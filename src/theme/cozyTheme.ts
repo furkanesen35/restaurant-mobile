@@ -6,11 +6,11 @@ export const cozyTheme = {
   colors: {
     ...DefaultTheme.colors,
     primary: '#8B2F1C', // Deep red
-    secondary: '#FFD700', // Gold
-    background: '#FFF8F0', // Cream
-    surface: '#F5E1C6', // Light brown
-    onBackground: '#3E2723', // Dark brown
-    onSurface: '#3E2723', // Dark brown
+    secondary: '#e0b97f', // Muted gold pastel
+    background: '#231a13', // Very dark brown for main background
+    surface: '#2d2117', // Dark brown for cards
+    onBackground: '#e0b97f', // Muted gold pastel for text on background
+    onSurface: '#e0b97f', // Muted gold pastel for text on cards
     outline: '#BCAAA4',
     error: '#D84315', // Alert red
   },
