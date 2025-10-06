@@ -8,18 +8,63 @@ import {
   Animated,
 } from "react-native";
 import { Card, useTheme } from "react-native-paper";
-import { menuCategories, menuItems } from "../data/menuData";
+import { useCart } from '../contexts/CartContext';
 
 const MenuScreen = () => {
   const { colors } = useTheme();
+  const { addToCart } = useCart();
 
-  const [expandedCategories, setExpandedCategories] = useState<string[]>([]); // all collapsed by default
+  const [menuCategories, setMenuCategories] = useState<{ id: string; name: string }[]>([]);
+  const [menuItems, setMenuItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const animatedHeights = useRef<{ [key: string]: Animated.Value }>({}).current;
-  const [selectedCategory, setSelectedCategory] = React.useState(
-    menuCategories[0].id
-  );
+  const [selectedCategory, setSelectedCategory] = React.useState<string>("all");
   const scrollViewRef = useRef<ScrollView>(null);
   const categoryRefs = useRef<{ [key: string]: View | null }>({});
+
+  React.useEffect(() => {
+    const fetchMenu = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // You may need to change this IP to your computer's IP address
+        const response = await fetch("http://192.168.1.110:3000/menu");
+        console.log("Menu API response status:", response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.log("Menu API error response:", errorText);
+          throw new Error(`Failed to fetch menu: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log("Fetched menu data:", JSON.stringify(data, null, 2));
+        
+        if (!data) {
+          throw new Error("No data received from server");
+        }
+        
+        // Handle empty menu data gracefully
+        const categories = Array.isArray(data.categories) ? data.categories : [];
+        const items = Array.isArray(data.items) ? data.items : [];
+        
+        setMenuCategories([{ id: "all", name: "All" }, ...categories]);
+        setMenuItems(items);
+        setSelectedCategory("all");
+        
+        console.log("Menu state updated successfully");
+      } catch (err: any) {
+        console.error("Menu fetch error:", err);
+        setError(err.message || "Failed to connect to server");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMenu();
+  }, []);
 
   // If 'all' is selected, group items by category
   const itemsToShow =
@@ -33,11 +78,12 @@ const MenuScreen = () => {
       : [
           {
             category: menuCategories.find((c) => c.id === selectedCategory),
-            items: menuItems.filter(
-              (item) => item.category === selectedCategory
-            ),
+            items: menuItems.filter((item) => item.category === selectedCategory),
           },
         ];
+  
+  console.log("MenuScreen render - selectedCategory:", selectedCategory);
+  console.log("MenuScreen render - itemsToShow:", JSON.stringify(itemsToShow, null, 2));
 
   // Helper to get or create Animated.Value for a category
   const getAnimatedHeight = (categoryId: string) => {
@@ -62,122 +108,161 @@ const MenuScreen = () => {
       toValue: targetHeight,
       duration: 300, // Slower for drawer effect
       useNativeDriver: false,
-    }).start(() => {
-      // Simple scroll after expansion
-      if (
-        isExpanding &&
-        categoryRefs.current[categoryId] &&
-        scrollViewRef.current
-      ) {
-        setTimeout(() => {
-          categoryRefs.current[categoryId]?.measureInWindow(
-            (x, y, width, height) => {
-              const scrollY = Math.max(0, y - 100); // Scroll to show category with padding
-              scrollViewRef.current?.scrollTo({ y: scrollY, animated: true });
-            }
-          );
-        }, 100);
-      }
-    });
+    }).start();
   };
 
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}> 
+        <Text style={{ color: colors.primary, fontSize: 20 }}>Loading menu...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}> 
+        <Text style={{ color: "red", fontSize: 18 }}>Error: {error}</Text>
+      </View>
+    );
+  }
+
+  // If menu data is empty, show a message
+  const hasMenu = menuCategories.length > 1 && menuItems.length > 0;
+  
+  console.log("MenuScreen render - menuCategories.length:", menuCategories.length);
+  console.log("MenuScreen render - menuItems.length:", menuItems.length);
+  console.log("MenuScreen render - hasMenu:", hasMenu);
+  console.log("MenuScreen render - loading:", loading);
+  console.log("MenuScreen render - error:", error);
+  
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}> 
       <Text style={[styles.title, { color: colors.primary }]}>Menu</Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.categoryBar}
-      >
-        {menuCategories.map((category) => (
-          <TouchableOpacity
-            key={category.id}
-            style={[
-              styles.categoryButton,
-              selectedCategory === category.id && {
-                backgroundColor: colors.primary,
-              },
-            ]}
-            onPress={() => setSelectedCategory(category.id)}
+      {!hasMenu ? (
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <Text style={{ color: colors.primary, fontSize: 18 }}>
+            No menu data available.
+          </Text>
+          <Text style={{ color: colors.primary, fontSize: 14, marginTop: 10 }}>
+            Categories: {menuCategories.length}, Items: {menuItems.length}
+          </Text>
+        </View>
+      ) : (
+        <>
+          {console.log("MenuScreen: Rendering menu UI - hasMenu is true")}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.categoryBar}
           >
-            <Text
-              style={{
-                color:
-                  selectedCategory === category.id
-                    ? colors.onPrimary
-                    : "#fffbe8", // Lighter for inactive
-                fontWeight:
-                  selectedCategory === category.id ? "bold" : "normal",
-                opacity: selectedCategory === category.id ? 1 : 0.8,
-              }}
-            >
-              {category.name}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-      <ScrollView contentContainerStyle={styles.menuList} ref={scrollViewRef}>
-        {itemsToShow.map(({ category, items }) => (
-          <View
-            key={category?.id}
-            style={styles.categorySection}
-            ref={(ref) => {
-              categoryRefs.current[category?.id!] = ref;
-            }}
-          >
-            {selectedCategory === "all" && (
+            {menuCategories.map((category) => (
               <TouchableOpacity
-                onPress={() => toggleCategory(category?.id!, items.length)}
+                key={category.id}
+                style={[
+                  styles.categoryButton,
+                  selectedCategory === category.id && {
+                    backgroundColor: colors.primary,
+                  },
+                ]}
+                onPress={() => setSelectedCategory(category.id)}
               >
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <Text style={styles.categoryTitle}>{category?.name}</Text>
-                  <Text
-                    style={{ fontSize: 18, marginLeft: 6, color: "#fffbe8" }}
-                  >
-                    {expandedCategories.includes(category?.id!) ? "▼" : "▶"}
-                  </Text>
-                </View>
+                <Text
+                  style={{
+                    color:
+                      selectedCategory === category.id
+                        ? colors.onPrimary
+                        : "#fffbe8", // Lighter for inactive
+                    fontWeight:
+                      selectedCategory === category.id ? "bold" : "normal",
+                    opacity: selectedCategory === category.id ? 1 : 0.8,
+                  }}
+                >
+                  {category.name}
+                </Text>
               </TouchableOpacity>
-            )}
-            {selectedCategory !== "all" ? (
-              items.map((item) => (
-                <Card key={item.id} style={styles.menuCard}>
-                  <Card.Title
-                    title={item.name}
-                    subtitle={`₺${item.price.toFixed(2)}`}
-                  />
-                  <Card.Content>
-                    <Text style={{ color: colors.onBackground }}>
-                      {item.description}
-                    </Text>
-                  </Card.Content>
-                </Card>
-              ))
-            ) : (
-              <Animated.View
-                style={{
-                  overflow: "hidden",
-                  height: getAnimatedHeight(category?.id!),
+            ))}
+          </ScrollView>
+          
+          <ScrollView contentContainerStyle={styles.menuList} ref={scrollViewRef}>
+            {itemsToShow.map(({ category, items }) => (
+              <View
+                key={category?.id}
+                style={styles.categorySection}
+                ref={(ref) => {
+                  if (ref && category?.id) categoryRefs.current[category.id] = ref;
                 }}
               >
-                {items.map((item) => (
-                  <Card key={item.id} style={styles.menuCard}>
-                    <Card.Title
-                      title={item.name}
-                      subtitle={`₺${item.price.toFixed(2)}`}
-                    />
-                    <Card.Content>
-                      <Text style={{ color: colors.onBackground }}>
-                        {item.description}
+                {selectedCategory === "all" && (
+                  <TouchableOpacity
+                    onPress={() => toggleCategory(category?.id!, items.length)}
+                  >
+                    <View style={{ flexDirection: "row", alignItems: "center" }}>
+                      <Text style={styles.categoryTitle}>{category?.name}</Text>
+                      <Text
+                        style={{ fontSize: 18, marginLeft: 6, color: "#fffbe8" }}
+                      >
+                        {expandedCategories.includes(category?.id!) ? "▼" : "▶"}
                       </Text>
-                    </Card.Content>
-                  </Card>
-                ))}
-              </Animated.View>
-            )}
-          </View>
-        ))}
-      </ScrollView>
+                    </View>
+                  </TouchableOpacity>
+                )}
+                
+                {selectedCategory !== "all" ? (
+                  // When specific category is selected, show items directly
+                  items.map((item) => (
+                    <Card key={item.id} style={styles.menuCard}>
+                      <Card.Title
+                        title={item.name}
+                        subtitle={`₺${item.price.toFixed(2)}`}
+                      />
+                      <Card.Content>
+                        <Text style={{ color: colors.onBackground }}>
+                          {item.description}
+                        </Text>
+                        <TouchableOpacity
+                          style={{ marginTop: 8, backgroundColor: colors.primary, borderRadius: 8, padding: 8, alignSelf: 'flex-start' }}
+                          onPress={() => addToCart({ menuItemId: item.id, name: item.name, price: item.price })}
+                        >
+                          <Text style={{ color: colors.onPrimary, fontWeight: 'bold' }}>Add to Cart</Text>
+                        </TouchableOpacity>
+                      </Card.Content>
+                    </Card>
+                  ))
+                ) : (
+                  // When "all" is selected, show collapsible items
+                  <Animated.View
+                    style={{
+                      overflow: "hidden",
+                      height: getAnimatedHeight(category?.id!),
+                    }}
+                  >
+                    {items.map((item) => (
+                      <Card key={item.id} style={styles.menuCard}>
+                        <Card.Title
+                          title={item.name}
+                          subtitle={`₺${item.price.toFixed(2)}`}
+                        />
+                        <Card.Content>
+                          <Text style={{ color: colors.onBackground }}>
+                            {item.description}
+                          </Text>
+                          <TouchableOpacity
+                            style={{ marginTop: 8, backgroundColor: colors.primary, borderRadius: 8, padding: 8, alignSelf: 'flex-start' }}
+                            onPress={() => addToCart({ menuItemId: item.id, name: item.name, price: item.price })}
+                          >
+                            <Text style={{ color: colors.onPrimary, fontWeight: 'bold' }}>Add to Cart</Text>
+                          </TouchableOpacity>
+                        </Card.Content>
+                      </Card>
+                    ))}
+                  </Animated.View>
+                )}
+              </View>
+            ))}
+          </ScrollView>
+        </>
+      )}
     </View>
   );
 };

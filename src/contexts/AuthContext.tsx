@@ -14,7 +14,6 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
-  checkStorage: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,15 +33,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         storedToken = localStorage.getItem('token');
         storedUser = localStorage.getItem('user');
       }
-      
-      if (storedToken) {
-        setToken(storedToken);
-        console.log('Token loaded from storage');
-      }
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
-        console.log('User loaded from storage');
-      }
+      if (storedToken) setToken(storedToken);
+      if (storedUser) setUser(JSON.parse(storedUser));
       setIsLoading(false);
     };
     loadSession();
@@ -79,7 +71,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             localStorage.setItem('user', JSON.stringify({ email }));
           }
         }
-        console.log('Login successful - token and user stored');
+  // login success
       } else {
         throw new Error(data.message || "Login failed");
       }
@@ -116,66 +108,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
-    console.log('=== LOGOUT FUNCTION CALLED ===');
-    console.log('Current token before logout:', token);
-    console.log('Current user before logout:', user);
-    
-    // Check what's in storage before clearing
-    const asyncToken = await AsyncStorage.getItem("token");
-    console.log('AsyncStorage token before clear:', asyncToken);
-    
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const localToken = localStorage.getItem('token');
-      console.log('localStorage token before clear:', localToken);
-    }
-    
-    // Clear state
     setToken(null);
     setUser(null);
-    console.log('State cleared - token and user set to null');
-    
-    // Clear AsyncStorage
     await AsyncStorage.removeItem("token");
     await AsyncStorage.removeItem("user");
-    console.log('AsyncStorage cleared');
-    
-    // Clear web localStorage if running on web
     if (typeof window !== 'undefined' && window.localStorage) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      console.log('localStorage cleared');
-      
-      // Verify localStorage is actually cleared
-      const tokenAfter = localStorage.getItem('token');
-      console.log('localStorage token after clear:', tokenAfter);
     }
-    
-    // Verify AsyncStorage is cleared
-    const asyncTokenAfter = await AsyncStorage.getItem("token");
-    console.log('AsyncStorage token after clear:', asyncTokenAfter);
-    
-    console.log('=== LOGOUT COMPLETED ===');
-  };
-
-  const checkStorage = async () => {
-    console.log('=== STORAGE CHECK ===');
-    console.log('Current state - token:', token, 'user:', user);
-    
-    const asyncToken = await AsyncStorage.getItem("token");
-    const asyncUser = await AsyncStorage.getItem("user");
-    console.log('AsyncStorage - token:', asyncToken, 'user:', asyncUser);
-    
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const localToken = localStorage.getItem('token');
-      const localUser = localStorage.getItem('user');
-      console.log('localStorage - token:', localToken, 'user:', localUser);
-    }
-    console.log('=== END STORAGE CHECK ===');
   };
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isLoading, login, register, logout, checkStorage }}
+      value={{ user, token, isLoading, login, register, logout }}
     >
       {children}
     </AuthContext.Provider>

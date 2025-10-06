@@ -20,15 +20,11 @@ import {
 
 const ProfileScreen = ({ navigation }: any) => {
   const { colors } = useTheme();
-  const { user, logout, checkStorage } = useAuth();
+  const { user, logout } = useAuth();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [emailUpdates, setEmailUpdates] = useState(false);
 
-  // Debug function to check current storage
-  const handleCheckStorage = async () => {
-    console.log('=== MANUAL STORAGE CHECK ===');
-    await checkStorage();
-  };
+
 
   const handleLogout = () => {
     console.log('=== LOGOUT BUTTON CLICKED - SHOWING ALERT ===');
@@ -283,34 +279,14 @@ const ProfileScreen = ({ navigation }: any) => {
         </Card.Content>
       </Card>
 
-      {/* Debug Storage Button */}
-      <Button
-        mode="outlined"
-        onPress={handleCheckStorage}
-        style={[styles.logoutButton, { marginBottom: 8 }]}
-        labelStyle={styles.logoutButtonText}
-      >
-        Check Storage
-      </Button>
-
-      {/* Direct Logout (No Confirmation) */}
-      <Button
-        mode="contained"
-        onPress={handleDirectLogout}
-        style={[styles.logoutButton, { marginBottom: 8, backgroundColor: '#e74c3c' }]}
-        labelStyle={[styles.logoutButtonText, { color: 'white' }]}
-      >
-        Direct Logout (Test)
-      </Button>
-
-      {/* Logout Button with Confirmation */}
+      {/* Logout Button */}
       <Button
         mode="outlined"
         onPress={handleLogout}
         style={styles.logoutButton}
         labelStyle={styles.logoutButtonText}
       >
-        Logout (With Confirmation)
+        Logout
       </Button>
 
       <View style={styles.footer}>

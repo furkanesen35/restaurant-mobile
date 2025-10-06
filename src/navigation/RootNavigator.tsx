@@ -12,10 +12,12 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
+import CartScreen from '../screens/CartScreen';
 function MainTabs() {
   return (
     <Tab.Navigator screenOptions={{ headerShown: false }}>
       <Tab.Screen name="Menu" component={MenuScreen} />
+      <Tab.Screen name="Cart" component={CartScreen} />
       <Tab.Screen name="Reservations" component={ReservationsScreen} />
       <Tab.Screen name="Orders" component={OrdersScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
