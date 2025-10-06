@@ -28,7 +28,8 @@ const CartScreen = () => {
       if (!response.ok) throw new Error('Order failed');
       clearCart();
       Alert.alert('Order placed!', 'Your order has been received.');
-    } catch (err) {
+    } catch (err: any) {
+      console.error('Order placement error:', err);
       Alert.alert('Error', err.message || 'Failed to place order');
     }
   };

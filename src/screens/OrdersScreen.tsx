@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Card, Chip, useTheme, ProgressBar } from "react-native-paper";
+import { useAuth } from "../contexts/AuthContext";
+import { useIsFocused } from "@react-navigation/native";
 
 type OrderStatus =
   | "pending"
@@ -28,38 +30,41 @@ type Order = {
 
 const OrdersScreen = () => {
   const { colors } = useTheme();
+  const { user, token } = useAuth();
   const [activeTab, setActiveTab] = useState<"current" | "history">("current");
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const isFocused = useIsFocused();
 
-  const currentOrders: Order[] = [
-    {
-      id: "ORD001",
-      items: ["Classic Cheeseburger", "Buffalo Wings", "Craft Beer"],
-      total: 34.97,
-      status: "preparing",
-      orderTime: "2:30 PM",
-      estimatedTime: "15-20 min",
-      progress: 0.6,
-    },
-  ];
+  useEffect(() => {
+    const fetchOrders = async () => {
+      if (!user) return;
+      setLoading(true);
+      try {
+        const res = await fetch(
+          `http://192.168.1.110:3000/order/user/${user.id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        const data = await res.json();
+        setOrders(data);
+      } catch (err) {
+        setOrders([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (isFocused) fetchOrders();
+  }, [user, token, isFocused]);
 
-  const orderHistory: Order[] = [
-    {
-      id: "ORD002",
-      items: ["Grilled Ribeye Steak", "House Wine"],
-      total: 36.98,
-      status: "delivered",
-      orderTime: "Yesterday, 7:45 PM",
-      progress: 1,
-    },
-    {
-      id: "ORD003",
-      items: ["BBQ Ribs", "Loaded Nachos", "Old Fashioned"],
-      total: 47.97,
-      status: "delivered",
-      orderTime: "Oct 1, 6:20 PM",
-      progress: 1,
-    },
-  ];
+  // Split orders into current and history
+  const currentOrders = orders.filter(
+    (o) => o.status !== "delivered" && o.status !== "cancelled"
+  );
+  const orderHistory = orders.filter(
+    (o) => o.status === "delivered" || o.status === "cancelled"
+  );
 
   const getStatusColor = (status: OrderStatus) => {
     switch (status) {
@@ -99,52 +104,47 @@ const OrdersScreen = () => {
     }
   };
 
-  const OrderCard = ({ order }: { order: Order }) => (
-    <Card style={styles.orderCard}>
-      <Card.Content>
-        <View style={styles.orderHeader}>
-          <Text style={styles.orderId}>#{order.id}</Text>
-          <Text style={styles.orderTime}>{order.orderTime}</Text>
-        </View>
+  const OrderCard = ({ order }: { order: any }) => {
+    // Calculate total from items
+    const total =
+      order.items && Array.isArray(order.items)
+        ? order.items.reduce(
+            (sum: number, oi: any) => sum + (oi.menuItem?.price || 0) * (oi.quantity || 1),
+            0
+          )
+        : 0;
 
-        <Chip
-          mode="outlined"
-          textStyle={{ color: getStatusColor(order.status) }}
-          style={[
-            styles.statusChip,
-            { borderColor: getStatusColor(order.status) },
-          ]}
-        >
-          {getStatusText(order.status)}
-        </Chip>
-
-        {order.status !== "delivered" && order.status !== "cancelled" && (
-          <View style={styles.progressSection}>
-            <ProgressBar
-              progress={order.progress}
-              color={getStatusColor(order.status)}
-              style={styles.progressBar}
-            />
-            {order.estimatedTime && (
-              <Text style={styles.estimatedTime}>
-                Est. {order.estimatedTime}
-              </Text>
-            )}
+    return (
+      <Card style={styles.orderCard}>
+        <Card.Content>
+          <View style={styles.orderHeader}>
+            <Text style={styles.orderId}>#{order.id}</Text>
+            {/* You can add order time here if available */}
           </View>
-        )}
-
-        <View style={styles.itemsList}>
-          {order.items.map((item, index) => (
-            <Text key={index} style={styles.orderItem}>
-              • {item}
-            </Text>
-          ))}
-        </View>
-
-        <Text style={styles.orderTotal}>Total: ₺{order.total.toFixed(2)}</Text>
-      </Card.Content>
-    </Card>
-  );
+          <Chip
+            mode="outlined"
+            textStyle={{ color: getStatusColor(order.status) }}
+            style={[
+              styles.statusChip,
+              { borderColor: getStatusColor(order.status) },
+            ]}
+          >
+            {getStatusText(order.status)}
+          </Chip>
+          {/* Items */}
+          <View style={styles.itemsList}>
+            {order.items &&
+              order.items.map((oi: any, idx: number) => (
+                <Text key={idx} style={styles.orderItem}>
+                  • {oi.menuItem?.name || "Item"} x{oi.quantity}
+                </Text>
+              ))}
+          </View>
+          <Text style={styles.orderTotal}>Total: ₺{total.toFixed(2)}</Text>
+        </Card.Content>
+      </Card>
+    );
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

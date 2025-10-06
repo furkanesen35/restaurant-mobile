@@ -8,12 +8,14 @@ import ReservationsScreen from "../screens/ReservationsScreen";
 import OrdersScreen from "../screens/OrdersScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import CartScreen from '../screens/CartScreen';
+import AdminScreen from '../screens/AdminScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-import CartScreen from '../screens/CartScreen';
 function MainTabs() {
+  const { user } = useAuth();
   return (
     <Tab.Navigator screenOptions={{ headerShown: false }}>
       <Tab.Screen name="Menu" component={MenuScreen} />
@@ -21,6 +23,9 @@ function MainTabs() {
       <Tab.Screen name="Reservations" component={ReservationsScreen} />
       <Tab.Screen name="Orders" component={OrdersScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
+      {user && user.role === 'admin' && (
+        <Tab.Screen name="Admin" component={AdminScreen} />
+      )}
     </Tab.Navigator>
   );
 }
