@@ -17,12 +17,13 @@ const CartScreen = () => {
       return;
     }
     try {
+      console.log('Placing order for user:', user.id, 'with cart:', cart);
       const response = await fetch('http://192.168.1.110:3000/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user.id,
-          items: cart.map(i => ({ menuItemId: parseInt(i.menuItemId), quantity: i.quantity }))
+          items: cart.map(i => ({ menuItemId: i.menuItemId, quantity: i.quantity }))
         })
       });
       if (!response.ok) throw new Error('Order failed');

@@ -6,121 +6,186 @@ import React, {
   ReactNode,
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { User, LoginCredentials, RegisterCredentials, AuthResponse, ApiError } from '../types';
+import apiClient from '../utils/apiClient';
 
 interface AuthContextType {
-  user: any;
+  user: User | null;
   token: string | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
-  logout: () => void;
+  error: string | null;
+  login: (credentials: LoginCredentials) => Promise<void>;
+  register: (credentials: RegisterCredentials) => Promise<void>;
+  logout: () => Promise<void>;
+  clearError: () => void;
+  refreshToken: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadSession = async () => {
-      let storedToken = await AsyncStorage.getItem("token");
-      let storedUser = await AsyncStorage.getItem("user");
-      
-      // Also check web localStorage if running on web
-      if (!storedToken && typeof window !== 'undefined' && window.localStorage) {
-        storedToken = localStorage.getItem('token');
-        storedUser = localStorage.getItem('user');
+      try {
+        let storedToken = await AsyncStorage.getItem("token");
+        let storedUser = await AsyncStorage.getItem("user");
+        
+        // Also check web localStorage if running on web
+        if (!storedToken && typeof window !== 'undefined' && window.localStorage) {
+          storedToken = localStorage.getItem('token');
+          storedUser = localStorage.getItem('user');
+        }
+        
+        if (storedToken) {
+          setToken(storedToken);
+          // Optionally validate token here
+        }
+        
+        if (storedUser) {
+          try {
+            const parsedUser = JSON.parse(storedUser);
+            setUser(parsedUser);
+          } catch (parseError) {
+            console.warn('Failed to parse stored user data:', parseError);
+            await AsyncStorage.removeItem('user');
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to load session:', error);
+      } finally {
+        setIsLoading(false);
       }
-      if (storedToken) setToken(storedToken);
-      if (storedUser) setUser(JSON.parse(storedUser));
-      setIsLoading(false);
     };
     loadSession();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    setIsLoading(true);
-    try {
-  const res = await fetch("http://192.168.1.110:3000/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (res.ok && data.token) {
-        setToken(data.token);
-        await AsyncStorage.setItem("token", data.token);
-        
-        // Also store in web localStorage if running on web
-        if (typeof window !== 'undefined' && window.localStorage) {
-          localStorage.setItem('token', data.token);
-        }
-        
-        if (data.user) {
-          setUser(data.user);
-          await AsyncStorage.setItem("user", JSON.stringify(data.user));
-          if (typeof window !== 'undefined' && window.localStorage) {
-            localStorage.setItem('user', JSON.stringify(data.user));
-          }
-        } else {
-          setUser({ email });
-          await AsyncStorage.setItem("user", JSON.stringify({ email }));
-          if (typeof window !== 'undefined' && window.localStorage) {
-            localStorage.setItem('user', JSON.stringify({ email }));
-          }
-        }
-  // login success
-      } else {
-        throw new Error(data.message || "Login failed");
+  const clearError = () => setError(null);
+
+  const storeAuthData = async (authData: AuthResponse) => {
+    const { token, refreshToken, user } = authData;
+    
+    await AsyncStorage.setItem('token', token);
+    await AsyncStorage.setItem('user', JSON.stringify(user));
+    
+    if (refreshToken) {
+      await AsyncStorage.setItem('refreshToken', refreshToken);
+    }
+    
+    // Also store in web localStorage if running on web
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      if (refreshToken) {
+        localStorage.setItem('refreshToken', refreshToken);
       }
+    }
+    
+    setToken(token);
+    setUser(user);
+  };
+
+  const login = async (credentials: LoginCredentials) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await apiClient.post<AuthResponse>('/auth/login', credentials);
+      
+      if (response.data) {
+        await storeAuthData(response.data);
+      } else {
+        throw new Error('Login failed - no data received');
+      }
+    } catch (error) {
+      const apiError = error as ApiError;
+      const errorMessage = apiError.message || 'Login failed. Please try again.';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (credentials: RegisterCredentials) => {
     setIsLoading(true);
+    setError(null);
+    
     try {
-  const res = await fetch("http://192.168.1.110:3000/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
-      });
-      const data = await res.json();
-      if (res.ok && data.token) {
-        setToken(data.token);
-        await AsyncStorage.setItem("token", data.token);
-        if (data.user) {
-          setUser(data.user);
-          await AsyncStorage.setItem("user", JSON.stringify(data.user));
-        } else {
-          setUser({ name, email });
-          await AsyncStorage.setItem("user", JSON.stringify({ name, email }));
-        }
+      const response = await apiClient.post<AuthResponse>('/auth/register', credentials);
+      
+      if (response.data) {
+        await storeAuthData(response.data);
       } else {
-        throw new Error(data.message || "Registration failed");
+        throw new Error('Registration failed - no data received');
       }
+    } catch (error) {
+      const apiError = error as ApiError;
+      const errorMessage = apiError.message || 'Registration failed. Please try again.';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
   const logout = async () => {
-    setToken(null);
-    setUser(null);
-    await AsyncStorage.removeItem("token");
-    await AsyncStorage.removeItem("user");
-    if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+    try {
+      setToken(null);
+      setUser(null);
+      setError(null);
+      
+      await AsyncStorage.multiRemove(['token', 'user', 'refreshToken']);
+      
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('refreshToken');
+      }
+    } catch (error) {
+      console.warn('Error during logout:', error);
+    }
+  };
+
+  const refreshToken = async () => {
+    try {
+      const storedRefreshToken = await AsyncStorage.getItem('refreshToken');
+      
+      if (!storedRefreshToken) {
+        throw new Error('No refresh token available');
+      }
+      
+      const response = await apiClient.post<AuthResponse>('/auth/refresh', {
+        refreshToken: storedRefreshToken
+      });
+      
+      if (response.data) {
+        await storeAuthData(response.data);
+      }
+    } catch (error) {
+      // If refresh fails, logout user
+      await logout();
+      throw error;
     }
   };
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isLoading, login, register, logout }}
+      value={{ 
+        user, 
+        token, 
+        isLoading, 
+        error, 
+        login, 
+        register, 
+        logout, 
+        clearError, 
+        refreshToken 
+      }}
     >
       {children}
     </AuthContext.Provider>
