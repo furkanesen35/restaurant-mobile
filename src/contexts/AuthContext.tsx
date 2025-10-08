@@ -150,11 +150,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       
       // Clear state after storage is cleared
-      setTimeout(() => {
-        setToken(null);
-        setUser(null);
-        setError(null);
-      }, 0);
+      setToken(null);
+      setUser(null);
+      setError(null);
       
       console.log('[AuthContext] logout successful');
     } catch (error) {
