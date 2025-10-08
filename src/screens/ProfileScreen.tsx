@@ -1,314 +1,210 @@
+
 import React, { useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Modal } from "react-native";
+import { Card, Button, Avatar, Divider, useTheme, IconButton } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-} from "react-native";
-import {
-  Card,
-  Avatar,
-  List,
-  Button,
-  Switch,
-  useTheme,
-  Divider,
-} from "react-native-paper";
+import AddressesScreen from "./AddressesScreen";
+import PaymentMethodsScreen from "./PaymentMethodsScreen";
 
-const ProfileScreen = ({ navigation }: any) => {
-  const { colors } = useTheme();
+const ProfileScreen = () => {
   const { user, logout } = useAuth();
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [emailUpdates, setEmailUpdates] = useState(false);
+  const { colors } = useTheme();
+  const [showAddresses, setShowAddresses] = useState(false);
+  const [showPayments, setShowPayments] = useState(false);
 
-
-
-  const handleLogout = () => {
-    console.log('=== LOGOUT BUTTON CLICKED - SHOWING ALERT ===');
-    if (typeof window !== 'undefined' && window.confirm) {
-      // Web: use window.confirm
-      const confirmed = window.confirm('Are you sure you want to logout?');
-      if (confirmed) {
-        (async () => {
-          console.log('=== LOGOUT CONFIRMED BY USER (WEB) ===');
-          try {
-            await logout();
-            console.log('Logout function completed, resetting navigation');
-            setTimeout(() => {
-              navigation.reset({ index: 0, routes: [{ name: "Login" }] });
-              console.log('Navigation reset completed');
-            }, 100);
-          } catch (error) {
-            console.error('Error during logout:', error);
-          }
-        })();
-      } else {
-        console.log('Logout cancelled by user (WEB)');
-      }
-    } else {
-      // Native: use Alert.alert
-      Alert.alert("Logout", "Are you sure you want to logout?", [
-        { 
-          text: "Cancel", 
-          style: "cancel",
-          onPress: () => console.log('Logout cancelled by user (NATIVE)')
-        },
-        {
-          text: "Logout",
-          onPress: async () => {
-            console.log('=== LOGOUT CONFIRMED BY USER (NATIVE) ===');
-            try {
-              await logout();
-              console.log('Logout function completed, resetting navigation');
-              setTimeout(() => {
-                navigation.reset({ index: 0, routes: [{ name: "Login" }] });
-                console.log('Navigation reset completed');
-              }, 100);
-            } catch (error) {
-              console.error('Error during logout:', error);
-            }
-          },
-        },
-      ]);
-    }
-  };
-
-  // Direct logout without confirmation for testing
-  const handleDirectLogout = async () => {
-    console.log('=== DIRECT LOGOUT (NO CONFIRMATION) ===');
-    try {
-      await logout();
-      console.log('Logout function completed, resetting navigation');
-      setTimeout(() => {
-        navigation.reset({ index: 0, routes: [{ name: "Login" }] });
-        console.log('Navigation reset completed');
-      }, 100);
-    } catch (error) {
-      console.error('Error during logout:', error);
-    }
-  };
-
-  const menuOptions = [
-    {
-      title: "Edit Profile",
-      description: "Update your personal information",
-      icon: "account-edit",
-      onPress: () =>
-        Alert.alert("Coming Soon", "Profile editing feature coming soon!"),
-    },
-    {
-      title: "Payment Methods",
-      description: "Manage your payment options",
-      icon: "credit-card",
-      onPress: () =>
-        Alert.alert("Coming Soon", "Payment methods feature coming soon!"),
-    },
-    {
-      title: "Delivery Addresses",
-      description: "Manage your saved addresses",
-      icon: "map-marker",
-      onPress: () =>
-        Alert.alert("Coming Soon", "Address management feature coming soon!"),
-    },
-    {
-      title: "Order History",
-      description: "View all your past orders",
-      icon: "history",
-      onPress: () =>
-        Alert.alert(
-          "Navigate to Orders",
-          "Switch to Orders tab to view history!"
-        ),
-    },
-    {
-      title: "Loyalty Program",
-      description: "Check your rewards and points",
-      icon: "star",
-      onPress: () =>
-        Alert.alert("Coming Soon", "Loyalty program feature coming soon!"),
-    },
-  ];
+  if (!user) {
+    return (
+      <View style={styles.loginPromptContainer}>
+        <Card style={styles.loginPromptCard}>
+          <Card.Content style={styles.loginPromptContent}>
+            <Avatar.Icon 
+              size={80} 
+              icon="account-circle" 
+              style={styles.loginPromptIcon} 
+            />
+            <Text style={styles.loginPromptTitle}>Welcome to Your Profile</Text>
+            <Text style={styles.loginPromptSubtitle}>
+              Please log in to access your profile, manage addresses, and payment methods.
+            </Text>
+          </Card.Content>
+        </Card>
+      </View>
+    );
+  }
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-    >
-      {/* Profile Header */}
-      <Card style={styles.profileCard}>
-        <Card.Content style={styles.profileContent}>
-          <Avatar.Text
-            size={80}
-            label={
-              user?.name
-                ? user.name
-                    .split(" ")
-                    .map((n: string) => n[0])
-                    .join("")
-                    .toUpperCase()
-                : user?.email
-                ? user.email[0].toUpperCase()
-                : "?"
-            }
+    <View style={styles.container}>
+      {/* Header Section */}
+      <Card style={styles.headerCard}>
+        <Card.Content style={styles.headerContent}>
+          <Avatar.Text 
+            size={80} 
+            label={user.name.charAt(0).toUpperCase()} 
             style={styles.avatar}
             labelStyle={styles.avatarLabel}
           />
-          <View style={styles.profileInfo}>
-            <Text style={styles.userName}>{user?.name || "No Name"}</Text>
-            <Text style={styles.userEmail}>{user?.email || "No Email"}</Text>
+          <View style={styles.userInfo}>
+            <Text style={styles.userName}>{user.name}</Text>
+            <Text style={styles.userEmail}>{user.email}</Text>
+            {user.role === 'admin' && (
+              <Card style={styles.adminBadge}>
+                <Text style={styles.adminBadgeText}>Admin</Text>
+              </Card>
+            )}
           </View>
         </Card.Content>
       </Card>
 
-      {/* Account Options */}
-      <Card style={styles.optionsCard}>
-        <Card.Title title="Account" titleStyle={styles.sectionTitle} />
-        <Card.Content>
-          {menuOptions.map((option, index) => (
-            <View key={option.title}>
-              <List.Item
-                title={option.title}
-                description={option.description}
-                left={(props) => (
-                  <List.Icon {...props} icon={option.icon} color="#e0b97f" />
-                )}
-                right={(props) => (
-                  <List.Icon {...props} icon="chevron-right" color="#e0b97f" />
-                )}
-                onPress={option.onPress}
-                titleStyle={styles.optionTitle}
-                descriptionStyle={styles.optionDescription}
-              />
-              {index < menuOptions.length - 1 && (
-                <Divider style={styles.divider} />
-              )}
-            </View>
-          ))}
-        </Card.Content>
-      </Card>
+      <Divider style={styles.divider} />
 
-      {/* Settings */}
-      <Card style={styles.optionsCard}>
-        <Card.Title title="Preferences" titleStyle={styles.sectionTitle} />
-        <Card.Content>
-          <View style={styles.settingItem}>
-            <View>
-              <Text style={styles.settingTitle}>Push Notifications</Text>
-              <Text style={styles.settingDescription}>
-                Get notified about order updates
-              </Text>
-            </View>
-            <Switch
-              value={notificationsEnabled}
-              onValueChange={setNotificationsEnabled}
-              color="#e0b97f"
-            />
-          </View>
-
-          <Divider style={styles.divider} />
-
-          <View style={styles.settingItem}>
-            <View>
-              <Text style={styles.settingTitle}>Email Updates</Text>
-              <Text style={styles.settingDescription}>
-                Receive promotions and news
-              </Text>
-            </View>
-            <Switch
-              value={emailUpdates}
-              onValueChange={setEmailUpdates}
-              color="#e0b97f"
-            />
-          </View>
-        </Card.Content>
-      </Card>
-
-      {/* Support */}
-      <Card style={styles.optionsCard}>
-        <Card.Title title="Support" titleStyle={styles.sectionTitle} />
-        <Card.Content>
-          <List.Item
-            title="Help Center"
-            description="Get answers to common questions"
-            left={(props) => (
-              <List.Icon {...props} icon="help-circle" color="#e0b97f" />
-            )}
-            right={(props) => (
-              <List.Icon {...props} icon="chevron-right" color="#e0b97f" />
-            )}
-            onPress={() =>
-              Alert.alert("Coming Soon", "Help center feature coming soon!")
-            }
-            titleStyle={styles.optionTitle}
-            descriptionStyle={styles.optionDescription}
+      {/* Addresses Section */}
+      <TouchableOpacity onPress={() => setShowAddresses(true)}>
+        <Card style={styles.sectionCard}>
+          <Card.Title 
+            title="My Addresses" 
+            titleStyle={styles.sectionTitle}
+            left={(props) => <Avatar.Icon {...props} icon="map-marker" style={styles.sectionIcon} />}
+            right={(props) => <IconButton {...props} icon="chevron-right" iconColor="#ffffff" />}
           />
-          <Divider style={styles.divider} />
-          <List.Item
-            title="Contact Us"
-            description="Reach out to our support team"
-            left={(props) => (
-              <List.Icon {...props} icon="phone" color="#e0b97f" />
-            )}
-            right={(props) => (
-              <List.Icon {...props} icon="chevron-right" color="#e0b97f" />
-            )}
-            onPress={() =>
-              Alert.alert("Contact", "Call us at: +1 (555) BAR-GRILL")
-            }
-            titleStyle={styles.optionTitle}
-            descriptionStyle={styles.optionDescription}
+          <Card.Content>
+            <Text style={styles.sectionPlaceholder}>Tap to manage your delivery addresses</Text>
+          </Card.Content>
+        </Card>
+      </TouchableOpacity>
+
+      {/* Payment Methods Section */}
+      <TouchableOpacity onPress={() => setShowPayments(true)}>
+        <Card style={styles.sectionCard}>
+          <Card.Title 
+            title="Payment Methods" 
+            titleStyle={styles.sectionTitle}
+            left={(props) => <Avatar.Icon {...props} icon="credit-card" style={styles.sectionIcon} />}
+            right={(props) => <IconButton {...props} icon="chevron-right" iconColor="#ffffff" />}
           />
-          <Divider style={styles.divider} />
-          <List.Item
-            title="Rate Our App"
-            description="Share your feedback with us"
-            left={(props) => (
-              <List.Icon {...props} icon="star-outline" color="#e0b97f" />
-            )}
-            right={(props) => (
-              <List.Icon {...props} icon="chevron-right" color="#e0b97f" />
-            )}
-            onPress={() =>
-              Alert.alert("Thank You!", "Thanks for using our app!")
-            }
-            titleStyle={styles.optionTitle}
-            descriptionStyle={styles.optionDescription}
-          />
-        </Card.Content>
-      </Card>
+          <Card.Content>
+            <Text style={styles.sectionPlaceholder}>Tap to manage your payment methods</Text>
+          </Card.Content>
+        </Card>
+      </TouchableOpacity>
 
       {/* Logout Button */}
-      <Button
-        mode="outlined"
-        onPress={handleLogout}
+      <Button 
+        mode="contained" 
+        onPress={logout} 
         style={styles.logoutButton}
-        labelStyle={styles.logoutButtonText}
+        labelStyle={styles.logoutButtonLabel}
+        contentStyle={styles.logoutButtonContent}
+        icon="logout"
       >
         Logout
       </Button>
 
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>Version 1.0.0</Text>
-      </View>
-    </ScrollView>
+      {/* Addresses Modal */}
+      <Modal
+        visible={showAddresses}
+        animationType="slide"
+        onRequestClose={() => setShowAddresses(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>My Addresses</Text>
+            <IconButton 
+              icon="close" 
+              onPress={() => setShowAddresses(false)} 
+              iconColor="#ffffff"
+            />
+          </View>
+          <AddressesScreen />
+        </View>
+      </Modal>
+
+      {/* Payment Methods Modal */}
+      <Modal
+        visible={showPayments}
+        animationType="slide"
+        onRequestClose={() => setShowPayments(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Payment Methods</Text>
+            <IconButton 
+              icon="close" 
+              onPress={() => setShowPayments(false)} 
+              iconColor="#ffffff"
+            />
+          </View>
+          <PaymentMethodsScreen />
+        </View>
+      </Modal>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  // Login Prompt Styles
+  loginPromptContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#231a13",
+    padding: 20,
+  },
+  loginPromptCard: {
+    width: "100%",
+    maxWidth: 350,
+    backgroundColor: "#2d2117",
+    borderRadius: 20,
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  loginPromptContent: {
+    alignItems: "center",
+    padding: 24,
+  },
+  loginPromptIcon: {
+    backgroundColor: "#e0b97f",
+    marginBottom: 16,
+  },
+  loginPromptTitle: {
+    color: "#ffffff",
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  loginPromptSubtitle: {
+    color: "#f5f5f5",
+    fontSize: 16,
+    textAlign: "center",
+    lineHeight: 22,
+    opacity: 0.9,
+  },
+
+  // Main Profile Styles
   container: {
     flex: 1,
+    backgroundColor: "#231a13",
     padding: 16,
   },
-  profileCard: {
-    marginBottom: 16,
+  
+  // Header Section
+  headerCard: {
     backgroundColor: "#2d2117",
     borderRadius: 16,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    marginBottom: 20,
   },
-  profileContent: {
+  headerContent: {
     flexDirection: "row",
     alignItems: "center",
+    padding: 20,
   },
   avatar: {
     backgroundColor: "#e0b97f",
@@ -316,79 +212,118 @@ const styles = StyleSheet.create({
   },
   avatarLabel: {
     color: "#231a13",
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "bold",
   },
-  profileInfo: {
+  userInfo: {
     flex: 1,
   },
   userName: {
-    fontSize: 20,
+    color: "#ffffff",
+    fontSize: 22,
     fontWeight: "bold",
-    color: "#fffbe8",
     marginBottom: 4,
   },
   userEmail: {
-    fontSize: 14,
-    color: "#e0b97f",
-    marginBottom: 2,
+    color: "#f5f5f5",
+    fontSize: 16,
+    marginBottom: 8,
+    opacity: 0.9,
   },
-  userPhone: {
-    fontSize: 14,
-    color: "#e0b97f",
+  adminBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "#e0b97f",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
-  optionsCard: {
-    marginBottom: 16,
+  adminBadgeText: {
+    color: "#231a13",
+    fontSize: 12,
+    fontWeight: "bold",
+    textTransform: "uppercase",
+  },
+
+  // Divider
+  divider: {
+    backgroundColor: "#e0b97f",
+    height: 2,
+    marginVertical: 16,
+  },
+
+  // Section Cards
+  sectionCard: {
     backgroundColor: "#2d2117",
     borderRadius: 16,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#3d3127",
   },
   sectionTitle: {
-    color: "#fffbe8",
+    color: "#ffffff",
     fontSize: 18,
     fontWeight: "bold",
   },
-  optionTitle: {
-    color: "#fffbe8",
+  sectionIcon: {
+    backgroundColor: "#e0b97f",
+  },
+  sectionPlaceholder: {
+    color: "#f5f5f5",
+    fontSize: 14,
+    fontStyle: "italic",
+    opacity: 0.8,
+    textAlign: "center",
+    paddingVertical: 12,
+  },
+
+  // Logout Button
+  logoutButton: {
+    backgroundColor: "#d32f2f",
+    borderRadius: 12,
+    marginTop: 20,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  logoutButtonContent: {
+    paddingVertical: 8,
+  },
+  logoutButtonLabel: {
+    color: "#ffffff",
     fontSize: 16,
+    fontWeight: "bold",
   },
-  optionDescription: {
-    color: "#e0b97f",
-    fontSize: 12,
-  },
-  divider: {
+
+  // Modal Styles
+  modalContainer: {
+    flex: 1,
     backgroundColor: "#231a13",
-    marginVertical: 8,
   },
-  settingItem: {
+  modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 8,
+    backgroundColor: "#2d2117",
+    paddingHorizontal: 16,
+    paddingTop: 50,
+    paddingBottom: 16,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
   },
-  settingTitle: {
-    color: "#fffbe8",
-    fontSize: 16,
-    marginBottom: 2,
-  },
-  settingDescription: {
-    color: "#e0b97f",
-    fontSize: 12,
-  },
-  logoutButton: {
-    marginTop: 16,
-    marginBottom: 24,
-    borderColor: "#e0b97f",
-  },
-  logoutButtonText: {
-    color: "#e0b97f",
-  },
-  footer: {
-    alignItems: "center",
-    paddingBottom: 32,
-  },
-  footerText: {
-    color: "#e0b97f",
-    fontSize: 12,
+  modalTitle: {
+    color: "#ffffff",
+    fontSize: 20,
+    fontWeight: "bold",
   },
 });
 

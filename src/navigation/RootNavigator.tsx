@@ -10,7 +10,6 @@ import ProfileScreen from "../screens/ProfileScreen";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import CartScreen from '../screens/CartScreen';
 import AdminScreen from '../screens/AdminScreen';
-
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 

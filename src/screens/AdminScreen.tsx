@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
 import { Card, useTheme } from 'react-native-paper';
 import { useAuth } from '../contexts/AuthContext';
 import { useIsFocused } from '@react-navigation/native';
 
-const STATUS_OPTIONS = ['pending', 'preparing', 'ready', 'delivered'];
+const STATUS_OPTIONS = ['pending', 'confirmed', 'preparing', 'ready', 'delivered', 'cancelled'];
 
 const AdminScreen = () => {
   const { colors } = useTheme();
@@ -93,18 +93,53 @@ const AdminScreen = () => {
                     - {orderItem.menuItem?.name || 'Item'} x{orderItem.quantity}
                   </Text>
                 ))}
-                <View style={{ flexDirection: 'row', marginTop: 8 }}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexDirection: 'row', marginTop: 8 }}>
                   {STATUS_OPTIONS.map(status => (
-                    <TouchableOpacity
-                      key={status}
-                      style={[styles.statusBtn, { backgroundColor: item.status === status ? colors.primary : '#fffbe8' }]}
-                      onPress={() => updateStatus(item.id, status)}
-                      disabled={item.status === status}
-                    >
-                      <Text style={{ color: item.status === status ? colors.onPrimary : '#231a13' }}>{status}</Text>
-                    </TouchableOpacity>
+                    status === 'cancelled' ? (
+                      <TouchableOpacity
+                        key={status}
+                        style={[styles.statusBtn, { backgroundColor: item.status === status ? colors.primary : '#fffbe8' }]}
+                        onPress={() => {
+                          Alert.alert(
+                            'Cancel Order',
+                            'Are you sure you want to cancel this order? This action cannot be undone.',
+                            [
+                              { text: 'No', style: 'cancel' },
+                              { text: 'Yes', style: 'destructive', onPress: async () => {
+                                try {
+                                  const response = await fetch(`http://192.168.1.110:3000/order/${item.id}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                      'Authorization': `Bearer ${token}`,
+                                      'Content-Type': 'application/json'
+                                    }
+                                  });
+                                  if (!response.ok) throw new Error('Failed to delete order');
+                                  Alert.alert('Order cancelled and deleted');
+                                  fetchOrders();
+                                } catch (err: any) {
+                                  Alert.alert('Error', err.message || 'Failed to delete order');
+                                }
+                              } }
+                            ]
+                          );
+                        }}
+                        disabled={item.status === status}
+                      >
+                        <Text style={{ color: item.status === status ? colors.onPrimary : 'red', fontWeight: 'bold' }}>Cancel</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <TouchableOpacity
+                        key={status}
+                        style={[styles.statusBtn, { backgroundColor: item.status === status ? colors.primary : '#fffbe8' }]}
+                        onPress={() => updateStatus(item.id, status)}
+                        disabled={item.status === status}
+                      >
+                        <Text style={{ color: item.status === status ? colors.onPrimary : '#231a13' }}>{status}</Text>
+                      </TouchableOpacity>
+                    )
                   ))}
-                </View>
+                </ScrollView>
               </Card.Content>
             </Card>
           )}
@@ -118,7 +153,15 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: '#231a13' },
   title: { fontSize: 28, fontWeight: 'bold', marginBottom: 16, alignSelf: 'center' },
   card: { marginBottom: 12, backgroundColor: '#2d2117' },
-  statusBtn: { padding: 8, borderRadius: 8, marginRight: 8, marginTop: 4 },
+  statusBtn: {
+    padding: 8,
+    borderRadius: 8,
+    marginRight: 8,
+    marginTop: 4,
+    minWidth: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });
 
 export default AdminScreen;

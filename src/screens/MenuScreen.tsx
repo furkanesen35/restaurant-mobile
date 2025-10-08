@@ -8,57 +8,57 @@ import {
   Animated,
 } from "react-native";
 import { Card, useTheme } from "react-native-paper";
-import { useCart } from '../contexts/CartContext';
+import { useCart } from "../contexts/CartContext";
 
 const MenuScreen = () => {
   const { colors } = useTheme();
   const { addToCart } = useCart();
 
-  const [menuCategories, setMenuCategories] = useState<{ id: string; name: string }[]>([]);
-  const [menuItems, setMenuItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
-  const animatedHeights = useRef<{ [key: string]: Animated.Value }>({}).current;
-  const [selectedCategory, setSelectedCategory] = React.useState<string>("all");
   const scrollViewRef = useRef<ScrollView>(null);
   const categoryRefs = useRef<{ [key: string]: View | null }>({});
+
+  const [menuCategories, setMenuCategories] = useState<
+    Array<{ id: string; name: string }>
+  >([]);
+  const [menuItems, setMenuItems] = useState<
+    Array<{
+      id: string;
+      name: string;
+      price: number;
+      description: string;
+      category: string;
+    }>
+  >([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [animatedHeights] = useState<{ [key: string]: Animated.Value }>({});
 
   React.useEffect(() => {
     const fetchMenu = async () => {
       try {
         setLoading(true);
         setError(null);
-        
-        // You may need to change this IP to your computer's IP address
         const response = await fetch("http://192.168.1.110:3000/menu");
-        console.log("Menu API response status:", response.status);
-        
         if (!response.ok) {
           const errorText = await response.text();
-          console.log("Menu API error response:", errorText);
           throw new Error(`Failed to fetch menu: ${response.status}`);
         }
-        
         const data = await response.json();
-        console.log("Fetched menu data:", JSON.stringify(data, null, 2));
-        
         if (!data) {
           throw new Error("No data received from server");
         }
-        
         // Handle empty menu data gracefully
-        const categories = Array.isArray(data.categories) ? data.categories : [];
+        const categories = Array.isArray(data.categories)
+          ? data.categories
+          : [];
         const items = Array.isArray(data.items) ? data.items : [];
-        
         setMenuCategories([{ id: "all", name: "All" }, ...categories]);
         setMenuItems(items);
         setSelectedCategory("all");
-        
-        console.log("Menu state updated successfully");
-      } catch (err: any) {
-        console.error("Menu fetch error:", err);
-        setError(err.message || "Failed to connect to server");
+      } catch (err) {
+        setError((err as Error).message || "Failed to connect to server");
       } finally {
         setLoading(false);
       }
@@ -70,20 +70,35 @@ const MenuScreen = () => {
   const itemsToShow =
     selectedCategory === "all"
       ? menuCategories
-          .filter((c) => c.id !== "all")
-          .map((category) => ({
+          .filter((c: { id: string; name: string }) => c.id !== "all")
+          .map((category: { id: string; name: string }) => ({
             category,
-            items: menuItems.filter((item) => item.category === category.id),
+            items: menuItems.filter(
+              (item: {
+                id: string;
+                name: string;
+                price: number;
+                description: string;
+                category: string;
+              }) => item.category === category.id
+            ),
           }))
       : [
           {
-            category: menuCategories.find((c) => c.id === selectedCategory),
-            items: menuItems.filter((item) => item.category === selectedCategory),
+            category: menuCategories.find(
+              (c: { id: string; name: string }) => c.id === selectedCategory
+            ),
+            items: menuItems.filter(
+              (item: {
+                id: string;
+                name: string;
+                price: number;
+                description: string;
+                category: string;
+              }) => item.category === selectedCategory
+            ),
           },
         ];
-  
-  console.log("MenuScreen render - selectedCategory:", selectedCategory);
-  console.log("MenuScreen render - itemsToShow:", JSON.stringify(itemsToShow, null, 2));
 
   // Helper to get or create Animated.Value for a category
   const getAnimatedHeight = (categoryId: string) => {
@@ -113,15 +128,27 @@ const MenuScreen = () => {
 
   if (loading) {
     return (
-      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}> 
-        <Text style={{ color: colors.primary, fontSize: 20 }}>Loading menu...</Text>
+      <View
+        style={[
+          styles.container,
+          { justifyContent: "center", alignItems: "center" },
+        ]}
+      >
+        <Text style={{ color: colors.primary, fontSize: 20 }}>
+          Loading menu...
+        </Text>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}> 
+      <View
+        style={[
+          styles.container,
+          { justifyContent: "center", alignItems: "center" },
+        ]}
+      >
         <Text style={{ color: "red", fontSize: 18 }}>Error: {error}</Text>
       </View>
     );
@@ -129,18 +156,14 @@ const MenuScreen = () => {
 
   // If menu data is empty, show a message
   const hasMenu = menuCategories.length > 1 && menuItems.length > 0;
-  
-  console.log("MenuScreen render - menuCategories.length:", menuCategories.length);
-  console.log("MenuScreen render - menuItems.length:", menuItems.length);
-  console.log("MenuScreen render - hasMenu:", hasMenu);
-  console.log("MenuScreen render - loading:", loading);
-  console.log("MenuScreen render - error:", error);
-  
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}> 
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Text style={[styles.title, { color: colors.primary }]}>Menu</Text>
       {!hasMenu ? (
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
           <Text style={{ color: colors.primary, fontSize: 18 }}>
             No menu data available.
           </Text>
@@ -150,7 +173,6 @@ const MenuScreen = () => {
         </View>
       ) : (
         <>
-          {console.log("MenuScreen: Rendering menu UI - hasMenu is true")}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -183,31 +205,41 @@ const MenuScreen = () => {
               </TouchableOpacity>
             ))}
           </ScrollView>
-          
-          <ScrollView contentContainerStyle={styles.menuList} ref={scrollViewRef}>
+
+          <ScrollView
+            contentContainerStyle={styles.menuList}
+            ref={scrollViewRef}
+          >
             {itemsToShow.map(({ category, items }) => (
               <View
                 key={category?.id}
                 style={styles.categorySection}
                 ref={(ref) => {
-                  if (ref && category?.id) categoryRefs.current[category.id] = ref;
+                  if (ref && category?.id)
+                    categoryRefs.current[category.id] = ref;
                 }}
               >
                 {selectedCategory === "all" && (
                   <TouchableOpacity
                     onPress={() => toggleCategory(category?.id!, items.length)}
                   >
-                    <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <View
+                      style={{ flexDirection: "row", alignItems: "center" }}
+                    >
                       <Text style={styles.categoryTitle}>{category?.name}</Text>
                       <Text
-                        style={{ fontSize: 18, marginLeft: 6, color: "#fffbe8" }}
+                        style={{
+                          fontSize: 18,
+                          marginLeft: 6,
+                          color: "#fffbe8",
+                        }}
                       >
                         {expandedCategories.includes(category?.id!) ? "▼" : "▶"}
                       </Text>
                     </View>
                   </TouchableOpacity>
                 )}
-                
+
                 {selectedCategory !== "all" ? (
                   // When specific category is selected, show items directly
                   items.map((item) => (
@@ -221,10 +253,29 @@ const MenuScreen = () => {
                           {item.description}
                         </Text>
                         <TouchableOpacity
-                          style={{ marginTop: 8, backgroundColor: colors.primary, borderRadius: 8, padding: 8, alignSelf: 'flex-start' }}
-                          onPress={() => addToCart({ menuItemId: item.id, name: item.name, price: item.price })}
+                          style={{
+                            marginTop: 8,
+                            backgroundColor: colors.primary,
+                            borderRadius: 8,
+                            padding: 8,
+                            alignSelf: "flex-start",
+                          }}
+                          onPress={() =>
+                            addToCart({
+                              menuItemId: item.id,
+                              name: item.name,
+                              price: item.price,
+                            })
+                          }
                         >
-                          <Text style={{ color: colors.onPrimary, fontWeight: 'bold' }}>Add to Cart</Text>
+                          <Text
+                            style={{
+                              color: colors.onPrimary,
+                              fontWeight: "bold",
+                            }}
+                          >
+                            Add to Cart
+                          </Text>
                         </TouchableOpacity>
                       </Card.Content>
                     </Card>
@@ -248,10 +299,29 @@ const MenuScreen = () => {
                             {item.description}
                           </Text>
                           <TouchableOpacity
-                            style={{ marginTop: 8, backgroundColor: colors.primary, borderRadius: 8, padding: 8, alignSelf: 'flex-start' }}
-                            onPress={() => addToCart({ menuItemId: item.id, name: item.name, price: item.price })}
+                            style={{
+                              marginTop: 8,
+                              backgroundColor: colors.primary,
+                              borderRadius: 8,
+                              padding: 8,
+                              alignSelf: "flex-start",
+                            }}
+                            onPress={() =>
+                              addToCart({
+                                menuItemId: item.id,
+                                name: item.name,
+                                price: item.price,
+                              })
+                            }
                           >
-                            <Text style={{ color: colors.onPrimary, fontWeight: 'bold' }}>Add to Cart</Text>
+                            <Text
+                              style={{
+                                color: colors.onPrimary,
+                                fontWeight: "bold",
+                              }}
+                            >
+                              Add to Cart
+                            </Text>
                           </TouchableOpacity>
                         </Card.Content>
                       </Card>

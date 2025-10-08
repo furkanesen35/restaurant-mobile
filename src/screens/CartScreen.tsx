@@ -17,16 +17,30 @@ const CartScreen = () => {
       return;
     }
     try {
-      console.log('Placing order for user:', user.id, 'with cart:', cart);
+      const items = cart.map(i => ({ menuItemId: parseInt(i.menuItemId), quantity: i.quantity }));
+      const payload = {
+        userId: user.id,
+        items: Array.from(items) // ensure it's a proper array
+      };
+      console.log('Order payload before stringify:', payload);
+      console.log('Items type check:', Array.isArray(payload.items), payload.items);
+      
+      const bodyString = JSON.stringify(payload);
+      console.log('Stringified body:', bodyString);
+      
       const response = await fetch('http://192.168.1.110:3000/order', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user.id,
-          items: cart.map(i => ({ menuItemId: i.menuItemId, quantity: i.quantity }))
-        })
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: bodyString
       });
-      if (!response.ok) throw new Error('Order failed');
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Order failed with status:', response.status, 'Error:', errorText);
+        throw new Error(`Order failed: ${response.status}`);
+      }
       clearCart();
       Alert.alert('Order placed!', 'Your order has been received.');
     } catch (err: any) {

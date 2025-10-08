@@ -6,8 +6,9 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  Alert,
 } from "react-native";
-import { Card, Chip, useTheme, ProgressBar } from "react-native-paper";
+import { Card, Chip, useTheme, ProgressBar, Button } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
 import { useIsFocused } from "@react-navigation/native";
 
@@ -51,6 +52,33 @@ const OrdersScreen = () => {
       setLoading(false);
       setRefreshing(false);
     }
+  };
+
+  const cancelOrder = async (orderId: string | number) => {
+    try {
+      console.log('Cancelling order:', orderId);
+      await apiClient.patch(`/order/${orderId}/status`, { status: 'cancelled' });
+      Alert.alert('Success', 'Order cancelled successfully');
+      fetchOrders(); // Refresh orders
+    } catch (err: any) {
+      console.error('Error cancelling order:', err);
+      Alert.alert('Error', 'Failed to cancel order');
+    }
+  };
+
+  const handleCancelOrder = (order: Order) => {
+    Alert.alert(
+      'Cancel Order',
+      `Are you sure you want to cancel order #${order.id}?`,
+      [
+        { text: 'No', style: 'cancel' },
+        { 
+          text: 'Yes', 
+          style: 'destructive',
+          onPress: () => cancelOrder(order.id)
+        }
+      ]
+    );
   };
 
   useEffect(() => {
@@ -115,6 +143,17 @@ const OrdersScreen = () => {
             <Text style={styles.orderTotal}>
               Total: {formatCurrency(total)}
             </Text>
+            {order.status === 'pending' && (
+              <Button 
+                mode="outlined" 
+                onPress={() => handleCancelOrder(order)}
+                style={styles.cancelButton}
+                labelStyle={styles.cancelButtonLabel}
+                compact
+              >
+                Cancel
+              </Button>
+            )}
           </View>
         </Card.Content>
       </Card>
@@ -300,7 +339,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#e0b97f",
-    textAlign: "right",
+    flex: 1,
+  },
+  cancelButton: {
+    borderColor: "#d32f2f",
+    marginLeft: 8,
+  },
+  cancelButtonLabel: {
+    color: "#d32f2f",
+    fontSize: 12,
   },
   emptyState: {
     alignItems: "center",
