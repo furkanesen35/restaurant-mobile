@@ -7,16 +7,23 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { TextInput, Button, useTheme, Card, Title, HelperText } from "react-native-paper";
+import { TextInput, Button, useTheme, Card, Title, HelperText, Divider } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
 import { NavigationProps } from "../types";
 import { validateEmail, parseErrorMessage } from "../utils/validation";
 import ErrorMessage from "../components/common/ErrorMessage";
 import LoadingOverlay from "../components/common/LoadingOverlay";
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+
+// Configure Google Sign-In
+GoogleSignin.configure({
+  webClientId: 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com', // From Google Cloud Console
+  offlineAccess: true,
+});
 
 const LoginScreen: React.FC<NavigationProps> = ({ navigation }) => {
   const { colors } = useTheme();
-  const { login, isLoading, error, clearError } = useAuth();
+  const { login, googleSignIn, isLoading, error, clearError } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [validationErrors, setValidationErrors] = useState<{ email?: string; password?: string }>({});
@@ -55,6 +62,31 @@ const LoginScreen: React.FC<NavigationProps> = ({ navigation }) => {
     } catch (e: any) {
       // Error is handled by the AuthContext and displayed via the error prop
       console.error('Login error:', e);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+      
+      if (userInfo.data) {
+        await googleSignIn({
+          email: userInfo.data.user.email,
+          name: userInfo.data.user.name || userInfo.data.user.email,
+          idToken: userInfo.data.idToken || '',
+        });
+      }
+    } catch (error: any) {
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+        console.log('User cancelled Google sign-in');
+      } else if (error.code === statusCodes.IN_PROGRESS) {
+        console.log('Google sign-in in progress');
+      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        console.error('Play services not available');
+      } else {
+        console.error('Google sign-in error:', error);
+      }
     }
   };
 
@@ -136,6 +168,24 @@ const LoginScreen: React.FC<NavigationProps> = ({ navigation }) => {
             >
               {isLoading ? "Signing In..." : "Sign In"}
             </Button>
+
+            <View style={styles.dividerContainer}>
+              <Divider style={styles.divider} />
+              <Text style={styles.dividerText}>OR</Text>
+              <Divider style={styles.divider} />
+            </View>
+
+            <Button
+              mode="outlined"
+              onPress={handleGoogleSignIn}
+              disabled={isLoading}
+              style={styles.googleButton}
+              contentStyle={styles.googleButtonContent}
+              labelStyle={styles.googleButtonLabel}
+              icon="google"
+            >
+              Sign in with Google
+            </Button>
             
             <View style={styles.footer}>
               <TouchableOpacity 
@@ -212,6 +262,35 @@ const styles = StyleSheet.create({
   },
   buttonLabel: {
     color: "#231a13",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  divider: {
+    flex: 1,
+    backgroundColor: '#e0b97f',
+    height: 1,
+  },
+  dividerText: {
+    color: '#e0b97f',
+    marginHorizontal: 12,
+    fontSize: 14,
+  },
+  googleButton: {
+    marginBottom: 16,
+    borderRadius: 12,
+    borderColor: '#e0b97f',
+    borderWidth: 2,
+  },
+  googleButtonContent: {
+    paddingVertical: 4,
+  },
+  googleButtonLabel: {
+    color: '#e0b97f',
     fontSize: 16,
     fontWeight: "600",
   },

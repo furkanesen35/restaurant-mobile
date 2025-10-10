@@ -15,16 +15,28 @@ const Tab = createBottomTabNavigator();
 
 function MainTabs() {
   const { user } = useAuth();
+  
+  const screens = React.useMemo(() => {
+    const baseScreens = [
+      { name: "Menu", component: MenuScreen },
+      { name: "Cart", component: CartScreen },
+      { name: "Reservations", component: ReservationsScreen },
+      { name: "Orders", component: OrdersScreen },
+      { name: "Profile", component: ProfileScreen },
+    ];
+    
+    if (user && user.role === 'admin') {
+      baseScreens.push({ name: "Admin", component: AdminScreen });
+    }
+    
+    return baseScreens;
+  }, [user?.role]);
+  
   return (
     <Tab.Navigator screenOptions={{ headerShown: false }}>
-      <Tab.Screen name="Menu" component={MenuScreen} />
-      <Tab.Screen name="Cart" component={CartScreen} />
-      <Tab.Screen name="Reservations" component={ReservationsScreen} />
-      <Tab.Screen name="Orders" component={OrdersScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
-      {user && user.role === 'admin' && (
-        <Tab.Screen name="Admin" component={AdminScreen} />
-      )}
+      {screens.map(screen => (
+        <Tab.Screen key={screen.name} name={screen.name} component={screen.component} />
+      ))}
     </Tab.Navigator>
   );
 }
@@ -32,18 +44,30 @@ function MainTabs() {
 const RootNavigator = () => {
   const { token, isLoading } = useAuth();
   
-  console.log('RootNavigator render - token:', token, 'isLoading:', isLoading);
+  console.log('RootNavigator render - token:', !!token, 'isLoading:', isLoading);
 
   if (isLoading) return null; // Optionally show splash/loading
 
+  // Use different keys to force complete remount on auth state change
+  const navigationKey = token ? 'authenticated' : 'unauthenticated';
+
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator key={navigationKey} screenOptions={{ headerShown: false }}>
       {token ? (
-        <Stack.Screen name="Main" component={MainTabs} />
+        <Stack.Screen 
+          name="Main" 
+          component={MainTabs}
+        />
       ) : (
         <>
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="Register" component={RegisterScreen} />
+          <Stack.Screen 
+            name="Login" 
+            component={LoginScreen}
+          />
+          <Stack.Screen 
+            name="Register" 
+            component={RegisterScreen}
+          />
         </>
       )}
     </Stack.Navigator>

@@ -17,6 +17,7 @@ interface AuthContextType {
   error: string | null;
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (credentials: RegisterCredentials) => Promise<void>;
+  googleSignIn: (googleUser: { email: string; name: string; idToken: string }) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
   refreshToken: () => Promise<void>;
@@ -136,6 +137,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const googleSignIn = async (googleUser: { email: string; name: string; idToken: string }) => {
+    setIsLoading(true);
+    setError(null);
+    console.log('[AuthContext] Google sign-in called with:', googleUser.email);
+    try {
+      const response = await apiClient.post<AuthResponse>('/auth/google', googleUser);
+      console.log('[AuthContext] Google sign-in response:', response.data);
+      if (response.data) {
+        await storeAuthData(response.data);
+      } else {
+        throw new Error('Google sign-in failed - no data received');
+      }
+    } catch (error) {
+      const apiError = error as ApiError;
+      const errorMessage = apiError.message || 'Google sign-in failed. Please try again.';
+      setError(errorMessage);
+      console.error('[AuthContext] Google sign-in error:', errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setIsLoading(false);
+      console.log('[AuthContext] Google sign-in finished, isLoading set to false');
+    }
+  };
+
   const logout = useCallback(async () => {
     try {
       console.log('[AuthContext] logout initiated');
@@ -198,7 +223,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isLoading, 
         error, 
         login, 
-        register, 
+        register,
+        googleSignIn,
         logout, 
         clearError, 
         refreshToken 
