@@ -1,42 +1,41 @@
 import React, { useState } from "react";
 import {
-  View,
   Text,
   StyleSheet,
   TouchableOpacity,
   KeyboardAvoidingView,
 } from "react-native";
-import { TextInput, Button, useTheme, Card, Title } from "react-native-paper";
+import { TextInput, Button, Card, Title } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
+import { NavigationProps } from "../types";
 
-const RegisterScreen = ({ navigation }: any) => {
-  const { colors } = useTheme();
+const RegisterScreen = ({ navigation }: NavigationProps) => {
   const { register, isLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  
+
   const handleRegister = async () => {
     setError("");
     setSuccess("");
-    
+
     if (!email || !password || !confirmPassword) {
       setError("All fields are required");
       return;
     }
-    
+
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       return;
     }
-    
+
     if (password.length < 6) {
       setError("Password must be at least 6 characters");
       return;
     }
-    
+
     try {
       await register({ email, password });
       setSuccess("Registration successful!");

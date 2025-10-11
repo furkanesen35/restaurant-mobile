@@ -11,14 +11,14 @@ import ReservationsScreen from "../screens/ReservationsScreen";
 import OrdersScreen from "../screens/OrdersScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import CartScreen from '../screens/CartScreen';
-import AdminScreen from '../screens/AdminScreen';
+import CartScreen from "../screens/CartScreen";
+import AdminScreen from "../screens/AdminScreen";
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function MainTabs() {
   const { user } = useAuth();
-  
+
   const screens = React.useMemo(() => {
     const baseScreens = [
       { name: "Menu", component: MenuScreen },
@@ -27,18 +27,22 @@ function MainTabs() {
       { name: "Orders", component: OrdersScreen },
       { name: "Profile", component: ProfileScreen },
     ];
-    
-    if (user && user.role === 'admin') {
+
+    if (user && user.role === "admin") {
       baseScreens.push({ name: "Admin", component: AdminScreen });
     }
-    
+
     return baseScreens;
-  }, [user?.role]);
-  
+  }, [user]);
+
   return (
     <Tab.Navigator screenOptions={{ headerShown: false }}>
-      {screens.map(screen => (
-        <Tab.Screen key={screen.name} name={screen.name} component={screen.component} />
+      {screens.map((screen) => (
+        <Tab.Screen
+          key={screen.name}
+          name={screen.name}
+          component={screen.component}
+        />
       ))}
     </Tab.Navigator>
   );
@@ -46,43 +50,33 @@ function MainTabs() {
 
 const RootNavigator = () => {
   const { token, isLoading } = useAuth();
-  
-  console.log('RootNavigator render - token:', !!token, 'isLoading:', isLoading);
+
+  console.log(
+    "RootNavigator render - token:",
+    !!token,
+    "isLoading:",
+    isLoading,
+  );
 
   if (isLoading) return null; // Optionally show splash/loading
 
   // Use different keys to force complete remount on auth state change
-  const navigationKey = token ? 'authenticated' : 'unauthenticated';
+  const navigationKey = token ? "authenticated" : "unauthenticated";
 
   return (
     <Stack.Navigator key={navigationKey} screenOptions={{ headerShown: false }}>
       {token ? (
-        <Stack.Screen 
-          name="Main" 
-          component={MainTabs}
-        />
+        <Stack.Screen name="Main" component={MainTabs} />
       ) : (
         <>
-          <Stack.Screen 
-            name="Login" 
-            component={LoginScreen}
-          />
-          <Stack.Screen 
-            name="Register" 
-            component={RegisterScreen}
-          />
-          <Stack.Screen 
-            name="ForgotPassword" 
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Register" component={RegisterScreen} />
+          <Stack.Screen
+            name="ForgotPassword"
             component={ForgotPasswordScreen}
           />
-          <Stack.Screen 
-            name="ResetPassword" 
-            component={ResetPasswordScreen}
-          />
-          <Stack.Screen 
-            name="VerifyEmail" 
-            component={VerifyEmailScreen}
-          />
+          <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+          <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
         </>
       )}
     </Stack.Navigator>

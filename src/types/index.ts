@@ -3,7 +3,7 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  role: 'user' | 'admin';
+  role: "user" | "admin";
   createdAt?: string;
 }
 
@@ -23,13 +23,13 @@ export interface MenuItem {
 }
 
 // Order types
-export type OrderStatus = 
-  | 'pending' 
-  | 'confirmed' 
-  | 'preparing' 
-  | 'ready' 
-  | 'delivered' 
-  | 'cancelled';
+export type OrderStatus =
+  | "pending"
+  | "confirmed"
+  | "preparing"
+  | "ready"
+  | "delivered"
+  | "cancelled";
 
 export interface OrderItem {
   id?: number;

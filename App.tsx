@@ -8,20 +8,20 @@ import RootNavigator from "./src/navigation/RootNavigator";
 import { CartProvider } from "./src/contexts/CartContext";
 
 const linking = {
-  prefixes: ['restaurantapp://', 'exp://192.168.1.110:8081'],
+  prefixes: ["restaurantapp://", "exp://192.168.1.110:8081"],
   config: {
     screens: {
-      Login: 'login',
-      Register: 'register',
-      ForgotPassword: 'forgot-password',
+      Login: "login",
+      Register: "register",
+      ForgotPassword: "forgot-password",
       ResetPassword: {
-        path: 'reset-password',
+        path: "reset-password",
         parse: {
           token: (token: string) => token,
         },
       },
       VerifyEmail: {
-        path: 'verify-email',
+        path: "verify-email",
         parse: {
           token: (token: string) => token,
         },

@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Snackbar, IconButton } from 'react-native-paper';
-import { ErrorMessageProps } from '../../types';
+import React from "react";
+import { Text, StyleSheet } from "react-native";
+import { Snackbar } from "react-native-paper";
+import { ErrorMessageProps } from "../../types";
 
 const ErrorMessage: React.FC<ErrorMessageProps> = ({ error, onDismiss }) => {
   if (!error) return null;
@@ -15,9 +15,9 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({ error, onDismiss }) => {
       duration={5000}
       style={styles.snackbar}
       action={{
-        label: 'Dismiss',
+        label: "Dismiss",
         onPress: handleDismiss,
-        textColor: '#fffbe8'
+        textColor: "#fffbe8",
       }}
     >
       <Text style={styles.text}>{error}</Text>
@@ -27,12 +27,12 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({ error, onDismiss }) => {
 
 const styles = StyleSheet.create({
   snackbar: {
-    backgroundColor: '#d32f2f',
+    backgroundColor: "#d32f2f",
     borderRadius: 8,
     marginBottom: 16,
   },
   text: {
-    color: '#fffbe8',
+    color: "#fffbe8",
     fontSize: 14,
   },
 });

@@ -42,7 +42,6 @@ const MenuScreen = () => {
         setError(null);
         const response = await fetch("http://192.168.1.110:3000/menu");
         if (!response.ok) {
-          const errorText = await response.text();
           throw new Error(`Failed to fetch menu: ${response.status}`);
         }
         const data = await response.json();
@@ -80,13 +79,13 @@ const MenuScreen = () => {
                 price: number;
                 description: string;
                 category: string;
-              }) => item.category === category.id
+              }) => item.category === category.id,
             ),
           }))
       : [
           {
             category: menuCategories.find(
-              (c: { id: string; name: string }) => c.id === selectedCategory
+              (c: { id: string; name: string }) => c.id === selectedCategory,
             ),
             items: menuItems.filter(
               (item: {
@@ -95,7 +94,7 @@ const MenuScreen = () => {
                 price: number;
                 description: string;
                 category: string;
-              }) => item.category === selectedCategory
+              }) => item.category === selectedCategory,
             ),
           },
         ];
@@ -221,7 +220,9 @@ const MenuScreen = () => {
               >
                 {selectedCategory === "all" && (
                   <TouchableOpacity
-                    onPress={() => toggleCategory(category?.id!, items.length)}
+                    onPress={() =>
+                      category?.id && toggleCategory(category.id, items.length)
+                    }
                   >
                     <View
                       style={{ flexDirection: "row", alignItems: "center" }}
@@ -234,7 +235,10 @@ const MenuScreen = () => {
                           color: "#fffbe8",
                         }}
                       >
-                        {expandedCategories.includes(category?.id!) ? "▼" : "▶"}
+                        {category?.id &&
+                        expandedCategories.includes(category.id)
+                          ? "▼"
+                          : "▶"}
                       </Text>
                     </View>
                   </TouchableOpacity>
@@ -285,7 +289,7 @@ const MenuScreen = () => {
                   <Animated.View
                     style={{
                       overflow: "hidden",
-                      height: getAnimatedHeight(category?.id!),
+                      height: category?.id ? getAnimatedHeight(category.id) : 0,
                     }}
                   >
                     {items.map((item) => (

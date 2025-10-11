@@ -6,7 +6,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { TextInput, Button, useTheme, Card, Title, HelperText } from "react-native-paper";
+import { TextInput, Button, Card, Title, HelperText } from "react-native-paper";
 import { NavigationProps } from "../types";
 import { validateEmail } from "../utils/validation";
 import ErrorMessage from "../components/common/ErrorMessage";
@@ -14,7 +14,6 @@ import LoadingOverlay from "../components/common/LoadingOverlay";
 import apiClient from "../utils/apiClient";
 
 const ForgotPasswordScreen: React.FC<NavigationProps> = ({ navigation }) => {
-  const { colors } = useTheme();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,11 +42,13 @@ const ForgotPasswordScreen: React.FC<NavigationProps> = ({ navigation }) => {
     setSuccess(false);
 
     try {
-      await apiClient.post('/auth/forgot-password', { email: email.trim().toLowerCase() });
+      await apiClient.post("/auth/forgot-password", {
+        email: email.trim().toLowerCase(),
+      });
       setSuccess(true);
       setEmail("");
     } catch (err: any) {
-      setError(err.message || 'Failed to send password reset email');
+      setError(err.message || "Failed to send password reset email");
     } finally {
       setIsLoading(false);
     }
@@ -55,18 +56,19 @@ const ForgotPasswordScreen: React.FC<NavigationProps> = ({ navigation }) => {
 
   return (
     <>
-      <KeyboardAvoidingView 
-        style={styles.container} 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
       >
         <Card style={styles.card}>
           <Card.Content>
             <Title style={styles.title}>Forgot Password</Title>
             <Text style={styles.subtitle}>
-              Enter your email address and we'll send you a link to reset your password.
+              Enter your email address and we'll send you a link to reset your
+              password.
             </Text>
-            
+
             {success && (
               <View style={styles.successContainer}>
                 <Text style={styles.successText}>
@@ -74,7 +76,7 @@ const ForgotPasswordScreen: React.FC<NavigationProps> = ({ navigation }) => {
                 </Text>
               </View>
             )}
-            
+
             <View style={styles.inputContainer}>
               <TextInput
                 label="Email"
@@ -99,7 +101,7 @@ const ForgotPasswordScreen: React.FC<NavigationProps> = ({ navigation }) => {
                 </HelperText>
               )}
             </View>
-            
+
             <Button
               mode="contained"
               onPress={handleSubmit}
@@ -124,16 +126,10 @@ const ForgotPasswordScreen: React.FC<NavigationProps> = ({ navigation }) => {
           </Card.Content>
         </Card>
       </KeyboardAvoidingView>
-      
-      <ErrorMessage 
-        error={error} 
-        onDismiss={() => setError(null)} 
-      />
-      
-      <LoadingOverlay 
-        visible={isLoading} 
-        message="Sending reset link..." 
-      />
+
+      <ErrorMessage error={error} onDismiss={() => setError(null)} />
+
+      <LoadingOverlay visible={isLoading} message="Sending reset link..." />
     </>
   );
 };
@@ -152,7 +148,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#2d2117",
     borderRadius: 20,
     elevation: 8,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -172,14 +168,14 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   successContainer: {
-    backgroundColor: '#4caf50',
+    backgroundColor: "#4caf50",
     padding: 12,
     borderRadius: 8,
     marginBottom: 16,
   },
   successText: {
-    color: '#ffffff',
-    textAlign: 'center',
+    color: "#ffffff",
+    textAlign: "center",
     fontSize: 14,
   },
   inputContainer: {

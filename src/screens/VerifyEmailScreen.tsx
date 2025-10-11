@@ -1,17 +1,59 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
-import { Text, Button, TextInput, ActivityIndicator } from 'react-native-paper';
-import { StackScreenProps } from '@react-navigation/stack';
-import apiClient from '../utils/apiClient';
+import React, { useState, useEffect, useCallback } from "react";
+import { View, StyleSheet, Alert } from "react-native";
+import { Text, Button, TextInput, ActivityIndicator } from "react-native-paper";
+import { StackScreenProps } from "@react-navigation/stack";
+import apiClient from "../utils/apiClient";
 
-type Props = StackScreenProps<any, 'VerifyEmail'>;
+type Props = StackScreenProps<any, "VerifyEmail">;
 
 const VerifyEmailScreen: React.FC<Props> = ({ route, navigation }) => {
-  const [token, setToken] = useState('');
+  const [token, setToken] = useState("");
   const [loading, setLoading] = useState(false);
   const [autoVerifying, setAutoVerifying] = useState(false);
   const [success, setSuccess] = useState(false);
   const [countdown, setCountdown] = useState(5);
+
+  const handleVerify = useCallback(
+    async (verificationToken?: string) => {
+      const tokenToVerify = verificationToken || token;
+      if (!tokenToVerify.trim()) {
+        Alert.alert("Error", "Please enter the verification code");
+        return;
+      }
+
+      try {
+        if (verificationToken) {
+          setAutoVerifying(true);
+        } else {
+          setLoading(true);
+        }
+
+        await apiClient.get(`/auth/verify-email?token=${tokenToVerify.trim()}`);
+        setSuccess(true);
+        setCountdown(5);
+        const interval = setInterval(() => {
+          setCountdown((prev) => {
+            if (prev <= 1) {
+              clearInterval(interval);
+              navigation.navigate(token ? "Main" : "Login");
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      } catch (error: any) {
+        Alert.alert(
+          "Error",
+          error.response?.data?.error ||
+            "Failed to verify email. Please try again.",
+        );
+      } finally {
+        setLoading(false);
+        setAutoVerifying(false);
+      }
+    },
+    [token, navigation],
+  );
 
   useEffect(() => {
     // Try to get token from route params (deep link)
@@ -20,45 +62,7 @@ const VerifyEmailScreen: React.FC<Props> = ({ route, navigation }) => {
       setToken(tokenFromParams);
       handleVerify(tokenFromParams);
     }
-  }, [route.params]);
-
-  const handleVerify = async (verificationToken?: string) => {
-    const tokenToVerify = verificationToken || token;
-    if (!tokenToVerify.trim()) {
-      Alert.alert('Error', 'Please enter the verification code');
-      return;
-    }
-
-    try {
-      if (verificationToken) {
-        setAutoVerifying(true);
-      } else {
-        setLoading(true);
-      }
-
-      const response = await apiClient.get(`/auth/verify-email?token=${tokenToVerify.trim()}`);
-      setSuccess(true);
-      setCountdown(5);
-      const interval = setInterval(() => {
-        setCountdown(prev => {
-          if (prev <= 1) {
-            clearInterval(interval);
-            navigation.navigate(token ? 'Main' : 'Login');
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } catch (error: any) {
-      Alert.alert(
-        'Error',
-        error.response?.data?.error || 'Failed to verify email. Please try again.'
-      );
-    } finally {
-      setLoading(false);
-      setAutoVerifying(false);
-    }
-  };
+  }, [route.params, handleVerify]);
 
   if (autoVerifying) {
     return (
@@ -73,7 +77,10 @@ const VerifyEmailScreen: React.FC<Props> = ({ route, navigation }) => {
     return (
       <View style={styles.container}>
         <Text style={styles.title}>Verification Successful!</Text>
-        <Text style={styles.subtitle}>Redirecting to main page in {countdown} second{countdown !== 1 ? 's' : ''}...</Text>
+        <Text style={styles.subtitle}>
+          Redirecting to main page in {countdown} second
+          {countdown !== 1 ? "s" : ""}...
+        </Text>
       </View>
     );
   }
@@ -107,7 +114,7 @@ const VerifyEmailScreen: React.FC<Props> = ({ route, navigation }) => {
 
       <Button
         mode="text"
-        onPress={() => navigation.navigate('Login')}
+        onPress={() => navigation.navigate("Login")}
         style={styles.backButton}
         disabled={success}
       >
@@ -121,20 +128,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    justifyContent: 'center',
-    backgroundColor: '#fff',
+    justifyContent: "center",
+    backgroundColor: "#fff",
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 10,
-    textAlign: 'center',
+    textAlign: "center",
   },
   subtitle: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     marginBottom: 30,
-    textAlign: 'center',
+    textAlign: "center",
   },
   input: {
     marginBottom: 15,

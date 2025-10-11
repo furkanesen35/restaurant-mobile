@@ -11,7 +11,7 @@ import { Button, Card, TextInput, useTheme } from "react-native-paper";
 
 const ReservationsScreen = () => {
   const { colors } = useTheme();
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, _setSelectedDate] = useState(new Date());
   const [selectedTime, setSelectedTime] = useState("");
   const [partySize, setPartySize] = useState("2");
   const [customerName, setCustomerName] = useState("");
@@ -41,7 +41,7 @@ const ReservationsScreen = () => {
     }
     Alert.alert(
       "Reservation Confirmed!",
-      `Table for ${partySize} on ${selectedDate.toDateString()} at ${selectedTime}. We'll see you soon, ${customerName}!`
+      `Table for ${partySize} on ${selectedDate.toDateString()} at ${selectedTime}. We'll see you soon, ${customerName}!`,
     );
   };
 

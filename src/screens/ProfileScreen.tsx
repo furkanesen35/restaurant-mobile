@@ -1,14 +1,12 @@
-
 import React, { useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from "react-native";
-import { Card, Button, Avatar, Divider, useTheme, IconButton } from "react-native-paper";
+import { Card, Button, Avatar, Divider, IconButton } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
 import AddressesScreen from "./AddressesScreen";
 import PaymentMethodsScreen from "./PaymentMethodsScreen";
 
 const ProfileScreen = () => {
   const { user, logout } = useAuth();
-  const { colors } = useTheme();
   const [showAddresses, setShowAddresses] = useState(false);
   const [showPayments, setShowPayments] = useState(false);
 
@@ -17,14 +15,15 @@ const ProfileScreen = () => {
       <View style={styles.loginPromptContainer}>
         <Card style={styles.loginPromptCard}>
           <Card.Content style={styles.loginPromptContent}>
-            <Avatar.Icon 
-              size={80} 
-              icon="account-circle" 
-              style={styles.loginPromptIcon} 
+            <Avatar.Icon
+              size={80}
+              icon="account-circle"
+              style={styles.loginPromptIcon}
             />
             <Text style={styles.loginPromptTitle}>Welcome to Your Profile</Text>
             <Text style={styles.loginPromptSubtitle}>
-              Please log in to access your profile, manage addresses, and payment methods.
+              Please log in to access your profile, manage addresses, and
+              payment methods.
             </Text>
           </Card.Content>
         </Card>
@@ -37,16 +36,16 @@ const ProfileScreen = () => {
       {/* Header Section */}
       <Card style={styles.headerCard}>
         <Card.Content style={styles.headerContent}>
-          <Avatar.Text 
-            size={80} 
-            label={user.name.charAt(0).toUpperCase()} 
+          <Avatar.Text
+            size={80}
+            label={user.name.charAt(0).toUpperCase()}
             style={styles.avatar}
             labelStyle={styles.avatarLabel}
           />
           <View style={styles.userInfo}>
             <Text style={styles.userName}>{user.name}</Text>
             <Text style={styles.userEmail}>{user.email}</Text>
-            {user.role === 'admin' && (
+            {user.role === "admin" && (
               <Card style={styles.adminBadge}>
                 <Text style={styles.adminBadgeText}>Admin</Text>
               </Card>
@@ -60,14 +59,24 @@ const ProfileScreen = () => {
       {/* Addresses Section */}
       <TouchableOpacity onPress={() => setShowAddresses(true)}>
         <Card style={styles.sectionCard}>
-          <Card.Title 
-            title="My Addresses" 
+          <Card.Title
+            title="My Addresses"
             titleStyle={styles.sectionTitle}
-            left={(props) => <Avatar.Icon {...props} icon="map-marker" style={styles.sectionIcon} />}
-            right={(props) => <IconButton {...props} icon="chevron-right" iconColor="#ffffff" />}
+            left={(props) => (
+              <Avatar.Icon
+                {...props}
+                icon="map-marker"
+                style={styles.sectionIcon}
+              />
+            )}
+            right={(props) => (
+              <IconButton {...props} icon="chevron-right" iconColor="#ffffff" />
+            )}
           />
           <Card.Content>
-            <Text style={styles.sectionPlaceholder}>Tap to manage your delivery addresses</Text>
+            <Text style={styles.sectionPlaceholder}>
+              Tap to manage your delivery addresses
+            </Text>
           </Card.Content>
         </Card>
       </TouchableOpacity>
@@ -75,22 +84,32 @@ const ProfileScreen = () => {
       {/* Payment Methods Section */}
       <TouchableOpacity onPress={() => setShowPayments(true)}>
         <Card style={styles.sectionCard}>
-          <Card.Title 
-            title="Payment Methods" 
+          <Card.Title
+            title="Payment Methods"
             titleStyle={styles.sectionTitle}
-            left={(props) => <Avatar.Icon {...props} icon="credit-card" style={styles.sectionIcon} />}
-            right={(props) => <IconButton {...props} icon="chevron-right" iconColor="#ffffff" />}
+            left={(props) => (
+              <Avatar.Icon
+                {...props}
+                icon="credit-card"
+                style={styles.sectionIcon}
+              />
+            )}
+            right={(props) => (
+              <IconButton {...props} icon="chevron-right" iconColor="#ffffff" />
+            )}
           />
           <Card.Content>
-            <Text style={styles.sectionPlaceholder}>Tap to manage your payment methods</Text>
+            <Text style={styles.sectionPlaceholder}>
+              Tap to manage your payment methods
+            </Text>
           </Card.Content>
         </Card>
       </TouchableOpacity>
 
       {/* Logout Button */}
-      <Button 
-        mode="contained" 
-        onPress={logout} 
+      <Button
+        mode="contained"
+        onPress={logout}
         style={styles.logoutButton}
         labelStyle={styles.logoutButtonLabel}
         contentStyle={styles.logoutButtonContent}
@@ -108,9 +127,9 @@ const ProfileScreen = () => {
         <View style={styles.modalContainer}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>My Addresses</Text>
-            <IconButton 
-              icon="close" 
-              onPress={() => setShowAddresses(false)} 
+            <IconButton
+              icon="close"
+              onPress={() => setShowAddresses(false)}
               iconColor="#ffffff"
             />
           </View>
@@ -127,9 +146,9 @@ const ProfileScreen = () => {
         <View style={styles.modalContainer}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Payment Methods</Text>
-            <IconButton 
-              icon="close" 
-              onPress={() => setShowPayments(false)} 
+            <IconButton
+              icon="close"
+              onPress={() => setShowPayments(false)}
               iconColor="#ffffff"
             />
           </View>
@@ -189,7 +208,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#231a13",
     padding: 16,
   },
-  
+
   // Header Section
   headerCard: {
     backgroundColor: "#2d2117",

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -8,15 +8,18 @@ import {
   RefreshControl,
   Alert,
 } from "react-native";
-import { Card, Chip, useTheme, ProgressBar, Button } from "react-native-paper";
+import { Card, Chip, useTheme, Button } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
 import { useIsFocused } from "@react-navigation/native";
 
-import { OrderStatus, Order, OrderItem } from "../types";
-import { formatCurrency, formatRelativeTime, parseErrorMessage } from "../utils/validation";
+import { Order, OrderItem } from "../types";
+import {
+  formatCurrency,
+  formatRelativeTime,
+  parseErrorMessage,
+} from "../utils/validation";
 import apiClient from "../utils/apiClient";
 import ErrorMessage from "../components/common/ErrorMessage";
-import LoadingOverlay from "../components/common/LoadingOverlay";
 
 const OrdersScreen = () => {
   const { colors } = useTheme();
@@ -28,56 +31,54 @@ const OrdersScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const isFocused = useIsFocused();
 
-  const fetchOrders = async (isRefresh = false) => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-    
-    if (isRefresh) {
-      setRefreshing(true);
-    } else {
-      setLoading(true);
-    }
-    setError(null);
-    
-    try {
-      const response = await apiClient.get<Order[]>(`/order/user/${user.id}`);
-      setOrders(response.data || []);
-    } catch (err: any) {
-      const errorMessage = parseErrorMessage(err);
-      setError(errorMessage);
-      console.error('Error fetching orders:', err);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+  const fetchOrders = useCallback(
+    async (isRefresh = false) => {
+      if (!user || !token) return;
+      if (isRefresh) setRefreshing(true);
+      else setLoading(true);
+      setError(null);
+
+      try {
+        const response = await apiClient.get<Order[]>(`/order/user/${user.id}`);
+        setOrders(response.data || []);
+      } catch (err: any) {
+        const errorMessage = parseErrorMessage(err);
+        setError(errorMessage);
+        console.error("Error fetching orders:", err);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [user, token],
+  );
 
   const cancelOrder = async (orderId: string | number) => {
     try {
-      console.log('Cancelling order:', orderId);
-      await apiClient.patch(`/order/${orderId}/status`, { status: 'cancelled' });
-      Alert.alert('Success', 'Order cancelled successfully');
+      console.log("Cancelling order:", orderId);
+      await apiClient.patch(`/order/${orderId}/status`, {
+        status: "cancelled",
+      });
+      Alert.alert("Success", "Order cancelled successfully");
       fetchOrders(); // Refresh orders
     } catch (err: any) {
-      console.error('Error cancelling order:', err);
-      Alert.alert('Error', 'Failed to cancel order');
+      console.error("Error cancelling order:", err);
+      Alert.alert("Error", "Failed to cancel order");
     }
   };
 
   const handleCancelOrder = (order: Order) => {
     Alert.alert(
-      'Cancel Order',
+      "Cancel Order",
       `Are you sure you want to cancel order #${order.id}?`,
       [
-        { text: 'No', style: 'cancel' },
-        { 
-          text: 'Yes', 
-          style: 'destructive',
-          onPress: () => cancelOrder(order.id)
-        }
-      ]
+        { text: "No", style: "cancel" },
+        {
+          text: "Yes",
+          style: "destructive",
+          onPress: () => cancelOrder(order.id),
+        },
+      ],
     );
   };
 
@@ -85,7 +86,7 @@ const OrdersScreen = () => {
     if (isFocused) {
       fetchOrders();
     }
-  }, [user, token, isFocused]);
+  }, [isFocused, fetchOrders]);
 
   const handleRefresh = () => {
     fetchOrders(true);
@@ -93,20 +94,20 @@ const OrdersScreen = () => {
 
   // Split orders into current and history
   const currentOrders = orders.filter(
-    (o) => o.status !== "delivered" && o.status !== "cancelled"
+    (o) => o.status !== "delivered" && o.status !== "cancelled",
   );
   const orderHistory = orders.filter(
-    (o) => o.status === "delivered" || o.status === "cancelled"
+    (o) => o.status === "delivered" || o.status === "cancelled",
   );
-
 
   const OrderCard = React.memo(({ order }: { order: Order }) => {
     // Calculate total from items
     const total =
       order.items && Array.isArray(order.items)
         ? order.items.reduce(
-            (sum: number, oi: OrderItem) => sum + (oi.menuItem?.price || 0) * (oi.quantity || 1),
-            0
+            (sum: number, oi: OrderItem) =>
+              sum + (oi.menuItem?.price || 0) * (oi.quantity || 1),
+            0,
           )
         : order.total || 0;
 
@@ -121,10 +122,7 @@ const OrdersScreen = () => {
               </Text>
             )}
           </View>
-          <Chip
-            mode="outlined"
-            style={styles.statusChip}
-          >
+          <Chip mode="outlined" style={styles.statusChip}>
             {order.status}
           </Chip>
           {/* Items */}
@@ -143,9 +141,9 @@ const OrdersScreen = () => {
             <Text style={styles.orderTotal}>
               Total: {formatCurrency(total)}
             </Text>
-            {order.status === 'pending' && (
-              <Button 
-                mode="outlined" 
+            {order.status === "pending" && (
+              <Button
+                mode="outlined"
                 onPress={() => handleCancelOrder(order)}
                 style={styles.cancelButton}
                 labelStyle={styles.cancelButtonLabel}
@@ -159,7 +157,6 @@ const OrdersScreen = () => {
       </Card>
     );
   });
-
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -194,13 +191,13 @@ const OrdersScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={styles.ordersContainer}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={['#e0b97f']}
+            colors={["#e0b97f"]}
             tintColor="#e0b97f"
           />
         }
@@ -214,7 +211,10 @@ const OrdersScreen = () => {
           <View style={styles.errorContainer}>
             <Text style={styles.errorTitle}>Unable to load orders</Text>
             <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={() => fetchOrders()}>
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={() => fetchOrders()}
+            >
               <Text style={styles.retryButtonText}>Try Again</Text>
             </TouchableOpacity>
           </View>
@@ -244,7 +244,7 @@ const OrdersScreen = () => {
           </View>
         )}
       </ScrollView>
-      
+
       <ErrorMessage error={error} onDismiss={() => setError(null)} />
     </View>
   );
@@ -366,45 +366,45 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: 40,
   },
   loadingText: {
-    color: '#fffbe8',
+    color: "#fffbe8",
     fontSize: 16,
   },
   errorContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: 40,
     paddingHorizontal: 20,
   },
   errorTitle: {
-    color: '#ff6b6b',
+    color: "#ff6b6b",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   errorText: {
-    color: '#fffbe8',
+    color: "#fffbe8",
     fontSize: 14,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 20,
     opacity: 0.8,
   },
   retryButton: {
-    backgroundColor: '#e0b97f',
+    backgroundColor: "#e0b97f",
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 8,
   },
   retryButtonText: {
-    color: '#231a13',
+    color: "#231a13",
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   orderFooter: {
     marginTop: 8,

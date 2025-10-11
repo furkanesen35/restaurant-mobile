@@ -1,6 +1,7 @@
 # Google Sign-In Setup Guide
 
 ## Prerequisites
+
 - Google Cloud Console account
 - Android/iOS app configured in Google Cloud Console
 
@@ -13,6 +14,7 @@
 ## Step 2: Create OAuth 2.0 Credentials
 
 ### For Android:
+
 1. Go to **APIs & Services** > **Credentials**
 2. Click **Create Credentials** > **OAuth client ID**
 3. Select **Android** as application type
@@ -30,6 +32,7 @@
 7. Click **Create**
 
 ### For Web Client (Required):
+
 1. Create another OAuth client ID
 2. Select **Web application**
 3. Add authorized redirect URIs if needed
@@ -39,19 +42,22 @@
 ## Step 3: Update Your App
 
 ### Update `src/screens/LoginScreen.tsx`:
+
 Replace `YOUR_WEB_CLIENT_ID.apps.googleusercontent.com` with your actual Web Client ID from Step 2.
 
 ```typescript
 GoogleSignin.configure({
-  webClientId: 'YOUR_ACTUAL_WEB_CLIENT_ID.apps.googleusercontent.com',
+  webClientId: "YOUR_ACTUAL_WEB_CLIENT_ID.apps.googleusercontent.com",
   offlineAccess: true,
 });
 ```
 
 ### For Android (android/app/build.gradle):
+
 No additional configuration needed if you've set up OAuth correctly.
 
 ### For iOS:
+
 1. Add to `ios/Podfile`:
    ```ruby
    pod 'GoogleSignIn', '~> 7.0'
@@ -81,15 +87,18 @@ No additional configuration needed if you've set up OAuth correctly.
 ## Troubleshooting
 
 ### "Developer Error" or "Sign-in failed"
+
 - Verify your Web Client ID is correct
 - Make sure SHA-1 fingerprint matches your keystore
 - Check package name matches your app
 
 ### "SIGN_IN_REQUIRED"
+
 - User canceled sign-in
 - This is normal behavior
 
 ### "PLAY_SERVICES_NOT_AVAILABLE"
+
 - Update Google Play Services on your Android device
 - Use a physical device or emulator with Google Play
 

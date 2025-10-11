@@ -1,10 +1,8 @@
-import 'dotenv/config';
+import "dotenv/config";
 
 export default {
   expo: {
-    plugins: [
-      "expo-web-browser"
-    ],
+    plugins: ["expo-web-browser"],
     name: "restaurant-mobile",
     slug: "restaurant-mobile",
     scheme: "restaurantapp",
@@ -16,25 +14,25 @@ export default {
     splash: {
       image: "./assets/splash-icon.png",
       resizeMode: "contain",
-      backgroundColor: "#ffffff"
+      backgroundColor: "#ffffff",
     },
     ios: {
-      supportsTablet: true
+      supportsTablet: true,
     },
     android: {
       package: "com.burgermeister_schmidt.restaurantmobile",
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
-        backgroundColor: "#ffffff"
+        backgroundColor: "#ffffff",
       },
       edgeToEdgeEnabled: true,
-      predictiveBackGestureEnabled: false
+      predictiveBackGestureEnabled: false,
     },
     web: {
-      favicon: "./assets/favicon.png"
+      favicon: "./assets/favicon.png",
     },
     extra: {
-      googleClientId: process.env.GOOGLE_CLIENT_ID
-    }
-  }
+      googleClientId: process.env.GOOGLE_CLIENT_ID,
+    },
+  },
 };
