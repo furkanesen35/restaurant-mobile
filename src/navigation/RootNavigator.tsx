@@ -2,6 +2,9 @@ import React from "react";
 import { createStackNavigator } from "@react-navigation/stack";
 import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
+import ForgotPasswordScreen from "../screens/ForgotPasswordScreen";
+import ResetPasswordScreen from "../screens/ResetPasswordScreen";
+import VerifyEmailScreen from "../screens/VerifyEmailScreen";
 import { useAuth } from "../contexts/AuthContext";
 import MenuScreen from "../screens/MenuScreen";
 import ReservationsScreen from "../screens/ReservationsScreen";
@@ -67,6 +70,18 @@ const RootNavigator = () => {
           <Stack.Screen 
             name="Register" 
             component={RegisterScreen}
+          />
+          <Stack.Screen 
+            name="ForgotPassword" 
+            component={ForgotPasswordScreen}
+          />
+          <Stack.Screen 
+            name="ResetPassword" 
+            component={ResetPasswordScreen}
+          />
+          <Stack.Screen 
+            name="VerifyEmail" 
+            component={VerifyEmailScreen}
           />
         </>
       )}

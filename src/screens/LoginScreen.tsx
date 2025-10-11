@@ -13,13 +13,10 @@ import { NavigationProps } from "../types";
 import { validateEmail, parseErrorMessage } from "../utils/validation";
 import ErrorMessage from "../components/common/ErrorMessage";
 import LoadingOverlay from "../components/common/LoadingOverlay";
-import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
-
-// Configure Google Sign-In
-GoogleSignin.configure({
-  webClientId: 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com', // From Google Cloud Console
-  offlineAccess: true,
-});
+// import * as Google from 'expo-auth-session/providers/google';
+// import * as WebBrowser from 'expo-web-browser';
+// import Constants from 'expo-constants';
+// WebBrowser.maybeCompleteAuthSession();
 
 const LoginScreen: React.FC<NavigationProps> = ({ navigation }) => {
   const { colors } = useTheme();
@@ -65,30 +62,38 @@ const LoginScreen: React.FC<NavigationProps> = ({ navigation }) => {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    try {
-      await GoogleSignin.hasPlayServices();
-      const userInfo = await GoogleSignin.signIn();
-      
-      if (userInfo.data) {
-        await googleSignIn({
-          email: userInfo.data.user.email,
-          name: userInfo.data.user.name || userInfo.data.user.email,
-          idToken: userInfo.data.idToken || '',
-        });
-      }
-    } catch (error: any) {
-      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        console.log('User cancelled Google sign-in');
-      } else if (error.code === statusCodes.IN_PROGRESS) {
-        console.log('Google sign-in in progress');
-      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        console.error('Play services not available');
-      } else {
-        console.error('Google sign-in error:', error);
-      }
-    }
-  };
+  // const googleClientId = Constants.expoConfig?.extra?.googleClientId;
+  // const [request, response, promptAsync] = Google.useAuthRequest({
+  //   clientId: googleClientId,
+  //   scopes: ['profile', 'email'],
+  // });
+
+  // useEffect(() => {
+  //   if (response?.type === 'success') {
+  //     const { authentication } = response;
+  //     if (authentication?.idToken) {
+  //       // Fetch user info from Google API
+  //       fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+  //         headers: { Authorization: `Bearer ${authentication.accessToken}` },
+  //       })
+  //         .then(res => res.json())
+  //         .then(async userInfo => {
+  //           await googleSignIn({
+  //             email: userInfo.email,
+  //             name: userInfo.name || userInfo.email,
+  //             idToken: authentication.idToken || '',
+  //           });
+  //         })
+  //         .catch(err => {
+  //           console.error('Failed to fetch Google user info:', err);
+  //         });
+  //     }
+  //   }
+  // }, [response]);
+
+  // const handleGoogleSignIn = () => {
+  //   promptAsync();
+  // };
 
   return (
     <>
@@ -169,12 +174,21 @@ const LoginScreen: React.FC<NavigationProps> = ({ navigation }) => {
               {isLoading ? "Signing In..." : "Sign In"}
             </Button>
 
+            <TouchableOpacity 
+              onPress={() => navigation.navigate("ForgotPassword")}
+              disabled={isLoading}
+              style={styles.forgotPasswordContainer}
+            >
+              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+            </TouchableOpacity>
+
             <View style={styles.dividerContainer}>
               <Divider style={styles.divider} />
               <Text style={styles.dividerText}>OR</Text>
               <Divider style={styles.divider} />
             </View>
 
+            {/*
             <Button
               mode="outlined"
               onPress={handleGoogleSignIn}
@@ -186,6 +200,7 @@ const LoginScreen: React.FC<NavigationProps> = ({ navigation }) => {
             >
               Sign in with Google
             </Button>
+            */}
             
             <View style={styles.footer}>
               <TouchableOpacity 
@@ -264,6 +279,16 @@ const styles = StyleSheet.create({
     color: "#231a13",
     fontSize: 16,
     fontWeight: "600",
+  },
+  forgotPasswordContainer: {
+    alignItems: 'center',
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  forgotPasswordText: {
+    color: '#e0b97f',
+    fontSize: 14,
+    textDecorationLine: 'underline',
   },
   dividerContainer: {
     flexDirection: 'row',

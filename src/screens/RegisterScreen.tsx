@@ -12,17 +12,33 @@ import { useAuth } from "../contexts/AuthContext";
 const RegisterScreen = ({ navigation }: any) => {
   const { colors } = useTheme();
   const { register, isLoading } = useAuth();
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
-
   const [success, setSuccess] = useState("");
+  
   const handleRegister = async () => {
     setError("");
     setSuccess("");
+    
+    if (!email || !password || !confirmPassword) {
+      setError("All fields are required");
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+    
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+    
     try {
-      await register(name, email, password);
+      await register({ email, password });
       setSuccess("Registration successful!");
     } catch (e: any) {
       setError(e.message || "Registration failed");
@@ -35,12 +51,6 @@ const RegisterScreen = ({ navigation }: any) => {
         <Card.Content>
           <Title style={styles.title}>Register</Title>
           <TextInput
-            label="Name"
-            value={name}
-            onChangeText={setName}
-            style={styles.input}
-          />
-          <TextInput
             label="Email"
             value={email}
             onChangeText={setEmail}
@@ -52,6 +62,13 @@ const RegisterScreen = ({ navigation }: any) => {
             label="Password"
             value={password}
             onChangeText={setPassword}
+            style={styles.input}
+            secureTextEntry
+          />
+          <TextInput
+            label="Confirm Password"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
             style={styles.input}
             secureTextEntry
           />

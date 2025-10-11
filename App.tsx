@@ -7,12 +7,35 @@ import { AuthProvider } from "./src/contexts/AuthContext";
 import RootNavigator from "./src/navigation/RootNavigator";
 import { CartProvider } from "./src/contexts/CartContext";
 
+const linking = {
+  prefixes: ['restaurantapp://', 'exp://192.168.1.110:8081'],
+  config: {
+    screens: {
+      Login: 'login',
+      Register: 'register',
+      ForgotPassword: 'forgot-password',
+      ResetPassword: {
+        path: 'reset-password',
+        parse: {
+          token: (token: string) => token,
+        },
+      },
+      VerifyEmail: {
+        path: 'verify-email',
+        parse: {
+          token: (token: string) => token,
+        },
+      },
+    },
+  },
+};
+
 export default function App() {
   return (
     <PaperProvider theme={cozyTheme}>
       <AuthProvider>
         <CartProvider>
-          <NavigationContainer>
+          <NavigationContainer linking={linking}>
             <RootNavigator />
           </NavigationContainer>
         </CartProvider>
