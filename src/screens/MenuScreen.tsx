@@ -79,13 +79,13 @@ const MenuScreen = () => {
                 price: number;
                 description: string;
                 category: string;
-              }) => item.category === category.id,
+              }) => item.category === category.id
             ),
           }))
       : [
           {
             category: menuCategories.find(
-              (c: { id: string; name: string }) => c.id === selectedCategory,
+              (c: { id: string; name: string }) => c.id === selectedCategory
             ),
             items: menuItems.filter(
               (item: {
@@ -94,7 +94,7 @@ const MenuScreen = () => {
                 price: number;
                 description: string;
                 category: string;
-              }) => item.category === selectedCategory,
+              }) => item.category === selectedCategory
             ),
           },
         ];

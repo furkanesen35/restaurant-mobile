@@ -7,8 +7,11 @@ import {
   StyleSheet,
   Alert,
   ScrollView,
+  TextInput,
+  Modal,
 } from "react-native";
-import { Card, useTheme } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Card, useTheme, Button, FAB } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
 import { useIsFocused } from "@react-navigation/native";
 
@@ -21,19 +24,46 @@ const STATUS_OPTIONS = [
   "cancelled",
 ];
 
+const API_BASE = "http://192.168.1.110:3000";
+
 const AdminScreen = () => {
   const { colors } = useTheme();
   const { token, user } = useAuth();
+  const [activeTab, setActiveTab] = useState<"orders" | "menu">("orders");
   const [orders, setOrders] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [menuItems, setMenuItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const isFocused = useIsFocused();
+
+  // Modal states
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showItemModal, setShowItemModal] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<any>(null);
+  const [editingItem, setEditingItem] = useState<any>(null);
+
+  // Form states
+  const [categoryForm, setCategoryForm] = useState({ name: "" });
+  const [itemForm, setItemForm] = useState({
+    name: "",
+    description: "",
+    price: "",
+    categoryId: "",
+    imageUrl: "",
+    available: true,
+  });
+
+  // Selected category for viewing menu items
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
+    null
+  );
 
   const fetchOrders = useCallback(async () => {
     if (!token) return;
     try {
       setLoading(true);
       console.log("Admin fetching orders with token:", token);
-      const response = await fetch("http://192.168.1.110:3000/order/all", {
+      const response = await fetch(`${API_BASE}/order/all`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -42,7 +72,7 @@ const AdminScreen = () => {
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(
-          `Failed to fetch orders: ${response.status} - ${errorText}`,
+          `Failed to fetch orders: ${response.status} - ${errorText}`
         );
       }
       const data = await response.json();
@@ -56,194 +86,744 @@ const AdminScreen = () => {
     }
   }, [token]);
 
+  const fetchCategories = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/menu/categories`);
+      const data = await response.json();
+      console.log("Categories fetched:", data);
+      setCategories(data || []);
+    } catch (err: any) {
+      console.error("Failed to fetch categories:", err);
+      Alert.alert("Error", "Failed to fetch categories");
+      setCategories([]);
+    }
+  }, []);
+
+  const fetchMenuItems = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/menu`);
+      const data = await response.json();
+      console.log("Menu items fetched:", data);
+      // The API returns { categories: [...], items: [...] }
+      // We need to extract the items array
+      const itemsArray = data.items || data || [];
+      console.log("Extracted items array:", itemsArray);
+      setMenuItems(itemsArray);
+    } catch (err: any) {
+      console.error("Failed to fetch menu items:", err);
+      Alert.alert("Error", "Failed to fetch menu items");
+      setMenuItems([]);
+    }
+  }, []);
+
   useEffect(() => {
     if (isFocused && user && token) {
-      fetchOrders();
+      if (activeTab === "orders") {
+        fetchOrders();
+      } else {
+        fetchCategories();
+        fetchMenuItems();
+      }
     }
-  }, [isFocused, user, token, fetchOrders]);
+  }, [
+    isFocused,
+    user,
+    token,
+    activeTab,
+    fetchOrders,
+    fetchCategories,
+    fetchMenuItems,
+  ]);
 
   const updateStatus = async (orderId: number, status: string) => {
     if (!token) return;
     try {
-      const response = await fetch(
-        `http://192.168.1.110:3000/order/${orderId}/status`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ status }),
+      const response = await fetch(`${API_BASE}/order/${orderId}/status`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({ status }),
+      });
       if (!response.ok) throw new Error("Failed to update status");
       Alert.alert("Success", `Order #${orderId} status updated to ${status}`);
-      fetchOrders(); // Refresh orders after update
+      fetchOrders();
     } catch (err: any) {
       Alert.alert("Error", err.message || "Failed to update order status");
     }
   };
 
+  // Category management
+  const saveCategory = async () => {
+    if (!categoryForm.name.trim()) {
+      Alert.alert("Error", "Category name is required");
+      return;
+    }
+
+    try {
+      const url = editingCategory
+        ? `${API_BASE}/menu/categories/${editingCategory.id}`
+        : `${API_BASE}/menu/categories`;
+      const method = editingCategory ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(categoryForm),
+      });
+
+      if (!response.ok) throw new Error("Failed to save category");
+      Alert.alert(
+        "Success",
+        `Category ${editingCategory ? "updated" : "created"}`
+      );
+      setShowCategoryModal(false);
+      setCategoryForm({ name: "" });
+      setEditingCategory(null);
+      fetchCategories();
+      fetchMenuItems();
+    } catch (err: any) {
+      Alert.alert("Error", err.message || "Failed to save category");
+    }
+  };
+
+  const deleteCategory = async (id: number) => {
+    Alert.alert(
+      "Delete Category",
+      "Are you sure? This will also delete all items in this category.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const response = await fetch(
+                `${API_BASE}/menu/categories/${id}`,
+                {
+                  method: "DELETE",
+                  headers: { Authorization: `Bearer ${token}` },
+                }
+              );
+              if (!response.ok) throw new Error("Failed to delete");
+              Alert.alert("Success", "Category deleted");
+              fetchCategories();
+              fetchMenuItems();
+            } catch (err: any) {
+              Alert.alert("Error", err.message || "Failed to delete category");
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Menu item management
+  const saveMenuItem = async () => {
+    if (!itemForm.name.trim() || !itemForm.price || !itemForm.categoryId) {
+      Alert.alert("Error", "Name, price, and category are required");
+      return;
+    }
+
+    try {
+      const url = editingItem
+        ? `${API_BASE}/menu/${editingItem.id}`
+        : `${API_BASE}/menu`;
+      const method = editingItem ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...itemForm,
+          price: parseFloat(itemForm.price),
+          categoryId: parseInt(itemForm.categoryId),
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to save menu item");
+      Alert.alert(
+        "Success",
+        `Menu item ${editingItem ? "updated" : "created"}`
+      );
+      setShowItemModal(false);
+      setItemForm({
+        name: "",
+        description: "",
+        price: "",
+        categoryId: "",
+        imageUrl: "",
+        available: true,
+      });
+      setEditingItem(null);
+      fetchMenuItems();
+    } catch (err: any) {
+      Alert.alert("Error", err.message || "Failed to save menu item");
+    }
+  };
+
+  const deleteMenuItem = async (id: number) => {
+    Alert.alert("Delete Item", "Are you sure?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            const response = await fetch(`${API_BASE}/menu/${id}`, {
+              method: "DELETE",
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!response.ok) throw new Error("Failed to delete");
+            Alert.alert("Success", "Item deleted");
+            fetchMenuItems();
+          } catch (err: any) {
+            Alert.alert("Error", err.message || "Failed to delete item");
+          }
+        },
+      },
+    ]);
+  };
+
   if (!user || user.role !== "admin") {
     return (
-      <View style={styles.container}>
-        <Text style={{ color: colors.error }}>Access denied.</Text>
-      </View>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.container}>
+          <Text style={{ color: colors.error }}>Access denied.</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={[styles.title, { color: colors.primary }]}>All Orders</Text>
-      {loading ? (
-        <Text style={{ color: colors.onBackground }}>Loading orders...</Text>
-      ) : orders.length === 0 ? (
-        <View
-          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-        >
-          <Text style={{ color: colors.onBackground, fontSize: 16 }}>
-            No orders found
-          </Text>
-          <Text
-            style={{ color: colors.onBackground, fontSize: 14, marginTop: 8 }}
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        {/* Tab Navigation */}
+        <View style={styles.tabContainer}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === "orders" && styles.activeTab]}
+            onPress={() => setActiveTab("orders")}
           >
-            Orders will appear here when customers place them
-          </Text>
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "orders" && styles.activeTabText,
+              ]}
+            >
+              Orders
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === "menu" && styles.activeTab]}
+            onPress={() => setActiveTab("menu")}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "menu" && styles.activeTabText,
+              ]}
+            >
+              Menu
+            </Text>
+          </TouchableOpacity>
         </View>
-      ) : (
-        <FlatList
-          data={orders}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <Card style={styles.card}>
-              <Card.Title
-                title={`Order #${item.id}`}
-                subtitle={`Status: ${item.status}`}
-              />
-              <Card.Content>
-                <Text style={{ color: colors.onBackground }}>
-                  User: {item.userId}
+
+        {/* Orders Tab */}
+        {activeTab === "orders" && (
+          <>
+            <Text style={[styles.title, { color: "#e0b97f" }]}>All Orders</Text>
+            {loading ? (
+              <Text style={{ color: colors.onBackground }}>
+                Loading orders...
+              </Text>
+            ) : orders.length === 0 ? (
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ color: colors.onBackground, fontSize: 16 }}>
+                  No orders found
                 </Text>
-                <Text style={{ color: colors.onBackground }}>Items:</Text>
-                {item.items.map((orderItem: any) => (
-                  <Text
-                    key={orderItem.id}
-                    style={{ color: colors.onBackground, marginLeft: 8 }}
-                  >
-                    - {orderItem.menuItem?.name || "Item"} x{orderItem.quantity}
-                  </Text>
-                ))}
+              </View>
+            ) : (
+              <FlatList
+                data={orders}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={({ item }) => (
+                  <Card style={styles.card}>
+                    <Card.Title
+                      title={`Order #${item.id}`}
+                      subtitle={`Status: ${item.status}`}
+                    />
+                    <Card.Content>
+                      <Text style={{ color: colors.onBackground }}>
+                        User: {item.userId}
+                      </Text>
+                      <Text style={{ color: colors.onBackground }}>Items:</Text>
+                      {item.items.map((orderItem: any) => (
+                        <Text
+                          key={orderItem.id}
+                          style={{ color: colors.onBackground, marginLeft: 8 }}
+                        >
+                          - {orderItem.menuItem?.name || "Item"} x
+                          {orderItem.quantity}
+                        </Text>
+                      ))}
+                      <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        style={{ flexDirection: "row", marginTop: 8 }}
+                      >
+                        {STATUS_OPTIONS.map((status) =>
+                          status === "cancelled" ? (
+                            <TouchableOpacity
+                              key={status}
+                              style={[
+                                styles.statusBtn,
+                                {
+                                  backgroundColor:
+                                    item.status === status
+                                      ? "#e0b97f"
+                                      : "#fffbe8",
+                                },
+                              ]}
+                              onPress={() => {
+                                Alert.alert(
+                                  "Cancel Order",
+                                  "Are you sure you want to cancel this order?",
+                                  [
+                                    { text: "No", style: "cancel" },
+                                    {
+                                      text: "Yes",
+                                      style: "destructive",
+                                      onPress: async () => {
+                                        try {
+                                          const response = await fetch(
+                                            `${API_BASE}/order/${item.id}`,
+                                            {
+                                              method: "DELETE",
+                                              headers: {
+                                                Authorization: `Bearer ${token}`,
+                                              },
+                                            }
+                                          );
+                                          if (!response.ok)
+                                            throw new Error("Failed");
+                                          Alert.alert("Order cancelled");
+                                          fetchOrders();
+                                        } catch (err: any) {
+                                          Alert.alert("Error", err.message);
+                                        }
+                                      },
+                                    },
+                                  ]
+                                );
+                              }}
+                              disabled={item.status === status}
+                            >
+                              <Text
+                                style={{
+                                  color:
+                                    item.status === status ? "#231a13" : "red",
+                                  fontWeight: "bold",
+                                }}
+                              >
+                                Cancel
+                              </Text>
+                            </TouchableOpacity>
+                          ) : (
+                            <TouchableOpacity
+                              key={status}
+                              style={[
+                                styles.statusBtn,
+                                {
+                                  backgroundColor:
+                                    item.status === status
+                                      ? "#e0b97f"
+                                      : "#fffbe8",
+                                },
+                              ]}
+                              onPress={() => updateStatus(item.id, status)}
+                              disabled={item.status === status}
+                            >
+                              <Text
+                                style={{
+                                  color:
+                                    item.status === status
+                                      ? "#231a13"
+                                      : "#231a13",
+                                }}
+                              >
+                                {status}
+                              </Text>
+                            </TouchableOpacity>
+                          )
+                        )}
+                      </ScrollView>
+                    </Card.Content>
+                  </Card>
+                )}
+              />
+            )}
+          </>
+        )}
+
+        {/* Menu Tab */}
+        {activeTab === "menu" && (
+          <>
+            <Text style={[styles.title, { color: "#e0b97f" }]}>
+              Menu Management
+            </Text>
+
+            {/* Categories Section */}
+            <Text style={styles.sectionTitle}>Categories</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.categoryScroll}
+            >
+              {categories.map((cat) => (
+                <Card
+                  key={cat.id}
+                  style={[
+                    styles.categoryCard,
+                    selectedCategoryId === cat.id && {
+                      borderColor: "#e0b97f",
+                      borderWidth: 2,
+                    },
+                  ]}
+                >
+                  <Card.Content style={{ paddingBottom: 12 }}>
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => {
+                        console.log("Category clicked:", cat.id, cat.name);
+                        setSelectedCategoryId(
+                          selectedCategoryId === cat.id ? null : cat.id
+                        );
+                      }}
+                    >
+                      <Text style={styles.categoryName}>{cat.name}</Text>
+                    </TouchableOpacity>
+                    <View style={styles.categoryActions}>
+                      <TouchableOpacity
+                        style={styles.editBtn}
+                        onPress={() => {
+                          setEditingCategory(cat);
+                          setCategoryForm({ name: cat.name });
+                          setShowCategoryModal(true);
+                        }}
+                      >
+                        <Text style={styles.btnText}>Edit</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.deleteBtn}
+                        onPress={() => deleteCategory(cat.id)}
+                      >
+                        <Text style={styles.btnText}>Delete</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </Card.Content>
+                </Card>
+              ))}
+              <TouchableOpacity
+                style={styles.addCategoryBtn}
+                onPress={() => {
+                  setEditingCategory(null);
+                  setCategoryForm({ name: "" });
+                  setShowCategoryModal(true);
+                }}
+              >
+                <Text style={styles.addBtnText}>+ Add Category</Text>
+              </TouchableOpacity>
+            </ScrollView>
+
+            {/* Menu Items Section */}
+            <Text style={styles.sectionTitle}>
+              Menu Items
+              {selectedCategoryId &&
+                ` (${
+                  categories.find((c) => c.id === selectedCategoryId)?.name ||
+                  "Category"
+                })`}
+            </Text>
+            <FlatList
+              data={
+                selectedCategoryId
+                  ? (menuItems || []).filter((item) => {
+                      // Handle both categoryId (number) and category (string) properties
+                      const itemCategoryId =
+                        item.categoryId || parseInt(item.category);
+                      return itemCategoryId === selectedCategoryId;
+                    })
+                  : menuItems || []
+              }
+              keyExtractor={(item) => item.id.toString()}
+              ListEmptyComponent={
+                <Text
+                  style={{
+                    color: "#fffbe8",
+                    textAlign: "center",
+                    marginTop: 16,
+                  }}
+                >
+                  {selectedCategoryId
+                    ? "No menu items in this category. Use the + button to add items."
+                    : "No menu items yet. Select a category or use the + button to add items."}
+                </Text>
+              }
+              renderItem={({ item }) => (
+                <Card style={styles.menuItemCard}>
+                  <Card.Content>
+                    <Text style={styles.itemName}>{item.name}</Text>
+                    <Text style={styles.itemDesc}>{item.description}</Text>
+                    <Text style={styles.itemPrice}>${item.price}</Text>
+                    <Text style={styles.itemCategory}>
+                      Category:{" "}
+                      {
+                        categories.find(
+                          (c) =>
+                            c.id ===
+                            (item.categoryId || parseInt(item.category))
+                        )?.name
+                      }
+                    </Text>
+                    <View style={styles.itemActions}>
+                      <TouchableOpacity
+                        style={styles.editBtn}
+                        onPress={() => {
+                          setEditingItem(item);
+                          setItemForm({
+                            name: item.name,
+                            description: item.description || "",
+                            price: item.price.toString(),
+                            categoryId: (
+                              item.categoryId || item.category
+                            ).toString(),
+                            imageUrl: item.imageUrl || "",
+                            available: item.available !== false,
+                          });
+                          setShowItemModal(true);
+                        }}
+                      >
+                        <Text style={styles.btnText}>Edit</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.deleteBtn}
+                        onPress={() => deleteMenuItem(item.id)}
+                      >
+                        <Text style={styles.btnText}>Delete</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </Card.Content>
+                </Card>
+              )}
+            />
+
+            {/* FAB for adding menu item */}
+            <FAB
+              style={styles.fab}
+              icon="plus"
+              onPress={() => {
+                setEditingItem(null);
+                setItemForm({
+                  name: "",
+                  description: "",
+                  price: "",
+                  categoryId: categories[0]?.id?.toString() || "",
+                  imageUrl: "",
+                  available: true,
+                });
+                setShowItemModal(true);
+              }}
+            />
+          </>
+        )}
+
+        {/* Category Modal */}
+        <Modal
+          visible={showCategoryModal}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowCategoryModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>
+                {editingCategory ? "Edit Category" : "New Category"}
+              </Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Category Name"
+                placeholderTextColor="#999"
+                value={categoryForm.name}
+                onChangeText={(text) => setCategoryForm({ name: text })}
+              />
+              <View style={styles.modalActions}>
+                <Button onPress={() => setShowCategoryModal(false)}>
+                  Cancel
+                </Button>
+                <Button mode="contained" onPress={saveCategory}>
+                  Save
+                </Button>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Menu Item Modal */}
+        <Modal
+          visible={showItemModal}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowItemModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <ScrollView contentContainerStyle={styles.modalScrollContent}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>
+                  {editingItem ? "Edit Menu Item" : "New Menu Item"}
+                </Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Item Name"
+                  placeholderTextColor="#999"
+                  value={itemForm.name}
+                  onChangeText={(text) =>
+                    setItemForm({ ...itemForm, name: text })
+                  }
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Description"
+                  placeholderTextColor="#999"
+                  value={itemForm.description}
+                  onChangeText={(text) =>
+                    setItemForm({ ...itemForm, description: text })
+                  }
+                  multiline
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Price"
+                  placeholderTextColor="#999"
+                  keyboardType="numeric"
+                  value={itemForm.price}
+                  onChangeText={(text) =>
+                    setItemForm({ ...itemForm, price: text })
+                  }
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Image URL (optional)"
+                  placeholderTextColor="#999"
+                  value={itemForm.imageUrl}
+                  onChangeText={(text) =>
+                    setItemForm({ ...itemForm, imageUrl: text })
+                  }
+                />
+                <Text style={styles.label}>Category:</Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
-                  style={{ flexDirection: "row", marginTop: 8 }}
+                  style={styles.categoryPicker}
                 >
-                  {STATUS_OPTIONS.map((status) =>
-                    status === "cancelled" ? (
-                      <TouchableOpacity
-                        key={status}
+                  {categories.map((cat) => (
+                    <TouchableOpacity
+                      key={cat.id}
+                      style={[
+                        styles.categoryOption,
+                        itemForm.categoryId === cat.id.toString() &&
+                          styles.categoryOptionSelected,
+                      ]}
+                      onPress={() =>
+                        setItemForm({
+                          ...itemForm,
+                          categoryId: cat.id.toString(),
+                        })
+                      }
+                    >
+                      <Text
                         style={[
-                          styles.statusBtn,
-                          {
-                            backgroundColor:
-                              item.status === status
-                                ? colors.primary
-                                : "#fffbe8",
-                          },
+                          styles.categoryOptionText,
+                          itemForm.categoryId === cat.id.toString() &&
+                            styles.categoryOptionTextSelected,
                         ]}
-                        onPress={() => {
-                          Alert.alert(
-                            "Cancel Order",
-                            "Are you sure you want to cancel this order? This action cannot be undone.",
-                            [
-                              { text: "No", style: "cancel" },
-                              {
-                                text: "Yes",
-                                style: "destructive",
-                                onPress: async () => {
-                                  try {
-                                    const response = await fetch(
-                                      `http://192.168.1.110:3000/order/${item.id}`,
-                                      {
-                                        method: "DELETE",
-                                        headers: {
-                                          Authorization: `Bearer ${token}`,
-                                          "Content-Type": "application/json",
-                                        },
-                                      },
-                                    );
-                                    if (!response.ok)
-                                      throw new Error("Failed to delete order");
-                                    Alert.alert("Order cancelled and deleted");
-                                    fetchOrders();
-                                  } catch (err: any) {
-                                    Alert.alert(
-                                      "Error",
-                                      err.message || "Failed to delete order",
-                                    );
-                                  }
-                                },
-                              },
-                            ],
-                          );
-                        }}
-                        disabled={item.status === status}
                       >
-                        <Text
-                          style={{
-                            color:
-                              item.status === status ? colors.onPrimary : "red",
-                            fontWeight: "bold",
-                          }}
-                        >
-                          Cancel
-                        </Text>
-                      </TouchableOpacity>
-                    ) : (
-                      <TouchableOpacity
-                        key={status}
-                        style={[
-                          styles.statusBtn,
-                          {
-                            backgroundColor:
-                              item.status === status
-                                ? colors.primary
-                                : "#fffbe8",
-                          },
-                        ]}
-                        onPress={() => updateStatus(item.id, status)}
-                        disabled={item.status === status}
-                      >
-                        <Text
-                          style={{
-                            color:
-                              item.status === status
-                                ? colors.onPrimary
-                                : "#231a13",
-                          }}
-                        >
-                          {status}
-                        </Text>
-                      </TouchableOpacity>
-                    ),
-                  )}
+                        {cat.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
                 </ScrollView>
-              </Card.Content>
-            </Card>
-          )}
-        />
-      )}
-    </View>
+                <View style={styles.modalActions}>
+                  <Button onPress={() => setShowItemModal(false)}>
+                    Cancel
+                  </Button>
+                  <Button mode="contained" onPress={saveMenuItem}>
+                    Save
+                  </Button>
+                </View>
+              </View>
+            </ScrollView>
+          </View>
+        </Modal>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#231a13",
+  },
   container: { flex: 1, padding: 16, backgroundColor: "#231a13" },
+  tabContainer: {
+    flexDirection: "row",
+    marginBottom: 16,
+    backgroundColor: "#2d2117",
+    borderRadius: 8,
+    padding: 4,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: "center",
+    borderRadius: 6,
+  },
+  activeTab: {
+    backgroundColor: "#e0b97f",
+  },
+  tabText: {
+    fontSize: 16,
+    color: "#fffbe8",
+    fontWeight: "600",
+  },
+  activeTabText: {
+    color: "#231a13",
+  },
   title: {
     fontSize: 28,
     fontWeight: "bold",
     marginBottom: 16,
     alignSelf: "center",
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#fffbe8",
+    marginTop: 16,
+    marginBottom: 8,
   },
   card: { marginBottom: 12, backgroundColor: "#2d2117" },
   statusBtn: {
@@ -254,6 +834,158 @@ const styles = StyleSheet.create({
     minWidth: 80,
     alignItems: "center",
     justifyContent: "center",
+  },
+  categoryScroll: {
+    maxHeight: 160,
+    marginBottom: 16,
+  },
+  categoryCard: {
+    backgroundColor: "#2d2117",
+    marginRight: 12,
+    minWidth: 160,
+    minHeight: 140,
+  },
+  categoryName: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#fffbe8",
+    marginBottom: 8,
+  },
+  categoryActions: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  addCategoryBtn: {
+    backgroundColor: "#e0b97f",
+    borderRadius: 8,
+    padding: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    width: 150,
+  },
+  addBtnText: {
+    color: "#231a13",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  menuItemCard: {
+    backgroundColor: "#2d2117",
+    marginBottom: 12,
+  },
+  itemName: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#fffbe8",
+  },
+  itemDesc: {
+    fontSize: 14,
+    color: "#e0b97f",
+    marginTop: 4,
+  },
+  itemPrice: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#e0b97f",
+    marginTop: 8,
+  },
+  itemCategory: {
+    fontSize: 12,
+    color: "#999",
+    marginTop: 4,
+  },
+  itemActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginTop: 12,
+  },
+  editBtn: {
+    backgroundColor: "#4a90e2",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  deleteBtn: {
+    backgroundColor: "#d32f2f",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  btnText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 12,
+  },
+  fab: {
+    position: "absolute",
+    right: 16,
+    bottom: 16,
+    backgroundColor: "#e0b97f",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalScrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#2d2117",
+    borderRadius: 12,
+    padding: 24,
+    width: "90%",
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#fffbe8",
+    marginBottom: 16,
+  },
+  input: {
+    backgroundColor: "#231a13",
+    color: "#fffbe8",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#e0b97f",
+  },
+  label: {
+    fontSize: 16,
+    color: "#fffbe8",
+    marginBottom: 8,
+    marginTop: 8,
+  },
+  categoryPicker: {
+    marginBottom: 16,
+  },
+  categoryOption: {
+    backgroundColor: "#231a13",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: "#e0b97f",
+  },
+  categoryOptionSelected: {
+    backgroundColor: "#e0b97f",
+  },
+  categoryOptionText: {
+    color: "#fffbe8",
+    fontWeight: "600",
+  },
+  categoryOptionTextSelected: {
+    color: "#231a13",
+  },
+  modalActions: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginTop: 16,
   },
 });
 
