@@ -100,7 +100,7 @@ export const validateForm = (fields: {
 // Format currency
 export const formatCurrency = (
   amount: number,
-  currency: string = "₺",
+  currency: string = "€",
 ): string => {
   return `${currency}${amount.toFixed(2)}`;
 };

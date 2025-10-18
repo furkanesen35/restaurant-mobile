@@ -368,6 +368,25 @@ const AdminScreen = () => {
                       <Text style={{ color: colors.onBackground }}>
                         User: {item.userId}
                       </Text>
+                      {item.address && (
+                        <View style={{ marginTop: 8, marginBottom: 8, padding: 8, backgroundColor: '#2d2117', borderRadius: 4 }}>
+                          <Text style={{ color: colors.primary, fontWeight: 'bold', marginBottom: 4 }}>
+                            📍 Delivery Address:
+                          </Text>
+                          <Text style={{ color: colors.onBackground }}>
+                            {item.address.street}
+                          </Text>
+                          <Text style={{ color: colors.onBackground }}>
+                            {item.address.city}, {item.address.postalCode}
+                          </Text>
+                          <Text style={{ color: colors.onBackground }}>
+                            {item.address.country}
+                          </Text>
+                          <Text style={{ color: colors.onBackground }}>
+                            📞 {item.address.phone}
+                          </Text>
+                        </View>
+                      )}
                       <Text style={{ color: colors.onBackground }}>Items:</Text>
                       {item.items.map((orderItem: any) => (
                         <Text

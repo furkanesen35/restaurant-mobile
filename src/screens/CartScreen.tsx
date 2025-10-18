@@ -47,7 +47,7 @@ const CartScreen = () => {
             <Card style={styles.card}>
               <Card.Title
                 title={item.name}
-                subtitle={`₺${item.price.toFixed(2)}`}
+                subtitle={`€${item.price.toFixed(2)}`}
               />
               <Card.Content>
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -83,7 +83,7 @@ const CartScreen = () => {
         />
       )}
       <Text style={[styles.total, { color: colors.primary }]}>
-        Total: ₺{total.toFixed(2)}
+        Total: €{total.toFixed(2)}
       </Text>
       <TouchableOpacity
         style={[styles.orderBtn, { backgroundColor: colors.primary }]}

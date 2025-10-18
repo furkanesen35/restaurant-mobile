@@ -7,6 +7,9 @@ import {
   Alert,
   ScrollView,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  TextInput,
 } from "react-native";
 import { useAuth } from "../contexts/AuthContext";
 import { useCart } from "../contexts/CartContext";
@@ -26,6 +29,16 @@ type PaymentMethod = {
   isDefault: boolean;
 };
 
+type Address = {
+  id: number;
+  label: string;
+  street: string;
+  city: string;
+  postalCode: string;
+  country: string;
+  phone: string;
+};
+
 const CheckoutScreen = () => {
   const { token, user } = useAuth();
   const { cart, clearCart } = useCart();
@@ -35,10 +48,23 @@ const CheckoutScreen = () => {
 
   const [savedMethods, setSavedMethods] = useState<PaymentMethod[]>([]);
   const [selectedMethodId, setSelectedMethodId] = useState<number | null>(null);
-  const [showNewCard, setShowNewCard] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingMethods, setLoadingMethods] = useState(true);
   const [cardComplete, setCardComplete] = useState(false);
+
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
+  const [loadingAddresses, setLoadingAddresses] = useState(true);
+  
+  // New address form state
+  const [newAddressForm, setNewAddressForm] = useState({
+    label: "",
+    street: "",
+    city: "",
+    postalCode: "",
+    country: "",
+    phone: "",
+  });
 
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -54,19 +80,19 @@ const CheckoutScreen = () => {
         const data: PaymentMethod[] = await res.json();
         setSavedMethods(data);
 
-        // Auto-select default payment method
+        // Auto-select default payment method or new card option (-1)
         const defaultMethod = data.find((m) => m.isDefault);
         if (defaultMethod) {
           setSelectedMethodId(defaultMethod.id);
         } else if (data.length > 0) {
           setSelectedMethodId(data[0].id);
         } else {
-          setShowNewCard(true);
+          setSelectedMethodId(-1); // Select "Add New Card" option
         }
       } catch (err) {
         console.error("Error fetching payment methods:", err);
-        // If no saved methods, show new card form
-        setShowNewCard(true);
+        // If no saved methods, select new card option
+        setSelectedMethodId(-1);
       } finally {
         setLoadingMethods(false);
       }
@@ -75,18 +101,60 @@ const CheckoutScreen = () => {
     fetchPaymentMethods();
   }, [token]);
 
+  // Fetch addresses on mount
+  React.useEffect(() => {
+    const fetchAddresses = async () => {
+      try {
+        setLoadingAddresses(true);
+        const res = await fetch(`${ENV.API_URL}/api/address`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error("Failed to fetch addresses");
+        const data: Address[] = await res.json();
+        setAddresses(data);
+
+        // Auto-select first address
+        if (data.length > 0) {
+          setSelectedAddressId(data[0].id);
+        }
+      } catch (err) {
+        console.error("Error fetching addresses:", err);
+      } finally {
+        setLoadingAddresses(false);
+      }
+    };
+    
+    fetchAddresses();
+  }, [token]);
+
   const handlePlaceOrder = async () => {
     if (!user) {
       Alert.alert("Error", "Please log in to place an order.");
       return;
     }
 
-    if (!selectedMethodId && !showNewCard) {
+    // Check if address is selected or new address is being added
+    if (selectedAddressId === null && selectedAddressId !== -1) {
+      Alert.alert("Error", "Please select a delivery address.");
+      return;
+    }
+
+    if (selectedAddressId === -1) {
+      // Validate new address form
+      if (!newAddressForm.label || !newAddressForm.street || !newAddressForm.city || 
+          !newAddressForm.postalCode || !newAddressForm.country || !newAddressForm.phone) {
+        Alert.alert("Error", "Please fill in all address fields.");
+        return;
+      }
+    }
+
+    // Check if payment method is selected or new card is being added
+    if (selectedMethodId === null && selectedMethodId !== -1) {
       Alert.alert("Error", "Please select a payment method.");
       return;
     }
 
-    if (showNewCard && !cardComplete) {
+    if (selectedMethodId === -1 && !cardComplete) {
       Alert.alert("Error", "Please enter valid card details.");
       return;
     }
@@ -94,6 +162,22 @@ const CheckoutScreen = () => {
     setLoading(true);
 
     try {
+      // Step 0: Create new address if needed
+      let finalAddressId = selectedAddressId;
+      if (selectedAddressId === -1) {
+        const addressRes = await fetch(`${ENV.API_URL}/api/address`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(newAddressForm),
+        });
+        if (!addressRes.ok) throw new Error("Failed to create address");
+        const newAddress = await addressRes.json();
+        finalAddressId = newAddress.id;
+      }
+
       // Step 1: Create Stripe PaymentIntent
       const paymentIntentRes = await fetch(
         `${ENV.API_URL}/api/payment/stripe-intent`,
@@ -105,7 +189,7 @@ const CheckoutScreen = () => {
           },
           body: JSON.stringify({
             amount: total,
-            currency: "try", // Turkish Lira
+            currency: "eur", // Euro
           }),
         }
       );
@@ -119,7 +203,7 @@ const CheckoutScreen = () => {
       // Step 2: Confirm payment with Stripe
       let paymentResult;
       
-      if (showNewCard) {
+      if (selectedMethodId === -1) {
         // Using new card
         paymentResult = await confirmPayment(clientSecret, {
           paymentMethodType: "Card",
@@ -149,7 +233,8 @@ const CheckoutScreen = () => {
       const orderPayload = {
         userId: user.id,
         items: items,
-        paymentMethodId: selectedMethodId,
+        paymentMethodId: selectedMethodId === -1 ? null : selectedMethodId,
+        addressId: finalAddressId,
       };
 
       const orderRes = await fetch(`${ENV.API_URL}/order`, {
@@ -172,8 +257,27 @@ const CheckoutScreen = () => {
         "Your payment was successful and order has been received.",
         [
           {
-            text: "OK",
-            onPress: () => navigation.navigate("Orders" as never),
+            text: "View Orders",
+            onPress: () => {
+              // Navigate back to MainTabs and switch to Orders tab
+              navigation.reset({
+                index: 0,
+                routes: [
+                  { 
+                    name: 'MainTabs' as never,
+                    state: {
+                      routes: [{ name: 'Orders' }],
+                      index: 0,
+                    }
+                  }
+                ],
+              });
+            },
+          },
+          {
+            text: "Stay Here",
+            style: "cancel",
+            onPress: () => navigation.goBack(),
           },
         ]
       );
@@ -185,19 +289,27 @@ const CheckoutScreen = () => {
     }
   };
 
-  if (loadingMethods) {
+  if (loadingMethods || loadingAddresses) {
     return (
       <View style={[styles.container, styles.centered]}>
         <ActivityIndicator size="large" color={colors.primary} />
         <Text style={{ color: colors.onBackground, marginTop: 16 }}>
-          Loading payment methods...
+          Loading...
         </Text>
       </View>
     );
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: "#231a13" }]}>
+    <KeyboardAvoidingView 
+      style={{ flex: 1 }} 
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={100}
+    >
+      <ScrollView 
+        style={[styles.container, { backgroundColor: "#231a13" }]}
+        keyboardShouldPersistTaps="handled"
+      >
       <Text style={[styles.title, { color: colors.primary }]}>Checkout</Text>
 
       {/* Order Summary */}
@@ -211,7 +323,7 @@ const CheckoutScreen = () => {
               {item.name} x {item.quantity}
             </Text>
             <Text style={{ color: colors.onBackground }}>
-              ₺{(item.price * item.quantity).toFixed(2)}
+              €{(item.price * item.quantity).toFixed(2)}
             </Text>
           </View>
         ))}
@@ -220,9 +332,120 @@ const CheckoutScreen = () => {
             Total:
           </Text>
           <Text style={[styles.totalText, { color: colors.primary }]}>
-            ₺{total.toFixed(2)}
+            €{total.toFixed(2)}
           </Text>
         </View>
+      </View>
+
+      {/* Delivery Address */}
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+          Delivery Address
+        </Text>
+        
+        {/* Saved Addresses */}
+        {addresses.map((address) => (
+          <TouchableOpacity
+            key={address.id}
+            style={[
+              styles.optionCard,
+              selectedAddressId === address.id && styles.selectedCard,
+              selectedAddressId === address.id ? { borderWidth: 2, borderStyle: 'solid' } : { borderWidth: 2, borderStyle: 'dashed' },
+              { backgroundColor: "#2d2117", borderColor: colors.primary },
+            ]}
+            onPress={() => setSelectedAddressId(address.id)}
+          >
+            <View style={styles.optionInfo}>
+              <Text style={[styles.optionLabel, { color: colors.primary }]}>
+                {address.label}
+              </Text>
+              <Text style={{ color: colors.onBackground }}>
+                {address.street}
+              </Text>
+              <Text style={{ color: colors.onBackground }}>
+                {address.city}, {address.postalCode}
+              </Text>
+              <Text style={{ color: colors.onBackground }}>
+                {address.country}
+              </Text>
+              <Text style={{ color: colors.onBackground }}>
+                📞 {address.phone}
+              </Text>
+            </View>
+            {selectedAddressId === address.id && (
+              <Text style={{ color: colors.primary, fontSize: 20 }}>✓</Text>
+            )}
+          </TouchableOpacity>
+        ))}
+
+        {/* Add New Address Option */}
+        <TouchableOpacity
+          style={[
+            styles.optionCard,
+            selectedAddressId === -1 && styles.selectedCard,
+            selectedAddressId === -1 ? { borderWidth: 2, borderStyle: 'solid' } : { borderWidth: 2, borderStyle: 'dashed' },
+            { backgroundColor: "#2d2117", borderColor: colors.primary },
+          ]}
+          onPress={() => setSelectedAddressId(-1)}
+        >
+          <View style={styles.optionInfo}>
+            <Text style={[styles.optionLabel, { color: colors.primary }]}>
+              + Add New Address
+            </Text>
+          </View>
+          {selectedAddressId === -1 && (
+            <Text style={{ color: colors.primary, fontSize: 20 }}>✓</Text>
+          )}
+        </TouchableOpacity>
+
+        {/* New Address Form (shown when -1 is selected) */}
+        {selectedAddressId === -1 && (
+          <View style={styles.formSection}>
+            <TextInput
+              placeholder="Label (e.g., Home, Work)"
+              value={newAddressForm.label}
+              onChangeText={(text) => setNewAddressForm({ ...newAddressForm, label: text })}
+              style={styles.input}
+              placeholderTextColor="#999"
+            />
+            <TextInput
+              placeholder="Street Address"
+              value={newAddressForm.street}
+              onChangeText={(text) => setNewAddressForm({ ...newAddressForm, street: text })}
+              style={styles.input}
+              placeholderTextColor="#999"
+            />
+            <TextInput
+              placeholder="City"
+              value={newAddressForm.city}
+              onChangeText={(text) => setNewAddressForm({ ...newAddressForm, city: text })}
+              style={styles.input}
+              placeholderTextColor="#999"
+            />
+            <TextInput
+              placeholder="Postal Code"
+              value={newAddressForm.postalCode}
+              onChangeText={(text) => setNewAddressForm({ ...newAddressForm, postalCode: text })}
+              style={styles.input}
+              placeholderTextColor="#999"
+            />
+            <TextInput
+              placeholder="Country"
+              value={newAddressForm.country}
+              onChangeText={(text) => setNewAddressForm({ ...newAddressForm, country: text })}
+              style={styles.input}
+              placeholderTextColor="#999"
+            />
+            <TextInput
+              placeholder="Phone"
+              value={newAddressForm.phone}
+              onChangeText={(text) => setNewAddressForm({ ...newAddressForm, phone: text })}
+              style={styles.input}
+              placeholderTextColor="#999"
+              keyboardType="phone-pad"
+            />
+          </View>
+        )}
       </View>
 
       {/* Payment Methods */}
@@ -232,90 +455,89 @@ const CheckoutScreen = () => {
         </Text>
 
         {/* Saved Payment Methods */}
-        {savedMethods.length > 0 && !showNewCard && (
-          <>
-            {savedMethods.map((method) => (
-              <TouchableOpacity
-                key={method.id}
-                style={[
-                  styles.paymentMethodCard,
-                  selectedMethodId === method.id && styles.selectedMethod,
-                  { backgroundColor: "#2d2117" },
-                ]}
-                onPress={() => setSelectedMethodId(method.id)}
-              >
-                <View style={styles.methodInfo}>
-                  <Text style={[styles.methodType, { color: colors.onBackground }]}>
-                    {method.type === "Card"
-                      ? `${method.brand || ""} Card`
-                      : "PayPal"}
-                  </Text>
-                  {method.type === "Card" ? (
-                    <Text style={{ color: colors.onBackground }}>
-                      **** **** **** {method.cardNumber?.slice(-4)}
-                    </Text>
-                  ) : (
-                    <Text style={{ color: colors.onBackground }}>
-                      {method.paypalEmail}
-                    </Text>
-                  )}
-                  {method.isDefault && (
-                    <Text style={{ color: colors.primary, fontSize: 12 }}>
-                      Default
-                    </Text>
-                  )}
-                </View>
-                {selectedMethodId === method.id && (
-                  <Text style={{ color: colors.primary, fontSize: 20 }}>✓</Text>
-                )}
-              </TouchableOpacity>
-            ))}
-
-            <TouchableOpacity
-              style={[styles.addNewButton, { borderColor: colors.primary }]}
-              onPress={() => setShowNewCard(true)}
-            >
-              <Text style={{ color: colors.primary }}>+ Add New Card</Text>
-            </TouchableOpacity>
-          </>
-        )}
-
-        {/* New Card Form */}
-        {showNewCard && (
-          <View style={styles.newCardSection}>
-            {savedMethods.length > 0 && (
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={() => setShowNewCard(false)}
-              >
-                <Text style={{ color: colors.primary }}>
-                  ← Back to saved methods
+        {savedMethods.map((method) => (
+          <TouchableOpacity
+            key={method.id}
+            style={[
+              styles.optionCard,
+              selectedMethodId === method.id && styles.selectedCard,
+              selectedMethodId === method.id ? { borderWidth: 2, borderStyle: 'solid' } : { borderWidth: 2, borderStyle: 'dashed' },
+              { backgroundColor: "#2d2117", borderColor: colors.primary },
+            ]}
+            onPress={() => setSelectedMethodId(method.id)}
+          >
+            <View style={styles.optionInfo}>
+              <Text style={[styles.optionLabel, { color: colors.onBackground }]}>
+                {method.type === "Card"
+                  ? `${method.brand || ""} Card`
+                  : "PayPal"}
+              </Text>
+              {method.type === "Card" ? (
+                <Text style={{ color: colors.onBackground }}>
+                  **** **** **** {method.cardNumber?.slice(-4)}
                 </Text>
-              </TouchableOpacity>
+              ) : (
+                <Text style={{ color: colors.onBackground }}>
+                  {method.paypalEmail}
+                </Text>
+              )}
+              {method.isDefault && (
+                <Text style={{ color: colors.primary, fontSize: 12 }}>
+                  Default
+                </Text>
+              )}
+            </View>
+            {selectedMethodId === method.id && (
+              <Text style={{ color: colors.primary, fontSize: 20 }}>✓</Text>
             )}
+          </TouchableOpacity>
+        ))}
+
+        {/* Add New Card Option */}
+        <TouchableOpacity
+          style={[
+            styles.optionCard,
+            selectedMethodId === -1 && styles.selectedCard,
+            selectedMethodId === -1 ? { borderWidth: 2, borderStyle: 'solid' } : { borderWidth: 2, borderStyle: 'dashed' },
+            { backgroundColor: "#2d2117", borderColor: colors.primary },
+          ]}
+          onPress={() => setSelectedMethodId(-1)}
+        >
+          <View style={styles.optionInfo}>
+            <Text style={[styles.optionLabel, { color: colors.primary }]}>
+              + Add New Card
+            </Text>
+          </View>
+          {selectedMethodId === -1 && (
+            <Text style={{ color: colors.primary, fontSize: 20 }}>✓</Text>
+          )}
+        </TouchableOpacity>
+
+        {/* New Card Form (shown when -1 is selected) */}
+        {selectedMethodId === -1 && (
+          <View style={styles.formSection}>
             <Text style={{ color: colors.onBackground, marginBottom: 8 }}>
               Enter card details:
             </Text>
-            <CardField
-              postalCodeEnabled={false}
-              placeholders={{
-                number: "4242 4242 4242 4242",
-              }}
-              cardStyle={{
-                backgroundColor: "#FFFFFF",
-                textColor: "#000000",
-              }}
-              style={{
-                width: "100%",
-                height: 50,
-                marginVertical: 10,
-              }}
-              onCardChange={(cardDetails) => {
-                setCardComplete(cardDetails.complete);
-              }}
-            />
-            <Text style={{ color: "#888", fontSize: 12, marginTop: 4 }}>
-              Use test card: 4242 4242 4242 4242, any future date, any CVC
+            <View style={styles.cardFieldWrapper}>
+              <CardField
+                postalCodeEnabled={false}
+                placeholders={{
+                  number: "4242 4242 4242 4242",
+                }}
+                cardStyle={{
+                  backgroundColor: "#FFFFFF",
+                  textColor: "#000000",
+                  placeholderColor: "#999999",
+                }}
+                style={styles.cardField}
+                onCardChange={(cardDetails) => {
+                  setCardComplete(cardDetails.complete);
+                }}
+              />
+            </View>
+            <Text style={{ color: "#888", fontSize: 12, marginTop: 8 }}>
+              Test card: 4242 4242 4242 4242, any future date, any CVC
             </Text>
           </View>
         )}
@@ -323,6 +545,7 @@ const CheckoutScreen = () => {
 
       {/* Place Order Button */}
       <TouchableOpacity
+        activeOpacity={0.7}
         style={[
           styles.placeOrderButton,
           { backgroundColor: colors.primary },
@@ -341,11 +564,12 @@ const CheckoutScreen = () => {
               fontWeight: "bold",
             }}
           >
-            Pay ₺{total.toFixed(2)} & Place Order
+            Pay €{total.toFixed(2)} & Place Order
           </Text>
         )}
       </TouchableOpacity>
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -388,51 +612,56 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "bold",
   },
-  paymentMethodCard: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 12,
-    borderWidth: 2,
-    borderColor: "transparent",
+  cardFieldWrapper: {
+    marginVertical: 12,
+    minHeight: 60,
   },
-  selectedMethod: {
-    borderColor: "#d4af37",
-  },
-  methodInfo: {
-    flex: 1,
-  },
-  methodType: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 4,
-  },
-  addNewButton: {
-    padding: 16,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderStyle: "dashed",
-    alignItems: "center",
-    marginTop: 8,
-  },
-  newCardSection: {
-    backgroundColor: "#2d2117",
-    padding: 16,
-    borderRadius: 8,
-  },
-  backButton: {
-    marginBottom: 16,
+  cardField: {
+    width: "100%",
+    height: 50,
   },
   placeOrderButton: {
     padding: 16,
     borderRadius: 10,
     alignItems: "center",
     marginVertical: 24,
+    minHeight: 60,
+    justifyContent: "center",
   },
   buttonDisabled: {
     opacity: 0.6,
+  },
+  optionCard: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  selectedCard: {
+    // Applied when selected - solid border is set inline
+  },
+  optionInfo: {
+    flex: 1,
+  },
+  optionLabel: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  formSection: {
+    backgroundColor: "#2d2117",
+    padding: 16,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  input: {
+    backgroundColor: "#fffbe8",
+    padding: 12,
+    borderRadius: 4,
+    marginBottom: 12,
+    color: "#000",
   },
 });
 

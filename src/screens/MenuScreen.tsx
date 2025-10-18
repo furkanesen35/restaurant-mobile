@@ -251,7 +251,7 @@ const MenuScreen = () => {
                     <Card key={item.id} style={styles.menuCard}>
                       <Card.Title
                         title={item.name}
-                        subtitle={`₺${item.price.toFixed(2)}`}
+                        subtitle={`€${item.price.toFixed(2)}`}
                       />
                       <Card.Content>
                         <Text style={{ color: colors.onBackground }}>
@@ -297,7 +297,7 @@ const MenuScreen = () => {
                       <Card key={item.id} style={styles.menuCard}>
                         <Card.Title
                           title={item.name}
-                          subtitle={`₺${item.price.toFixed(2)}`}
+                          subtitle={`€${item.price.toFixed(2)}`}
                         />
                         <Card.Content>
                           <Text style={{ color: colors.onBackground }}>
