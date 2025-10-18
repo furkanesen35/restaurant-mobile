@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   TextInput,
+  Switch,
 } from "react-native";
 import { useAuth } from "../contexts/AuthContext";
 import { useCart } from "../contexts/CartContext";
@@ -35,7 +36,6 @@ type Address = {
   street: string;
   city: string;
   postalCode: string;
-  country: string;
   phone: string;
 };
 
@@ -62,9 +62,10 @@ const CheckoutScreen = () => {
     street: "",
     city: "",
     postalCode: "",
-    country: "",
     phone: "",
   });
+  const [saveAddressToProfile, setSaveAddressToProfile] = useState(true);
+  const [savePaymentToProfile, setSavePaymentToProfile] = useState(true);
 
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -142,7 +143,7 @@ const CheckoutScreen = () => {
     if (selectedAddressId === -1) {
       // Validate new address form
       if (!newAddressForm.label || !newAddressForm.street || !newAddressForm.city || 
-          !newAddressForm.postalCode || !newAddressForm.country || !newAddressForm.phone) {
+          !newAddressForm.postalCode || !newAddressForm.phone) {
         Alert.alert("Error", "Please fill in all address fields.");
         return;
       }
@@ -165,13 +166,17 @@ const CheckoutScreen = () => {
       // Step 0: Create new address if needed
       let finalAddressId = selectedAddressId;
       if (selectedAddressId === -1) {
+        // Create address with saveToProfile flag
         const addressRes = await fetch(`${ENV.API_URL}/api/address`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(newAddressForm),
+          body: JSON.stringify({
+            ...newAddressForm,
+            saveToProfile: saveAddressToProfile,
+          }),
         });
         if (!addressRes.ok) throw new Error("Failed to create address");
         const newAddress = await addressRes.json();
@@ -366,9 +371,6 @@ const CheckoutScreen = () => {
                 {address.city}, {address.postalCode}
               </Text>
               <Text style={{ color: colors.onBackground }}>
-                {address.country}
-              </Text>
-              <Text style={{ color: colors.onBackground }}>
                 📞 {address.phone}
               </Text>
             </View>
@@ -430,13 +432,6 @@ const CheckoutScreen = () => {
               placeholderTextColor="#999"
             />
             <TextInput
-              placeholder="Country"
-              value={newAddressForm.country}
-              onChangeText={(text) => setNewAddressForm({ ...newAddressForm, country: text })}
-              style={styles.input}
-              placeholderTextColor="#999"
-            />
-            <TextInput
               placeholder="Phone"
               value={newAddressForm.phone}
               onChangeText={(text) => setNewAddressForm({ ...newAddressForm, phone: text })}
@@ -444,6 +439,24 @@ const CheckoutScreen = () => {
               placeholderTextColor="#999"
               keyboardType="phone-pad"
             />
+            
+            {/* Save to Profile Toggle */}
+            <View style={styles.toggleContainer}>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.toggleLabel, { color: colors.primary }]}>
+                  Save this address to my profile
+                </Text>
+                <Text style={[styles.toggleSubtext, { color: "#999" }]}>
+                  You can use it for future orders
+                </Text>
+              </View>
+              <Switch
+                value={saveAddressToProfile}
+                onValueChange={setSaveAddressToProfile}
+                trackColor={{ false: "#767577", true: colors.primary }}
+                thumbColor={saveAddressToProfile ? "#fff" : "#f4f3f4"}
+              />
+            </View>
           </View>
         )}
       </View>
@@ -539,6 +552,24 @@ const CheckoutScreen = () => {
             <Text style={{ color: "#888", fontSize: 12, marginTop: 8 }}>
               Test card: 4242 4242 4242 4242, any future date, any CVC
             </Text>
+            
+            {/* Save to Profile Toggle */}
+            <View style={styles.toggleContainer}>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.toggleLabel, { color: colors.primary }]}>
+                  Save this card to my profile
+                </Text>
+                <Text style={[styles.toggleSubtext, { color: "#999" }]}>
+                  Securely save for faster checkout
+                </Text>
+              </View>
+              <Switch
+                value={savePaymentToProfile}
+                onValueChange={setSavePaymentToProfile}
+                trackColor={{ false: "#767577", true: colors.primary }}
+                thumbColor={savePaymentToProfile ? "#fff" : "#f4f3f4"}
+              />
+            </View>
           </View>
         )}
       </View>
@@ -662,6 +693,23 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     marginBottom: 12,
     color: "#000",
+  },
+  toggleContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#444",
+  },
+  toggleLabel: {
+    fontSize: 15,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  toggleSubtext: {
+    fontSize: 12,
   },
 });
 

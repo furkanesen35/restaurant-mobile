@@ -16,8 +16,7 @@ type Address = {
   label: string;
   street: string;
   city: string;
-  postalCode: string; // Changed from zip to postalCode for Germany
-  country: string;
+  postalCode: string;
   phone?: string;
 };
 
@@ -29,7 +28,6 @@ const AddressesScreen = () => {
     street: "",
     city: "",
     postalCode: "",
-    country: "Germany",
     phone: "",
   });
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -82,7 +80,6 @@ const AddressesScreen = () => {
         street: "",
         city: "",
         postalCode: "",
-        country: "Germany",
         phone: "",
       });
       setEditingId(null);
@@ -100,7 +97,6 @@ const AddressesScreen = () => {
       street: address.street,
       city: address.city,
       postalCode: address.postalCode,
-      country: address.country,
       phone: address.phone,
     });
     setEditingId(address.id);
@@ -128,7 +124,7 @@ const AddressesScreen = () => {
           <View style={styles.addressCard}>
             <Text style={styles.label}>{item.label}</Text>
             <Text>
-              {item.street}, {item.city}, {item.postalCode}, {item.country}
+              {item.street}, {item.city}, {item.postalCode}
             </Text>
             <Text>{item.phone}</Text>
             <View style={styles.actions}>
@@ -171,12 +167,6 @@ const AddressesScreen = () => {
           style={styles.input}
         />
         <TextInput
-          placeholder="Country"
-          value={form.country}
-          onChangeText={(v) => setForm((f) => ({ ...f, country: v }))}
-          style={styles.input}
-        />
-        <TextInput
           placeholder="Phone"
           value={form.phone}
           onChangeText={(v) => setForm((f) => ({ ...f, phone: v }))}
@@ -194,7 +184,6 @@ const AddressesScreen = () => {
                 street: "",
                 city: "",
                 postalCode: "",
-                country: "Germany",
                 phone: "",
               });
             }}

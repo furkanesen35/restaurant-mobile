@@ -380,9 +380,6 @@ const AdminScreen = () => {
                             {item.address.city}, {item.address.postalCode}
                           </Text>
                           <Text style={{ color: colors.onBackground }}>
-                            {item.address.country}
-                          </Text>
-                          <Text style={{ color: colors.onBackground }}>
                             📞 {item.address.phone}
                           </Text>
                         </View>
