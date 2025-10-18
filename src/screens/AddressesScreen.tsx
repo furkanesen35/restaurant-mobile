@@ -9,8 +9,7 @@ import {
   Alert,
 } from "react-native";
 import { useAuth } from "../contexts/AuthContext";
-
-const API_URL = "http://192.168.1.110:3000/api/address";
+import ENV from "../config/env";
 
 type Address = {
   id: number;
@@ -37,7 +36,7 @@ const AddressesScreen = () => {
 
   const fetchAddresses = useCallback(async () => {
     try {
-      const res = await fetch(API_URL, {
+      const res = await fetch(ENV.API_URL + "/api/address", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data: Address[] = await res.json();
@@ -55,7 +54,7 @@ const AddressesScreen = () => {
     try {
       console.log("Saving address:", form);
       const method = editingId ? "PUT" : "POST";
-      const url = editingId ? `${API_URL}/${editingId}` : API_URL;
+      const url = editingId ? `${ENV.API_URL + "/api/address"}/${editingId}` : ENV.API_URL + "/api/address";
       console.log("Request URL:", url);
       console.log("Request method:", method);
       console.log("Request body:", JSON.stringify(form, null, 2));
@@ -109,7 +108,7 @@ const AddressesScreen = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      await fetch(`${API_URL}/${id}`, {
+      await fetch(`${ENV.API_URL + "/api/address"}/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });

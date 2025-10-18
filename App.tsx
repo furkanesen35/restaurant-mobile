@@ -3,6 +3,8 @@ import { PaperProvider } from "react-native-paper";
 import { NavigationContainer } from "@react-navigation/native";
 import { cozyTheme } from "./src/theme/cozyTheme";
 import { AuthProvider } from "./src/contexts/AuthContext";
+import { StripeProvider } from "@stripe/stripe-react-native";
+import ENV from "./src/config/env";
 
 import RootNavigator from "./src/navigation/RootNavigator";
 import { CartProvider } from "./src/contexts/CartContext";
@@ -32,14 +34,16 @@ const linking = {
 
 export default function App() {
   return (
-    <PaperProvider theme={cozyTheme}>
-      <AuthProvider>
-        <CartProvider>
-          <NavigationContainer linking={linking}>
-            <RootNavigator />
-          </NavigationContainer>
-        </CartProvider>
-      </AuthProvider>
-    </PaperProvider>
+    <StripeProvider publishableKey={ENV.STRIPE_PUBLISHABLE_KEY}>
+      <PaperProvider theme={cozyTheme}>
+        <AuthProvider>
+          <CartProvider>
+            <NavigationContainer linking={linking}>
+              <RootNavigator />
+            </NavigationContainer>
+          </CartProvider>
+        </AuthProvider>
+      </PaperProvider>
+    </StripeProvider>
   );
 }

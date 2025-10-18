@@ -1,9 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ApiResponse, ApiError } from "../types";
+import ENV from "../config/env";
 
 // Environment configuration
 const config = {
-  baseURL: "http://192.168.1.110:3000", // Use your computer's IP
+  baseURL: ENV.API_URL,
   timeout: 10000,
   retryAttempts: 3,
   retryDelay: 1000,

@@ -10,8 +10,7 @@ import {
   Switch,
 } from "react-native";
 import { useAuth } from "../contexts/AuthContext";
-
-const API_URL = "http://192.168.1.110:3000/api/payment";
+import ENV from "../config/env";
 
 // PaymentMethod type
 type PaymentMethod = {
@@ -41,7 +40,7 @@ const PaymentMethodsScreen = () => {
 
   const fetchMethods = useCallback(async () => {
     try {
-      const res = await fetch(API_URL, {
+      const res = await fetch(`${ENV.API_URL}/api/payment`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data: PaymentMethod[] = await res.json();
@@ -58,7 +57,7 @@ const PaymentMethodsScreen = () => {
   const handleSave = async () => {
     try {
       const method = editingId ? "PUT" : "POST";
-      const url = editingId ? `${API_URL}/${editingId}` : API_URL;
+      const url = editingId ? `${ENV.API_URL}/api/payment/${editingId}` : `${ENV.API_URL}/api/payment`;
       const res = await fetch(url, {
         method,
         headers: {
@@ -91,7 +90,7 @@ const PaymentMethodsScreen = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      await fetch(`${API_URL}/${id}`, {
+      await fetch(`${ENV.API_URL}/api/payment/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });

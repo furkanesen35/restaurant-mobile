@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { Card, useTheme } from "react-native-paper";
 import { useCart } from "../contexts/CartContext";
+import ENV from "../config/env";
 
 const MenuScreen = () => {
   const { colors } = useTheme();
@@ -40,7 +41,7 @@ const MenuScreen = () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch("http://192.168.1.110:3000/menu");
+        const response = await fetch(`${ENV.API_URL}/menu`);
         if (!response.ok) {
           throw new Error(`Failed to fetch menu: ${response.status}`);
         }

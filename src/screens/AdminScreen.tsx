@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Card, useTheme, Button, FAB } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
 import { useIsFocused } from "@react-navigation/native";
+import ENV from "../config/env";
 
 const STATUS_OPTIONS = [
   "pending",
@@ -23,8 +24,6 @@ const STATUS_OPTIONS = [
   "delivered",
   "cancelled",
 ];
-
-const API_BASE = "http://192.168.1.110:3000";
 
 const AdminScreen = () => {
   const { colors } = useTheme();
@@ -63,7 +62,7 @@ const AdminScreen = () => {
     try {
       setLoading(true);
       console.log("Admin fetching orders with token:", token);
-      const response = await fetch(`${API_BASE}/order/all`, {
+      const response = await fetch(`${ENV.API_URL}/order/all`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -88,7 +87,7 @@ const AdminScreen = () => {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/menu/categories`);
+      const response = await fetch(`${ENV.API_URL}/menu/categories`);
       const data = await response.json();
       console.log("Categories fetched:", data);
       setCategories(data || []);
@@ -101,7 +100,7 @@ const AdminScreen = () => {
 
   const fetchMenuItems = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/menu`);
+      const response = await fetch(`${ENV.API_URL}/menu`);
       const data = await response.json();
       console.log("Menu items fetched:", data);
       // The API returns { categories: [...], items: [...] }
@@ -138,7 +137,7 @@ const AdminScreen = () => {
   const updateStatus = async (orderId: number, status: string) => {
     if (!token) return;
     try {
-      const response = await fetch(`${API_BASE}/order/${orderId}/status`, {
+      const response = await fetch(`${ENV.API_URL}/order/${orderId}/status`, {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -163,8 +162,8 @@ const AdminScreen = () => {
 
     try {
       const url = editingCategory
-        ? `${API_BASE}/menu/categories/${editingCategory.id}`
-        : `${API_BASE}/menu/categories`;
+        ? `${ENV.API_URL}/menu/categories/${editingCategory.id}`
+        : `${ENV.API_URL}/menu/categories`;
       const method = editingCategory ? "PUT" : "POST";
 
       const response = await fetch(url, {
@@ -203,7 +202,7 @@ const AdminScreen = () => {
           onPress: async () => {
             try {
               const response = await fetch(
-                `${API_BASE}/menu/categories/${id}`,
+                `${ENV.API_URL}/menu/categories/${id}`,
                 {
                   method: "DELETE",
                   headers: { Authorization: `Bearer ${token}` },
@@ -231,8 +230,8 @@ const AdminScreen = () => {
 
     try {
       const url = editingItem
-        ? `${API_BASE}/menu/${editingItem.id}`
-        : `${API_BASE}/menu`;
+        ? `${ENV.API_URL}/menu/${editingItem.id}`
+        : `${ENV.API_URL}/menu`;
       const method = editingItem ? "PUT" : "POST";
 
       const response = await fetch(url, {
@@ -277,7 +276,7 @@ const AdminScreen = () => {
         style: "destructive",
         onPress: async () => {
           try {
-            const response = await fetch(`${API_BASE}/menu/${id}`, {
+            const response = await fetch(`${ENV.API_URL}/menu/${id}`, {
               method: "DELETE",
               headers: { Authorization: `Bearer ${token}` },
             });
@@ -409,7 +408,7 @@ const AdminScreen = () => {
                                       onPress: async () => {
                                         try {
                                           const response = await fetch(
-                                            `${API_BASE}/order/${item.id}`,
+                                            `${ENV.API_URL}/order/${item.id}`,
                                             {
                                               method: "DELETE",
                                               headers: {

@@ -10,62 +10,26 @@ import {
 import { useCart } from "../contexts/CartContext";
 import { useTheme, Card } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
+import { useNavigation } from "@react-navigation/native";
 
 const CartScreen = () => {
-  const { cart, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { cart, updateQuantity, removeFromCart } = useCart();
   const { colors } = useTheme();
   const { user } = useAuth();
+  const navigation = useNavigation();
 
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  const handleOrder = async () => {
+  const handleProceedToCheckout = () => {
     if (!user) {
       Alert.alert("Login required", "Please log in to place an order.");
       return;
     }
-    try {
-      const items = cart.map((i) => ({
-        menuItemId: parseInt(i.menuItemId),
-        quantity: i.quantity,
-      }));
-      const payload = {
-        userId: user.id,
-        items: Array.from(items), // ensure it's a proper array
-      };
-      console.log("Order payload before stringify:", payload);
-      console.log(
-        "Items type check:",
-        Array.isArray(payload.items),
-        payload.items,
-      );
-
-      const bodyString = JSON.stringify(payload);
-      console.log("Stringified body:", bodyString);
-
-      const response = await fetch("http://192.168.1.110:3000/order", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: bodyString,
-      });
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(
-          "Order failed with status:",
-          response.status,
-          "Error:",
-          errorText,
-        );
-        throw new Error(`Order failed: ${response.status}`);
-      }
-      clearCart();
-      Alert.alert("Order placed!", "Your order has been received.");
-    } catch (err: any) {
-      console.error("Order placement error:", err);
-      Alert.alert("Error", err.message || "Failed to place order");
+    if (cart.length === 0) {
+      Alert.alert("Empty cart", "Please add items to your cart first.");
+      return;
     }
+    navigation.navigate("Checkout" as never);
   };
 
   return (
@@ -123,13 +87,13 @@ const CartScreen = () => {
       </Text>
       <TouchableOpacity
         style={[styles.orderBtn, { backgroundColor: colors.primary }]}
-        onPress={handleOrder}
+        onPress={handleProceedToCheckout}
         disabled={cart.length === 0}
       >
         <Text
           style={{ color: colors.onPrimary, fontWeight: "bold", fontSize: 18 }}
         >
-          Place Order
+          Proceed to Checkout
         </Text>
       </TouchableOpacity>
     </View>

@@ -13,6 +13,7 @@ import ProfileScreen from "../screens/ProfileScreen";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import CartScreen from "../screens/CartScreen";
 import AdminScreen from "../screens/AdminScreen";
+import CheckoutScreen from "../screens/CheckoutScreen";
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -48,6 +49,27 @@ function MainTabs() {
   );
 }
 
+function MainStack() {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen 
+        name="MainTabs" 
+        component={MainTabs} 
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="Checkout" 
+        component={CheckoutScreen}
+        options={{ 
+          title: "Checkout",
+          headerStyle: { backgroundColor: "#231a13" },
+          headerTintColor: "#d4af37",
+        }}
+      />
+    </Stack.Navigator>
+  );
+}
+
 const RootNavigator = () => {
   const { token, isLoading } = useAuth();
 
@@ -66,7 +88,7 @@ const RootNavigator = () => {
   return (
     <Stack.Navigator key={navigationKey} screenOptions={{ headerShown: false }}>
       {token ? (
-        <Stack.Screen name="Main" component={MainTabs} />
+        <Stack.Screen name="Main" component={MainStack} />
       ) : (
         <>
           <Stack.Screen name="Login" component={LoginScreen} />
