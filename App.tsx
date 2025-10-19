@@ -1,4 +1,5 @@
 import * as React from "react";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { PaperProvider } from "react-native-paper";
 import { NavigationContainer } from "@react-navigation/native";
 import { cozyTheme } from "./src/theme/cozyTheme";
@@ -34,16 +35,18 @@ const linking = {
 
 export default function App() {
   return (
-    <StripeProvider publishableKey={ENV.STRIPE_PUBLISHABLE_KEY}>
-      <PaperProvider theme={cozyTheme}>
-        <AuthProvider>
-          <CartProvider>
-            <NavigationContainer linking={linking}>
-              <RootNavigator />
-            </NavigationContainer>
-          </CartProvider>
-        </AuthProvider>
-      </PaperProvider>
-    </StripeProvider>
+    <SafeAreaProvider>
+      <StripeProvider publishableKey={ENV.STRIPE_PUBLISHABLE_KEY}>
+        <PaperProvider theme={cozyTheme}>
+          <AuthProvider>
+            <CartProvider>
+              <NavigationContainer linking={linking}>
+                <RootNavigator />
+              </NavigationContainer>
+            </CartProvider>
+          </AuthProvider>
+        </PaperProvider>
+      </StripeProvider>
+    </SafeAreaProvider>
   );
 }

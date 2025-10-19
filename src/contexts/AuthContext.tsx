@@ -117,7 +117,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = await apiClient.post<AuthResponse>(
         "/auth/login",
-        credentials,
+        credentials
       );
       console.log("[AuthContext] login response:", response.data);
       if (response.data) {
@@ -145,7 +145,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = await apiClient.post<AuthResponse>(
         "/auth/register",
-        credentials,
+        credentials
       );
       console.log("[AuthContext] register response:", response.data);
       if (response.data) {
@@ -177,7 +177,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = await apiClient.post<AuthResponse>(
         "/auth/google",
-        googleUser,
+        googleUser
       );
       console.log("[AuthContext] Google sign-in response:", response.data);
       if (response.data) {
@@ -195,7 +195,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setIsLoading(false);
       console.log(
-        "[AuthContext] Google sign-in finished, isLoading set to false",
+        "[AuthContext] Google sign-in finished, isLoading set to false"
       );
     }
   };

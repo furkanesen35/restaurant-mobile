@@ -50,7 +50,7 @@ const OrdersScreen = () => {
         setRefreshing(false);
       }
     },
-    [user, token],
+    [user, token]
   );
 
   const cancelOrder = async (orderId: string | number) => {
@@ -78,7 +78,7 @@ const OrdersScreen = () => {
           style: "destructive",
           onPress: () => cancelOrder(order.id),
         },
-      ],
+      ]
     );
   };
 
@@ -94,10 +94,10 @@ const OrdersScreen = () => {
 
   // Split orders into current and history
   const currentOrders = orders.filter(
-    (o) => o.status !== "delivered" && o.status !== "cancelled",
+    (o) => o.status !== "delivered" && o.status !== "cancelled"
   );
   const orderHistory = orders.filter(
-    (o) => o.status === "delivered" || o.status === "cancelled",
+    (o) => o.status === "delivered" || o.status === "cancelled"
   );
 
   const OrderCard = React.memo(({ order }: { order: Order }) => {
@@ -107,7 +107,7 @@ const OrdersScreen = () => {
         ? order.items.reduce(
             (sum: number, oi: OrderItem) =>
               sum + (oi.menuItem?.price || 0) * (oi.quantity || 1),
-            0,
+            0
           )
         : order.total || 0;
 

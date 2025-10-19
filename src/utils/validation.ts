@@ -5,7 +5,7 @@ export const validateEmail = (email: string): boolean => {
 };
 
 export const validatePassword = (
-  password: string,
+  password: string
 ): {
   isValid: boolean;
   errors: string[];
@@ -39,7 +39,7 @@ export const validatePassword = (
 };
 
 export const validateName = (
-  name: string,
+  name: string
 ): {
   isValid: boolean;
   error?: string;
@@ -100,7 +100,7 @@ export const validateForm = (fields: {
 // Format currency
 export const formatCurrency = (
   amount: number,
-  currency: string = "€",
+  currency: string = "€"
 ): string => {
   return `${currency}${amount.toFixed(2)}`;
 };
@@ -144,7 +144,7 @@ export const formatRelativeTime = (dateString: string): string => {
 // Debounce function for search inputs
 export const debounce = <T extends (...args: any[]) => any>(
   func: T,
-  delay: number,
+  delay: number
 ): ((...args: Parameters<T>) => void) => {
   let timeoutId: NodeJS.Timeout;
 

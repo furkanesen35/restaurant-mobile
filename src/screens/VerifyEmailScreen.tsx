@@ -45,14 +45,14 @@ const VerifyEmailScreen: React.FC<Props> = ({ route, navigation }) => {
         Alert.alert(
           "Error",
           error.response?.data?.error ||
-            "Failed to verify email. Please try again.",
+            "Failed to verify email. Please try again."
         );
       } finally {
         setLoading(false);
         setAutoVerifying(false);
       }
     },
-    [token, navigation],
+    [token, navigation]
   );
 
   useEffect(() => {

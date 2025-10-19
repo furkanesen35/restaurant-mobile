@@ -1,11 +1,13 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Animated,
+  LayoutAnimation,
+  Platform,
+  UIManager,
 } from "react-native";
 import { Card, useTheme } from "react-native-paper";
 import { useCart } from "../contexts/CartContext";
@@ -34,9 +36,17 @@ const MenuScreen = () => {
     }>
   >([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [animatedHeights] = useState<{ [key: string]: Animated.Value }>({});
 
-  React.useEffect(() => {
+  useEffect(() => {
+    if (
+      Platform.OS === "android" &&
+      UIManager.setLayoutAnimationEnabledExperimental
+    ) {
+      UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+  }, []);
+
+  useEffect(() => {
     const fetchMenu = async () => {
       try {
         setLoading(true);
@@ -100,30 +110,13 @@ const MenuScreen = () => {
           },
         ];
 
-  // Helper to get or create Animated.Value for a category
-  const getAnimatedHeight = (categoryId: string) => {
-    if (!animatedHeights[categoryId]) {
-      animatedHeights[categoryId] = new Animated.Value(0);
-    }
-    return animatedHeights[categoryId];
-  };
-
-  const toggleCategory = (categoryId: string, itemCount: number) => {
+  const toggleCategory = (categoryId: string) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     const isExpanding = !expandedCategories.includes(categoryId);
     const newExpanded = isExpanding
       ? [...expandedCategories, categoryId]
       : expandedCategories.filter((id) => id !== categoryId);
     setExpandedCategories(newExpanded);
-
-    // More accurate height calculation: card height + margins
-    const cardHeight = 100; // Card + margin
-    const targetHeight = isExpanding ? itemCount * cardHeight : 0;
-
-    Animated.timing(getAnimatedHeight(categoryId), {
-      toValue: targetHeight,
-      duration: 300, // Slower for drawer effect
-      useNativeDriver: false,
-    }).start();
   };
 
   if (loading) {
@@ -173,38 +166,39 @@ const MenuScreen = () => {
         </View>
       ) : (
         <>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.categoryBar}
-          >
-            {menuCategories.map((category) => (
-              <TouchableOpacity
-                key={category.id}
-                style={[
-                  styles.categoryButton,
-                  selectedCategory === category.id && {
-                    backgroundColor: colors.primary,
-                  },
-                ]}
-                onPress={() => setSelectedCategory(category.id)}
-              >
-                <Text
-                  style={{
-                    color:
-                      selectedCategory === category.id
-                        ? colors.onPrimary
-                        : "#fffbe8", // Lighter for inactive
-                    fontWeight:
-                      selectedCategory === category.id ? "bold" : "normal",
-                    opacity: selectedCategory === category.id ? 1 : 0.8,
-                  }}
+          <View style={styles.categoryBarContainer}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.categoryBarContent}
+            >
+              {menuCategories.map((category) => (
+                <TouchableOpacity
+                  key={category.id}
+                  style={[
+                    styles.categoryButton,
+                    selectedCategory === category.id && {
+                      backgroundColor: colors.primary,
+                    },
+                  ]}
+                  onPress={() => setSelectedCategory(category.id)}
                 >
-                  {category.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+                  <Text
+                    style={[
+                      styles.categoryButtonText,
+                      selectedCategory === category.id && {
+                        color: colors.onPrimary,
+                        fontWeight: "700",
+                        opacity: 1,
+                      },
+                    ]}
+                  >
+                    {category.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
 
           <ScrollView
             contentContainerStyle={styles.menuList}
@@ -221,9 +215,7 @@ const MenuScreen = () => {
               >
                 {selectedCategory === "all" && (
                   <TouchableOpacity
-                    onPress={() =>
-                      category?.id && toggleCategory(category.id, items.length)
-                    }
+                    onPress={() => category?.id && toggleCategory(category.id)}
                   >
                     <View
                       style={{ flexDirection: "row", alignItems: "center" }}
@@ -245,55 +237,9 @@ const MenuScreen = () => {
                   </TouchableOpacity>
                 )}
 
-                {selectedCategory !== "all" ? (
-                  // When specific category is selected, show items directly
-                  items.map((item) => (
-                    <Card key={item.id} style={styles.menuCard}>
-                      <Card.Title
-                        title={item.name}
-                        subtitle={`€${item.price.toFixed(2)}`}
-                      />
-                      <Card.Content>
-                        <Text style={{ color: colors.onBackground }}>
-                          {item.description}
-                        </Text>
-                        <TouchableOpacity
-                          style={{
-                            marginTop: 8,
-                            backgroundColor: colors.primary,
-                            borderRadius: 8,
-                            padding: 8,
-                            alignSelf: "flex-start",
-                          }}
-                          onPress={() =>
-                            addToCart({
-                              menuItemId: item.id,
-                              name: item.name,
-                              price: item.price,
-                            })
-                          }
-                        >
-                          <Text
-                            style={{
-                              color: colors.onPrimary,
-                              fontWeight: "bold",
-                            }}
-                          >
-                            Add to Cart
-                          </Text>
-                        </TouchableOpacity>
-                      </Card.Content>
-                    </Card>
-                  ))
-                ) : (
-                  // When "all" is selected, show collapsible items
-                  <Animated.View
-                    style={{
-                      overflow: "hidden",
-                      height: category?.id ? getAnimatedHeight(category.id) : 0,
-                    }}
-                  >
-                    {items.map((item) => (
+                {selectedCategory !== "all"
+                  ? // When specific category is selected, show items directly
+                    items.map((item) => (
                       <Card key={item.id} style={styles.menuCard}>
                         <Card.Title
                           title={item.name}
@@ -330,9 +276,49 @@ const MenuScreen = () => {
                           </TouchableOpacity>
                         </Card.Content>
                       </Card>
-                    ))}
-                  </Animated.View>
-                )}
+                    ))
+                  : expandedCategories.includes(category?.id ?? "") && (
+                      <View>
+                        {items.map((item) => (
+                          <Card key={item.id} style={styles.menuCard}>
+                            <Card.Title
+                              title={item.name}
+                              subtitle={`€${item.price.toFixed(2)}`}
+                            />
+                            <Card.Content>
+                              <Text style={{ color: colors.onBackground }}>
+                                {item.description}
+                              </Text>
+                              <TouchableOpacity
+                                style={{
+                                  marginTop: 8,
+                                  backgroundColor: colors.primary,
+                                  borderRadius: 8,
+                                  padding: 8,
+                                  alignSelf: "flex-start",
+                                }}
+                                onPress={() =>
+                                  addToCart({
+                                    menuItemId: item.id,
+                                    name: item.name,
+                                    price: item.price,
+                                  })
+                                }
+                              >
+                                <Text
+                                  style={{
+                                    color: colors.onPrimary,
+                                    fontWeight: "bold",
+                                  }}
+                                >
+                                  Add to Cart
+                                </Text>
+                              </TouchableOpacity>
+                            </Card.Content>
+                          </Card>
+                        ))}
+                      </View>
+                    )}
               </View>
             ))}
           </ScrollView>
@@ -361,18 +347,39 @@ const styles = StyleSheet.create({
   },
   categoryBar: {
     flexGrow: 0,
-    maxHeight: 56,
     marginBottom: 12,
     paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  categoryBarContainer: {
+    height: 60,
+    justifyContent: "center",
+    paddingHorizontal: 8,
+    marginBottom: 12,
+  },
+  categoryBarContent: {
+    alignItems: "center",
+    paddingVertical: 4,
+    paddingRight: 8,
   },
   categoryButton: {
     paddingHorizontal: 18,
-    paddingVertical: 10,
+    height: 44,
     borderRadius: 22,
     marginRight: 10,
     backgroundColor: "#2d2117",
     borderWidth: 2,
     borderColor: "#fffbe8", // Lighter border for visibility
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  categoryButtonText: {
+    fontSize: 16,
+    color: "#fffbe8",
+    letterSpacing: 0.5,
+    fontWeight: "500",
+    opacity: 0.8,
+    lineHeight: 20,
   },
   categorySection: {
     marginBottom: 32,

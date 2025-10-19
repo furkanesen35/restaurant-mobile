@@ -27,7 +27,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         return prev.map((i) =>
           i.menuItemId === item.menuItemId
             ? { ...i, quantity: i.quantity + 1 }
-            : i,
+            : i
         );
       }
       return [...prev, { ...item, quantity: 1 }];
@@ -42,7 +42,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setCart((prev) =>
       prev
         .map((i) => (i.menuItemId === menuItemId ? { ...i, quantity } : i))
-        .filter((i) => i.quantity > 0),
+        .filter((i) => i.quantity > 0)
     );
   };
 

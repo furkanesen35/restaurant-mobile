@@ -41,7 +41,7 @@ const ReservationsScreen = () => {
     }
     Alert.alert(
       "Reservation Confirmed!",
-      `Table for ${partySize} on ${selectedDate.toDateString()} at ${selectedTime}. We'll see you soon, ${customerName}!`,
+      `Table for ${partySize} on ${selectedDate.toDateString()} at ${selectedTime}. We'll see you soon, ${customerName}!`
     );
   };
 

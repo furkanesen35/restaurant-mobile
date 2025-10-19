@@ -52,15 +52,15 @@ function MainTabs() {
 function MainStack() {
   return (
     <Stack.Navigator>
-      <Stack.Screen 
-        name="MainTabs" 
-        component={MainTabs} 
+      <Stack.Screen
+        name="MainTabs"
+        component={MainTabs}
         options={{ headerShown: false }}
       />
-      <Stack.Screen 
-        name="Checkout" 
+      <Stack.Screen
+        name="Checkout"
         component={CheckoutScreen}
-        options={{ 
+        options={{
           title: "Checkout",
           headerStyle: { backgroundColor: "#231a13" },
           headerTintColor: "#d4af37",
@@ -77,7 +77,7 @@ const RootNavigator = () => {
     "RootNavigator render - token:",
     !!token,
     "isLoading:",
-    isLoading,
+    isLoading
   );
 
   if (isLoading) return null; // Optionally show splash/loading

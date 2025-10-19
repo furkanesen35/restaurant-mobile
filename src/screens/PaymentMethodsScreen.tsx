@@ -147,9 +147,7 @@ const PaymentMethodsScreen = () => {
               )}
             </View>
             <Text style={styles.cardInfo}>{item.cardHolder}</Text>
-            <Text style={styles.cardNumber}>
-                 {item.cardNumber?.slice(-4)}
-            </Text>
+            <Text style={styles.cardNumber}>{item.cardNumber?.slice(-4)}</Text>
             <Text style={styles.cardExpiry}>Expires: {item.expiry}</Text>
             <TouchableOpacity
               style={styles.deleteButton}

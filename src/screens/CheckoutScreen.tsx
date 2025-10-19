@@ -12,6 +12,7 @@ import {
   TextInput,
   Switch,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../contexts/AuthContext";
 import { useCart } from "../contexts/CartContext";
 import { useTheme } from "react-native-paper";
@@ -53,9 +54,11 @@ const CheckoutScreen = () => {
   const [cardComplete, setCardComplete] = useState(false);
 
   const [addresses, setAddresses] = useState<Address[]>([]);
-  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(
+    null
+  );
   const [loadingAddresses, setLoadingAddresses] = useState(true);
-  
+
   // New address form state
   const [newAddressForm, setNewAddressForm] = useState({
     label: "",
@@ -98,7 +101,7 @@ const CheckoutScreen = () => {
         setLoadingMethods(false);
       }
     };
-    
+
     fetchPaymentMethods();
   }, [token]);
 
@@ -124,7 +127,7 @@ const CheckoutScreen = () => {
         setLoadingAddresses(false);
       }
     };
-    
+
     fetchAddresses();
   }, [token]);
 
@@ -142,8 +145,13 @@ const CheckoutScreen = () => {
 
     if (selectedAddressId === -1) {
       // Validate new address form
-      if (!newAddressForm.label || !newAddressForm.street || !newAddressForm.city || 
-          !newAddressForm.postalCode || !newAddressForm.phone) {
+      if (
+        !newAddressForm.label ||
+        !newAddressForm.street ||
+        !newAddressForm.city ||
+        !newAddressForm.postalCode ||
+        !newAddressForm.phone
+      ) {
         Alert.alert("Error", "Please fill in all address fields.");
         return;
       }
@@ -207,7 +215,7 @@ const CheckoutScreen = () => {
 
       // Step 2: Confirm payment with Stripe
       let paymentResult;
-      
+
       if (selectedMethodId === -1) {
         // Using new card
         paymentResult = await confirmPayment(clientSecret, {
@@ -215,7 +223,9 @@ const CheckoutScreen = () => {
         });
       } else {
         // Using saved payment method
-        const selectedMethod = savedMethods.find((m) => m.id === selectedMethodId);
+        const selectedMethod = savedMethods.find(
+          (m) => m.id === selectedMethodId
+        );
         if (!selectedMethod) {
           throw new Error("Selected payment method not found");
         }
@@ -268,13 +278,13 @@ const CheckoutScreen = () => {
               navigation.reset({
                 index: 0,
                 routes: [
-                  { 
-                    name: 'MainTabs' as never,
+                  {
+                    name: "MainTabs" as never,
                     state: {
-                      routes: [{ name: 'Orders' }],
+                      routes: [{ name: "Orders" }],
                       index: 0,
-                    }
-                  }
+                    },
+                  },
                 ],
               });
             },
@@ -306,301 +316,333 @@ const CheckoutScreen = () => {
   }
 
   return (
-    <KeyboardAvoidingView 
-      style={{ flex: 1 }} 
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={100}
+    // SafeAreaView prevents content from going under status bar and notches
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: "#231a13" }}
+      edges={["top", "bottom"]}
     >
-      <ScrollView 
-        style={[styles.container, { backgroundColor: "#231a13" }]}
-        keyboardShouldPersistTaps="handled"
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={100}
       >
-      <Text style={[styles.title, { color: colors.primary }]}>Checkout</Text>
-
-      {/* Order Summary */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.primary }]}>
-          Order Summary
-        </Text>
-        {cart.map((item) => (
-          <View key={item.menuItemId} style={styles.orderItem}>
-            <Text style={{ color: colors.onBackground }}>
-              {item.name} x {item.quantity}
-            </Text>
-            <Text style={{ color: colors.onBackground }}>
-              €{(item.price * item.quantity).toFixed(2)}
-            </Text>
-          </View>
-        ))}
-        <View style={styles.totalRow}>
-          <Text style={[styles.totalText, { color: colors.primary }]}>
-            Total:
-          </Text>
-          <Text style={[styles.totalText, { color: colors.primary }]}>
-            €{total.toFixed(2)}
-          </Text>
-        </View>
-      </View>
-
-      {/* Delivery Address */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.primary }]}>
-          Delivery Address
-        </Text>
-        
-        {/* Saved Addresses */}
-        {addresses.map((address) => (
-          <TouchableOpacity
-            key={address.id}
-            style={[
-              styles.optionCard,
-              selectedAddressId === address.id && styles.selectedCard,
-              selectedAddressId === address.id ? { borderWidth: 2, borderStyle: 'solid' } : { borderWidth: 2, borderStyle: 'dashed' },
-              { backgroundColor: "#2d2117", borderColor: colors.primary },
-            ]}
-            onPress={() => setSelectedAddressId(address.id)}
-          >
-            <View style={styles.optionInfo}>
-              <Text style={[styles.optionLabel, { color: colors.primary }]}>
-                {address.label}
-              </Text>
-              <Text style={{ color: colors.onBackground }}>
-                {address.street}
-              </Text>
-              <Text style={{ color: colors.onBackground }}>
-                {address.city}, {address.postalCode}
-              </Text>
-              <Text style={{ color: colors.onBackground }}>
-                📞 {address.phone}
-              </Text>
-            </View>
-            {selectedAddressId === address.id && (
-              <Text style={{ color: colors.primary, fontSize: 20 }}>✓</Text>
-            )}
-          </TouchableOpacity>
-        ))}
-
-        {/* Add New Address Option */}
-        <TouchableOpacity
-          style={[
-            styles.optionCard,
-            selectedAddressId === -1 && styles.selectedCard,
-            selectedAddressId === -1 ? { borderWidth: 2, borderStyle: 'solid' } : { borderWidth: 2, borderStyle: 'dashed' },
-            { backgroundColor: "#2d2117", borderColor: colors.primary },
-          ]}
-          onPress={() => setSelectedAddressId(-1)}
+        <ScrollView
+          style={[styles.container, { backgroundColor: "#231a13" }]}
+          keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.optionInfo}>
-            <Text style={[styles.optionLabel, { color: colors.primary }]}>
-              + Add New Address
-            </Text>
-          </View>
-          {selectedAddressId === -1 && (
-            <Text style={{ color: colors.primary, fontSize: 20 }}>✓</Text>
-          )}
-        </TouchableOpacity>
+          <Text style={[styles.title, { color: colors.primary }]}>
+            Checkout
+          </Text>
 
-        {/* New Address Form (shown when -1 is selected) */}
-        {selectedAddressId === -1 && (
-          <View style={styles.formSection}>
-            <TextInput
-              placeholder="Label (e.g., Home, Work)"
-              value={newAddressForm.label}
-              onChangeText={(text) => setNewAddressForm({ ...newAddressForm, label: text })}
-              style={styles.input}
-              placeholderTextColor="#999"
-            />
-            <TextInput
-              placeholder="Street Address"
-              value={newAddressForm.street}
-              onChangeText={(text) => setNewAddressForm({ ...newAddressForm, street: text })}
-              style={styles.input}
-              placeholderTextColor="#999"
-            />
-            <TextInput
-              placeholder="City"
-              value={newAddressForm.city}
-              onChangeText={(text) => setNewAddressForm({ ...newAddressForm, city: text })}
-              style={styles.input}
-              placeholderTextColor="#999"
-            />
-            <TextInput
-              placeholder="Postal Code"
-              value={newAddressForm.postalCode}
-              onChangeText={(text) => setNewAddressForm({ ...newAddressForm, postalCode: text })}
-              style={styles.input}
-              placeholderTextColor="#999"
-            />
-            <TextInput
-              placeholder="Phone"
-              value={newAddressForm.phone}
-              onChangeText={(text) => setNewAddressForm({ ...newAddressForm, phone: text })}
-              style={styles.input}
-              placeholderTextColor="#999"
-              keyboardType="phone-pad"
-            />
-            
-            {/* Save to Profile Toggle */}
-            <View style={styles.toggleContainer}>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.toggleLabel, { color: colors.primary }]}>
-                  Save this address to my profile
+          {/* Order Summary */}
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+              Order Summary
+            </Text>
+            {cart.map((item) => (
+              <View key={item.menuItemId} style={styles.orderItem}>
+                <Text style={{ color: colors.onBackground }}>
+                  {item.name} x {item.quantity}
                 </Text>
-                <Text style={[styles.toggleSubtext, { color: "#999" }]}>
-                  You can use it for future orders
+                <Text style={{ color: colors.onBackground }}>
+                  €{(item.price * item.quantity).toFixed(2)}
                 </Text>
               </View>
-              <Switch
-                value={saveAddressToProfile}
-                onValueChange={setSaveAddressToProfile}
-                trackColor={{ false: "#767577", true: colors.primary }}
-                thumbColor={saveAddressToProfile ? "#fff" : "#f4f3f4"}
-              />
-            </View>
-          </View>
-        )}
-      </View>
-
-      {/* Payment Methods */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.primary }]}>
-          Payment Method
-        </Text>
-
-        {/* Saved Payment Methods */}
-        {savedMethods.map((method) => (
-          <TouchableOpacity
-            key={method.id}
-            style={[
-              styles.optionCard,
-              selectedMethodId === method.id && styles.selectedCard,
-              selectedMethodId === method.id ? { borderWidth: 2, borderStyle: 'solid' } : { borderWidth: 2, borderStyle: 'dashed' },
-              { backgroundColor: "#2d2117", borderColor: colors.primary },
-            ]}
-            onPress={() => setSelectedMethodId(method.id)}
-          >
-            <View style={styles.optionInfo}>
-              <Text style={[styles.optionLabel, { color: colors.onBackground }]}>
-                {method.type === "Card"
-                  ? `${method.brand || ""} Card`
-                  : "PayPal"}
+            ))}
+            <View style={styles.totalRow}>
+              <Text style={[styles.totalText, { color: colors.primary }]}>
+                Total:
               </Text>
-              {method.type === "Card" ? (
-                <Text style={{ color: colors.onBackground }}>
-                  **** **** **** {method.cardNumber?.slice(-4)}
-                </Text>
-              ) : (
-                <Text style={{ color: colors.onBackground }}>
-                  {method.paypalEmail}
-                </Text>
-              )}
-              {method.isDefault && (
-                <Text style={{ color: colors.primary, fontSize: 12 }}>
-                  Default
-                </Text>
-              )}
+              <Text style={[styles.totalText, { color: colors.primary }]}>
+                €{total.toFixed(2)}
+              </Text>
             </View>
-            {selectedMethodId === method.id && (
-              <Text style={{ color: colors.primary, fontSize: 20 }}>✓</Text>
-            )}
-          </TouchableOpacity>
-        ))}
-
-        {/* Add New Card Option */}
-        <TouchableOpacity
-          style={[
-            styles.optionCard,
-            selectedMethodId === -1 && styles.selectedCard,
-            selectedMethodId === -1 ? { borderWidth: 2, borderStyle: 'solid' } : { borderWidth: 2, borderStyle: 'dashed' },
-            { backgroundColor: "#2d2117", borderColor: colors.primary },
-          ]}
-          onPress={() => setSelectedMethodId(-1)}
-        >
-          <View style={styles.optionInfo}>
-            <Text style={[styles.optionLabel, { color: colors.primary }]}>
-              + Add New Card
-            </Text>
           </View>
-          {selectedMethodId === -1 && (
-            <Text style={{ color: colors.primary, fontSize: 20 }}>✓</Text>
-          )}
-        </TouchableOpacity>
 
-        {/* New Card Form (shown when -1 is selected) */}
-        {selectedMethodId === -1 && (
-          <View style={styles.formSection}>
-            <Text style={{ color: colors.onBackground, marginBottom: 8 }}>
-              Enter card details:
+          {/* Delivery Address */}
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+              Delivery Address
             </Text>
-            <View style={styles.cardFieldWrapper}>
-              <CardField
-                postalCodeEnabled={false}
-                placeholders={{
-                  number: "4242 4242 4242 4242",
-                }}
-                cardStyle={{
-                  backgroundColor: "#FFFFFF",
-                  textColor: "#000000",
-                  placeholderColor: "#999999",
-                }}
-                style={styles.cardField}
-                onCardChange={(cardDetails) => {
-                  setCardComplete(cardDetails.complete);
-                }}
-              />
-            </View>
-            <Text style={{ color: "#888", fontSize: 12, marginTop: 8 }}>
-              Test card: 4242 4242 4242 4242, any future date, any CVC
-            </Text>
-            
-            {/* Save to Profile Toggle */}
-            <View style={styles.toggleContainer}>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.toggleLabel, { color: colors.primary }]}>
-                  Save this card to my profile
-                </Text>
-                <Text style={[styles.toggleSubtext, { color: "#999" }]}>
-                  Securely save for faster checkout
+
+            {/* Saved Addresses */}
+            {addresses.map((address) => (
+              <TouchableOpacity
+                key={address.id}
+                style={[
+                  styles.optionCard,
+                  selectedAddressId === address.id && styles.selectedCard,
+                  selectedAddressId === address.id
+                    ? { borderWidth: 2, borderStyle: "solid" }
+                    : { borderWidth: 2, borderStyle: "dashed" },
+                  { backgroundColor: "#2d2117", borderColor: colors.primary },
+                ]}
+                onPress={() => setSelectedAddressId(address.id)}
+              >
+                <View style={styles.optionInfo}>
+                  <Text style={[styles.optionLabel, { color: colors.primary }]}>
+                    {address.label}
+                  </Text>
+                  <Text style={{ color: colors.onBackground }}>
+                    {address.street}
+                  </Text>
+                  <Text style={{ color: colors.onBackground }}>
+                    {address.city}, {address.postalCode}
+                  </Text>
+                  <Text style={{ color: colors.onBackground }}>
+                    📞 {address.phone}
+                  </Text>
+                </View>
+                {selectedAddressId === address.id && (
+                  <Text style={{ color: colors.primary, fontSize: 20 }}>✓</Text>
+                )}
+              </TouchableOpacity>
+            ))}
+
+            {/* Add New Address Option */}
+            <TouchableOpacity
+              style={[
+                styles.optionCard,
+                selectedAddressId === -1 && styles.selectedCard,
+                selectedAddressId === -1
+                  ? { borderWidth: 2, borderStyle: "solid" }
+                  : { borderWidth: 2, borderStyle: "dashed" },
+                { backgroundColor: "#2d2117", borderColor: colors.primary },
+              ]}
+              onPress={() => setSelectedAddressId(-1)}
+            >
+              <View style={styles.optionInfo}>
+                <Text style={[styles.optionLabel, { color: colors.primary }]}>
+                  + Add New Address
                 </Text>
               </View>
-              <Switch
-                value={savePaymentToProfile}
-                onValueChange={setSavePaymentToProfile}
-                trackColor={{ false: "#767577", true: colors.primary }}
-                thumbColor={savePaymentToProfile ? "#fff" : "#f4f3f4"}
-              />
-            </View>
-          </View>
-        )}
-      </View>
+              {selectedAddressId === -1 && (
+                <Text style={{ color: colors.primary, fontSize: 20 }}>✓</Text>
+              )}
+            </TouchableOpacity>
 
-      {/* Place Order Button */}
-      <TouchableOpacity
-        activeOpacity={0.7}
-        style={[
-          styles.placeOrderButton,
-          { backgroundColor: colors.primary },
-          loading && styles.buttonDisabled,
-        ]}
-        onPress={handlePlaceOrder}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color={colors.onPrimary} />
-        ) : (
-          <Text
-            style={{
-              color: colors.onPrimary,
-              fontSize: 18,
-              fontWeight: "bold",
-            }}
+            {/* New Address Form (shown when -1 is selected) */}
+            {selectedAddressId === -1 && (
+              <View style={styles.formSection}>
+                <TextInput
+                  placeholder="Label (e.g., Home, Work)"
+                  value={newAddressForm.label}
+                  onChangeText={(text) =>
+                    setNewAddressForm({ ...newAddressForm, label: text })
+                  }
+                  style={styles.input}
+                  placeholderTextColor="#999"
+                />
+                <TextInput
+                  placeholder="Street Address"
+                  value={newAddressForm.street}
+                  onChangeText={(text) =>
+                    setNewAddressForm({ ...newAddressForm, street: text })
+                  }
+                  style={styles.input}
+                  placeholderTextColor="#999"
+                />
+                <TextInput
+                  placeholder="City"
+                  value={newAddressForm.city}
+                  onChangeText={(text) =>
+                    setNewAddressForm({ ...newAddressForm, city: text })
+                  }
+                  style={styles.input}
+                  placeholderTextColor="#999"
+                />
+                <TextInput
+                  placeholder="Postal Code"
+                  value={newAddressForm.postalCode}
+                  onChangeText={(text) =>
+                    setNewAddressForm({ ...newAddressForm, postalCode: text })
+                  }
+                  style={styles.input}
+                  placeholderTextColor="#999"
+                />
+                <TextInput
+                  placeholder="Phone"
+                  value={newAddressForm.phone}
+                  onChangeText={(text) =>
+                    setNewAddressForm({ ...newAddressForm, phone: text })
+                  }
+                  style={styles.input}
+                  placeholderTextColor="#999"
+                  keyboardType="phone-pad"
+                />
+
+                {/* Save to Profile Toggle */}
+                <View style={styles.toggleContainer}>
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={[styles.toggleLabel, { color: colors.primary }]}
+                    >
+                      Save this address to my profile
+                    </Text>
+                    <Text style={[styles.toggleSubtext, { color: "#999" }]}>
+                      You can use it for future orders
+                    </Text>
+                  </View>
+                  <Switch
+                    value={saveAddressToProfile}
+                    onValueChange={setSaveAddressToProfile}
+                    trackColor={{ false: "#767577", true: colors.primary }}
+                    thumbColor={saveAddressToProfile ? "#fff" : "#f4f3f4"}
+                  />
+                </View>
+              </View>
+            )}
+          </View>
+
+          {/* Payment Methods */}
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.primary }]}>
+              Payment Method
+            </Text>
+
+            {/* Saved Payment Methods */}
+            {savedMethods.map((method) => (
+              <TouchableOpacity
+                key={method.id}
+                style={[
+                  styles.optionCard,
+                  selectedMethodId === method.id && styles.selectedCard,
+                  selectedMethodId === method.id
+                    ? { borderWidth: 2, borderStyle: "solid" }
+                    : { borderWidth: 2, borderStyle: "dashed" },
+                  { backgroundColor: "#2d2117", borderColor: colors.primary },
+                ]}
+                onPress={() => setSelectedMethodId(method.id)}
+              >
+                <View style={styles.optionInfo}>
+                  <Text
+                    style={[styles.optionLabel, { color: colors.onBackground }]}
+                  >
+                    {method.type === "Card"
+                      ? `${method.brand || ""} Card`
+                      : "PayPal"}
+                  </Text>
+                  {method.type === "Card" ? (
+                    <Text style={{ color: colors.onBackground }}>
+                      **** **** **** {method.cardNumber?.slice(-4)}
+                    </Text>
+                  ) : (
+                    <Text style={{ color: colors.onBackground }}>
+                      {method.paypalEmail}
+                    </Text>
+                  )}
+                  {method.isDefault && (
+                    <Text style={{ color: colors.primary, fontSize: 12 }}>
+                      Default
+                    </Text>
+                  )}
+                </View>
+                {selectedMethodId === method.id && (
+                  <Text style={{ color: colors.primary, fontSize: 20 }}>✓</Text>
+                )}
+              </TouchableOpacity>
+            ))}
+
+            {/* Add New Card Option */}
+            <TouchableOpacity
+              style={[
+                styles.optionCard,
+                selectedMethodId === -1 && styles.selectedCard,
+                selectedMethodId === -1
+                  ? { borderWidth: 2, borderStyle: "solid" }
+                  : { borderWidth: 2, borderStyle: "dashed" },
+                { backgroundColor: "#2d2117", borderColor: colors.primary },
+              ]}
+              onPress={() => setSelectedMethodId(-1)}
+            >
+              <View style={styles.optionInfo}>
+                <Text style={[styles.optionLabel, { color: colors.primary }]}>
+                  + Add New Card
+                </Text>
+              </View>
+              {selectedMethodId === -1 && (
+                <Text style={{ color: colors.primary, fontSize: 20 }}>✓</Text>
+              )}
+            </TouchableOpacity>
+
+            {/* New Card Form (shown when -1 is selected) */}
+            {selectedMethodId === -1 && (
+              <View style={styles.formSection}>
+                <Text style={{ color: colors.onBackground, marginBottom: 8 }}>
+                  Enter card details:
+                </Text>
+                <View style={styles.cardFieldWrapper}>
+                  <CardField
+                    postalCodeEnabled={false}
+                    placeholders={{
+                      number: "4242 4242 4242 4242",
+                    }}
+                    cardStyle={{
+                      backgroundColor: "#FFFFFF",
+                      textColor: "#000000",
+                      placeholderColor: "#999999",
+                    }}
+                    style={styles.cardField}
+                    onCardChange={(cardDetails) => {
+                      setCardComplete(cardDetails.complete);
+                    }}
+                  />
+                </View>
+                <Text style={{ color: "#888", fontSize: 12, marginTop: 8 }}>
+                  Test card: 4242 4242 4242 4242, any future date, any CVC
+                </Text>
+
+                {/* Save to Profile Toggle */}
+                <View style={styles.toggleContainer}>
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={[styles.toggleLabel, { color: colors.primary }]}
+                    >
+                      Save this card to my profile
+                    </Text>
+                    <Text style={[styles.toggleSubtext, { color: "#999" }]}>
+                      Securely save for faster checkout
+                    </Text>
+                  </View>
+                  <Switch
+                    value={savePaymentToProfile}
+                    onValueChange={setSavePaymentToProfile}
+                    trackColor={{ false: "#767577", true: colors.primary }}
+                    thumbColor={savePaymentToProfile ? "#fff" : "#f4f3f4"}
+                  />
+                </View>
+              </View>
+            )}
+          </View>
+
+          {/* Place Order Button */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={[
+              styles.placeOrderButton,
+              { backgroundColor: colors.primary },
+              loading && styles.buttonDisabled,
+            ]}
+            onPress={handlePlaceOrder}
+            disabled={loading}
           >
-            Pay €{total.toFixed(2)} & Place Order
-          </Text>
-        )}
-      </TouchableOpacity>
-    </ScrollView>
-    </KeyboardAvoidingView>
+            {loading ? (
+              <ActivityIndicator color={colors.onPrimary} />
+            ) : (
+              <Text
+                style={{
+                  color: colors.onPrimary,
+                  fontSize: 18,
+                  fontWeight: "bold",
+                }}
+              >
+                Pay €{total.toFixed(2)} & Place Order
+              </Text>
+            )}
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 

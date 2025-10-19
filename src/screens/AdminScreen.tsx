@@ -369,8 +369,22 @@ const AdminScreen = () => {
                         User: {item.userId}
                       </Text>
                       {item.address && (
-                        <View style={{ marginTop: 8, marginBottom: 8, padding: 8, backgroundColor: '#2d2117', borderRadius: 4 }}>
-                          <Text style={{ color: colors.primary, fontWeight: 'bold', marginBottom: 4 }}>
+                        <View
+                          style={{
+                            marginTop: 8,
+                            marginBottom: 8,
+                            padding: 8,
+                            backgroundColor: "#2d2117",
+                            borderRadius: 4,
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: colors.primary,
+                              fontWeight: "bold",
+                              marginBottom: 4,
+                            }}
+                          >
                             📍 Delivery Address:
                           </Text>
                           <Text style={{ color: colors.onBackground }}>
