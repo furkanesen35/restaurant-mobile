@@ -56,6 +56,27 @@ const ProfileScreen = () => {
 
       <Divider style={styles.divider} />
 
+      <Card style={styles.loyaltyCard}>
+        <Card.Title
+          title="Loyalty Points"
+          titleStyle={styles.sectionTitle}
+          left={(props) => (
+            <Avatar.Icon
+              {...props}
+              icon="star-circle"
+              style={styles.sectionIcon}
+            />
+          )}
+        />
+        <Card.Content style={styles.loyaltyContent}>
+          <Text style={styles.loyaltyPoints}>{user.loyaltyPoints ?? 0}</Text>
+          <Text style={styles.loyaltyCaption}>
+            Earn 1 point for every €1 spent. Points accumulate automatically
+            after each successful payment.
+          </Text>
+        </Card.Content>
+      </Card>
+
       {/* Addresses Section */}
       <TouchableOpacity onPress={() => setShowAddresses(true)}>
         <Card style={styles.sectionCard}>
@@ -268,6 +289,30 @@ const styles = StyleSheet.create({
     backgroundColor: "#e0b97f",
     height: 2,
     marginVertical: 16,
+  },
+
+  loyaltyCard: {
+    backgroundColor: "#2d2117",
+    borderRadius: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#3d3127",
+  },
+  loyaltyContent: {
+    alignItems: "center",
+    paddingBottom: 20,
+  },
+  loyaltyPoints: {
+    color: "#e0b97f",
+    fontSize: 36,
+    fontWeight: "bold",
+    marginBottom: 8,
+  },
+  loyaltyCaption: {
+    color: "#f5f5f5",
+    fontSize: 14,
+    textAlign: "center",
+    opacity: 0.85,
   },
 
   // Section Cards

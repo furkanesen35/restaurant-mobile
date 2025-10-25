@@ -31,6 +31,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   clearError: () => void;
   refreshToken: () => Promise<void>;
+  updateUser: (updates: Partial<User>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -40,6 +41,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const persistUser = useCallback(async (userData: User | null) => {
+    if (userData) {
+      await AsyncStorage.setItem("user", JSON.stringify(userData));
+      if (typeof window !== "undefined" && window.localStorage) {
+        window.localStorage.setItem("user", JSON.stringify(userData));
+      }
+    } else {
+      await AsyncStorage.removeItem("user");
+      if (typeof window !== "undefined" && window.localStorage) {
+        window.localStorage.removeItem("user");
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const loadSession = async () => {
@@ -86,29 +101,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const clearError = () => setError(null);
 
-  const storeAuthData = async (authData: AuthResponse) => {
-    const { token, refreshToken, user } = authData;
-    await AsyncStorage.setItem("token", token);
-    await AsyncStorage.setItem("user", JSON.stringify(user));
-    if (refreshToken) {
-      await AsyncStorage.setItem("refreshToken", refreshToken);
-    }
-    // Also store in web localStorage if running on web
-    if (typeof window !== "undefined" && window.localStorage) {
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
+  const storeAuthData = useCallback(
+    async (authData: AuthResponse) => {
+      const { token, refreshToken, user } = authData;
+      await AsyncStorage.setItem("token", token);
+      await persistUser(user);
       if (refreshToken) {
-        localStorage.setItem("refreshToken", refreshToken);
+        await AsyncStorage.setItem("refreshToken", refreshToken);
       }
-    }
-    setToken(token);
-    setUser(user);
-    console.log("[AuthContext] storeAuthData called:", {
-      token,
-      user,
-      refreshToken,
-    });
-  };
+      // Also store in web localStorage if running on web
+      if (typeof window !== "undefined" && window.localStorage) {
+        localStorage.setItem("token", token);
+        if (refreshToken) {
+          localStorage.setItem("refreshToken", refreshToken);
+        }
+      }
+      setToken(token);
+      setUser(user);
+      console.log("[AuthContext] storeAuthData called:", {
+        token,
+        user,
+        refreshToken,
+      });
+    },
+    [persistUser],
+  );
 
   const login = async (credentials: LoginCredentials) => {
     setIsLoading(true);
@@ -209,7 +226,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (typeof window !== "undefined" && window.localStorage) {
         localStorage.removeItem("token");
-        localStorage.removeItem("user");
         localStorage.removeItem("refreshToken");
       }
 
@@ -252,7 +268,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       throw error;
     }
-  }, []);
+  }, [storeAuthData]);
+
+  const updateUser = useCallback(
+    async (updates: Partial<User>) => {
+      setUser((prev) => {
+        if (!prev) return prev;
+        const updatedUser = { ...prev, ...updates };
+        void persistUser(updatedUser);
+        return updatedUser;
+      });
+    },
+    [persistUser],
+  );
 
   return (
     <AuthContext.Provider
@@ -267,6 +295,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         logout,
         clearError,
         refreshToken,
+        updateUser,
       }}
     >
       {children}

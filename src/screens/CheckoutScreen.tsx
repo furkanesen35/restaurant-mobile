@@ -41,7 +41,7 @@ type Address = {
 };
 
 const CheckoutScreen = () => {
-  const { token, user } = useAuth();
+  const { token, user, updateUser } = useAuth();
   const { cart, clearCart } = useCart();
   const { colors } = useTheme();
   const navigation = useNavigation();
@@ -265,11 +265,21 @@ const CheckoutScreen = () => {
         throw new Error("Failed to create order");
       }
 
+      const orderData = await orderRes.json();
+      const pointsEarned = orderData?.loyaltyPointsEarned ?? 0;
+      const updatedBalance = orderData?.loyaltyPointsBalance;
+
+      if (typeof updatedBalance === "number") {
+        await updateUser({ loyaltyPoints: updatedBalance });
+      }
+
       // Success!
       clearCart();
       Alert.alert(
         "Order placed!",
-        "Your payment was successful and order has been received.",
+        pointsEarned > 0
+          ? `Your payment was successful and order has been received. You earned ${pointsEarned} loyalty points!`
+          : "Your payment was successful and order has been received.",
         [
           {
             text: "View Orders",

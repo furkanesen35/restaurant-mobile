@@ -23,7 +23,7 @@ import ErrorMessage from "../components/common/ErrorMessage";
 
 const OrdersScreen = () => {
   const { colors } = useTheme();
-  const { user, token } = useAuth();
+  const { user, token, updateUser } = useAuth();
   const [activeTab, setActiveTab] = useState<"current" | "history">("current");
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,9 +56,15 @@ const OrdersScreen = () => {
   const cancelOrder = async (orderId: string | number) => {
     try {
       console.log("Cancelling order:", orderId);
-      await apiClient.patch(`/order/${orderId}/status`, {
+      const response = await apiClient.patch(`/order/${orderId}/status`, {
         status: "cancelled",
       });
+      
+      // Update user's loyalty points if they were deducted
+      if (response.data.loyaltyPointsBalance !== undefined) {
+        await updateUser({ loyaltyPoints: response.data.loyaltyPointsBalance });
+      }
+      
       Alert.alert("Success", "Order cancelled successfully");
       fetchOrders(); // Refresh orders
     } catch (err: any) {
