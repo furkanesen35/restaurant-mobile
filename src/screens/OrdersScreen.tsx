@@ -12,7 +12,7 @@ import { Card, Chip, useTheme, Button } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
 import { useIsFocused } from "@react-navigation/native";
 
-import { Order, OrderItem } from "../types";
+import { Order, OrderItem, OrderStatus } from "../types";
 import {
   formatCurrency,
   formatRelativeTime,
@@ -56,12 +56,15 @@ const OrdersScreen = () => {
   const cancelOrder = async (orderId: string | number) => {
     try {
       console.log("Cancelling order:", orderId);
-      const response = await apiClient.patch(`/order/${orderId}/status`, {
+      const response = await apiClient.patch<{
+        loyaltyPointsBalance?: number;
+        loyaltyPointsDeducted?: number;
+      }>(`/order/${orderId}/status`, {
         status: "cancelled",
       });
       
       // Update user's loyalty points if they were deducted
-      if (response.data.loyaltyPointsBalance !== undefined) {
+      if (response.data?.loyaltyPointsBalance !== undefined) {
         await updateUser({ loyaltyPoints: response.data.loyaltyPointsBalance });
       }
       
@@ -91,6 +94,13 @@ const OrdersScreen = () => {
   useEffect(() => {
     if (isFocused) {
       fetchOrders();
+
+      // Auto-refresh every 30 seconds for real-time updates
+      const interval = setInterval(() => {
+        fetchOrders();
+      }, 30000);
+
+      return () => clearInterval(interval);
     }
   }, [isFocused, fetchOrders]);
 
@@ -117,6 +127,37 @@ const OrdersScreen = () => {
           )
         : order.total || 0;
 
+    // Calculate progress based on status
+    const getProgress = (status: OrderStatus) => {
+      const statusProgress: Record<OrderStatus, number> = {
+        pending: 0.2,
+        confirmed: 0.4,
+        preparing: 0.6,
+        ready: 0.8,
+        delivered: 1.0,
+        cancelled: 0,
+      };
+      return statusProgress[status] || 0;
+    };
+
+    // Get estimated time remaining
+    const getTimeRemaining = () => {
+      if (!order.estimatedDeliveryTime) return null;
+      const now = new Date();
+      const eta = new Date(order.estimatedDeliveryTime);
+      const diffMs = eta.getTime() - now.getTime();
+      const diffMins = Math.floor(diffMs / 60000);
+
+      if (diffMins <= 0) return "Soon";
+      if (diffMins < 60) return `${diffMins} min`;
+      const hours = Math.floor(diffMins / 60);
+      const mins = diffMins % 60;
+      return `${hours}h ${mins}m`;
+    };
+
+    const progress = getProgress(order.status);
+    const timeRemaining = getTimeRemaining();
+
     return (
       <Card style={styles.orderCard}>
         <Card.Content>
@@ -131,6 +172,26 @@ const OrdersScreen = () => {
           <Chip mode="outlined" style={styles.statusChip}>
             {order.status}
           </Chip>
+
+          {/* Progress Bar for active orders */}
+          {order.status !== "delivered" && order.status !== "cancelled" && (
+            <View style={styles.progressSection}>
+              <View style={styles.progressBar}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    { width: `${progress * 100}%` },
+                  ]}
+                />
+              </View>
+              {timeRemaining && (
+                <Text style={styles.estimatedTime}>
+                  Estimated: {timeRemaining}
+                </Text>
+              )}
+            </View>
+          )}
+
           {/* Items */}
           <View style={styles.itemsList}>
             {order.items && order.items.length > 0 ? (
@@ -327,6 +388,12 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     backgroundColor: "#231a13",
     marginBottom: 8,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    backgroundColor: "#e0b97f",
+    borderRadius: 3,
   },
   estimatedTime: {
     fontSize: 12,

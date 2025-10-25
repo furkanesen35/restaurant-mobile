@@ -21,6 +21,12 @@ export interface MenuItem {
   price: number;
   category: string;
   image?: string;
+  imageUrl?: string;
+  isVegetarian?: boolean;
+  isVegan?: boolean;
+  isGlutenFree?: boolean;
+  isSpicy?: boolean;
+  allergens?: string;
 }
 
 // Order types
@@ -49,6 +55,7 @@ export interface Order {
   createdAt: string;
   updatedAt?: string;
   estimatedTime?: string;
+  estimatedDeliveryTime?: string;
   total?: number;
 }
 

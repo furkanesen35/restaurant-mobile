@@ -10,6 +10,7 @@ import MenuScreen from "../screens/MenuScreen";
 import ReservationsScreen from "../screens/ReservationsScreen";
 import OrdersScreen from "../screens/OrdersScreen";
 import ProfileScreen from "../screens/ProfileScreen";
+import FavoritesScreen from "../screens/FavoritesScreen";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import CartScreen from "../screens/CartScreen";
 import AdminScreen from "../screens/AdminScreen";
@@ -23,6 +24,7 @@ function MainTabs() {
   const screens = React.useMemo(() => {
     const baseScreens = [
       { name: "Menu", component: MenuScreen },
+      { name: "Favorites", component: FavoritesScreen },
       { name: "Cart", component: CartScreen },
       { name: "Reservations", component: ReservationsScreen },
       { name: "Orders", component: OrdersScreen },
