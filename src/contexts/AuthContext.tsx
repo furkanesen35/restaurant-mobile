@@ -7,6 +7,8 @@ import React, {
   ReactNode,
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Notifications from "expo-notifications";
+import { Platform } from "react-native";
 import {
   User,
   LoginCredentials,
@@ -35,6 +37,42 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Register for push notifications
+async function registerForPushNotifications() {
+  try {
+    if (Platform.OS === "android") {
+      await Notifications.setNotificationChannelAsync("default", {
+        name: "default",
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: "#e0b97f",
+      });
+    }
+
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+
+    if (existingStatus !== "granted") {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+
+    if (finalStatus !== "granted") {
+      console.log("Push notification permission not granted");
+      return null;
+    }
+
+    const token = (await Notifications.getExpoPushTokenAsync({
+      projectId: "34d8bfb4-2a86-49ed-a4d6-b29eee48d18d",
+    })).data;
+    console.log("Expo Push Token:", token);
+    return token;
+  } catch (error) {
+    console.error("Error getting push token:", error);
+    return null;
+  }
+}
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -101,6 +139,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const clearError = () => setError(null);
 
+  // Register push notification token with backend
+  const registerPushToken = useCallback(async () => {
+    try {
+      const pushToken = await registerForPushNotifications();
+      if (pushToken) {
+        await apiClient.post("/notifications/register", {
+          token: pushToken,
+        });
+        console.log("Push token registered with backend");
+      }
+    } catch (error) {
+      console.error("Failed to register push token:", error);
+    }
+  }, []);
+
   const storeAuthData = useCallback(
     async (authData: AuthResponse) => {
       const { token, refreshToken, user } = authData;
@@ -123,8 +176,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user,
         refreshToken,
       });
+
+      // Register for push notifications after login
+      registerPushToken();
     },
-    [persistUser],
+    [persistUser, registerPushToken],
   );
 
   const login = async (credentials: LoginCredentials) => {

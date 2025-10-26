@@ -3,6 +3,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { PaperProvider } from "react-native-paper";
 import { NavigationContainer } from "@react-navigation/native";
 import { LogBox, UIManager, Platform, StatusBar } from "react-native";
+import * as Notifications from "expo-notifications";
 import { cozyTheme } from "./src/theme/cozyTheme";
 import { AuthProvider } from "./src/contexts/AuthContext";
 import { StripeProvider } from "@stripe/stripe-react-native";
@@ -11,9 +12,22 @@ import ENV from "./src/config/env";
 import RootNavigator from "./src/navigation/RootNavigator";
 import { CartProvider } from "./src/contexts/CartContext";
 
+// Configure how notifications are displayed when app is in foreground
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
+
 // Suppress the setLayoutAnimationEnabledExperimental warning
 LogBox.ignoreLogs([
   "setLayoutAnimationEnabledExperimental",
+  "expo-notifications: Android Push notifications",
+  "`expo-notifications` functionality is not fully supported in Expo Go",
 ]);
 
 // Enable LayoutAnimation on Android

@@ -15,11 +15,42 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import CartScreen from "../screens/CartScreen";
 import AdminScreen from "../screens/AdminScreen";
 import CheckoutScreen from "../screens/CheckoutScreen";
+import Icon from "react-native-paper/src/components/Icon";
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function MainTabs() {
   const { user } = useAuth();
+
+  const getTabIcon = (routeName: string, focused: boolean, color: string, size: number) => {
+    let iconName = "home";
+    
+    switch (routeName) {
+      case "Menu":
+        iconName = "silverware-fork-knife";
+        break;
+      case "Favorites":
+        iconName = "heart";
+        break;
+      case "Cart":
+        iconName = "cart";
+        break;
+      case "Reservations":
+        iconName = "calendar-clock";
+        break;
+      case "Orders":
+        iconName = "receipt";
+        break;
+      case "Profile":
+        iconName = "account";
+        break;
+      case "Admin":
+        iconName = "shield-crown";
+        break;
+    }
+
+    return <Icon source={iconName} size={size} color={color} />;
+  };
 
   const screens = React.useMemo(() => {
     const baseScreens = [
@@ -39,7 +70,27 @@ function MainTabs() {
   }, [user]);
 
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false }}>
+    <Tab.Navigator 
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarIcon: ({ focused, color, size }) => 
+          getTabIcon(route.name, focused, color, size),
+        tabBarActiveTintColor: "#f5e6c8",
+        tabBarInactiveTintColor: "#b8a68a",
+        tabBarStyle: {
+          backgroundColor: "#1a120b",
+          borderTopColor: "#2d2117",
+          borderTopWidth: 1,
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 8,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: "600",
+        },
+      })}
+    >
       {screens.map((screen) => (
         <Tab.Screen
           key={screen.name}

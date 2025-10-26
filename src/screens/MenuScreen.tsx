@@ -319,7 +319,7 @@ const MenuScreen = () => {
             dietaryFilters.isGlutenFree && styles.filterChipSelected,
           ]}
           textStyle={styles.filterChipText}
-          icon="wheat-off"
+          icon="barley-off"
         >
           Gluten-Free
         </Chip>
