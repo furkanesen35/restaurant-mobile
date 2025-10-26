@@ -66,17 +66,9 @@ const MenuScreen = () => {
         setLoading(true);
         setError(null);
 
-        // Build query parameters
+        // Only pass search query to API - do filtering client-side for better UX
         const params = new URLSearchParams();
         if (debouncedSearchQuery) params.append("search", debouncedSearchQuery);
-        if (selectedCategory !== "all")
-          params.append("categoryId", selectedCategory);
-        if (dietaryFilters.isVegetarian)
-          params.append("isVegetarian", "true");
-        if (dietaryFilters.isVegan) params.append("isVegan", "true");
-        if (dietaryFilters.isGlutenFree)
-          params.append("isGlutenFree", "true");
-        if (dietaryFilters.isSpicy) params.append("isSpicy", "true");
 
         const queryString = params.toString();
         const url = `${ENV.API_URL}/menu${queryString ? `?${queryString}` : ""}`;
@@ -103,7 +95,7 @@ const MenuScreen = () => {
       }
     };
     fetchMenu();
-  }, [debouncedSearchQuery, selectedCategory, dietaryFilters]);
+  }, [debouncedSearchQuery]);
 
   // Auto-expand categories when searching
   useEffect(() => {
@@ -122,6 +114,34 @@ const MenuScreen = () => {
     }
   }, [debouncedSearchQuery, menuCategories, menuItems]);
 
+  // Client-side filtering for better UX (no page reload)
+  const getFilteredItems = () => {
+    let filtered = menuItems;
+
+    // Apply category filter
+    if (selectedCategory !== "all") {
+      filtered = filtered.filter((item) => item.category === selectedCategory);
+    }
+
+    // Apply dietary filters
+    if (dietaryFilters.isVegetarian) {
+      filtered = filtered.filter((item) => item.isVegetarian);
+    }
+    if (dietaryFilters.isVegan) {
+      filtered = filtered.filter((item) => item.isVegan);
+    }
+    if (dietaryFilters.isGlutenFree) {
+      filtered = filtered.filter((item) => item.isGlutenFree);
+    }
+    if (dietaryFilters.isSpicy) {
+      filtered = filtered.filter((item) => item.isSpicy);
+    }
+
+    return filtered;
+  };
+
+  const filteredItems = getFilteredItems();
+
   // If 'all' is selected, group items by category
   const itemsToShow =
     selectedCategory === "all"
@@ -129,7 +149,7 @@ const MenuScreen = () => {
           .filter((c: { id: string; name: string }) => c.id !== "all")
           .map((category: { id: string; name: string }) => ({
             category,
-            items: menuItems.filter(
+            items: filteredItems.filter(
               (item: {
                 id: string;
                 name: string;
@@ -148,7 +168,7 @@ const MenuScreen = () => {
             category: menuCategories.find(
               (c: { id: string; name: string }) => c.id === selectedCategory
             ),
-            items: menuItems.filter(
+            items: filteredItems.filter(
               (item: {
                 id: string;
                 name: string;
@@ -237,7 +257,7 @@ const MenuScreen = () => {
       style={[styles.container, { backgroundColor: colors.background }]}
       edges={["top"]}
     >
-      <Text style={[styles.title, { color: colors.primary }]}>Menu</Text>
+      <Text style={styles.title}>Menu</Text>
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
@@ -251,12 +271,7 @@ const MenuScreen = () => {
       </View>
 
       {/* Dietary Filters */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.filtersContainer}
-        contentContainerStyle={styles.filtersContent}
-      >
+      <View style={styles.filtersContainer}>
         <Chip
           selected={dietaryFilters.isVegetarian}
           onPress={() =>
@@ -345,7 +360,7 @@ const MenuScreen = () => {
             Clear
           </Chip>
         )}
-      </ScrollView>
+      </View>
 
       {!hasMenu ? (
         <View
@@ -592,15 +607,19 @@ const styles = StyleSheet.create({
   },
 
   // ============================================================================
-  // DIETARY FILTERS - Horizontal scrollable row of filter chips
+  // DIETARY FILTERS - Wrapping container for filter chips
+  // Used by: View wrapping all dietary filter chips (Vegetarian, Vegan, etc.)
   // ============================================================================
   filtersContainer: {
+    flexDirection: "row", // Arranges chips in a row
+    flexWrap: "wrap", // Allows chips to wrap to next line if needed
+    paddingHorizontal: 16, // Padding on left/right sides
     marginBottom: 12, // Space between filters and category buttons below
-    flexGrow: 0, // Prevents container from expanding to fill space
+    gap: 8, // 8px space between each chip
   },
 
   // ============================================================================
-  // FILTER CHIPS CONTENT - Inner wrapper for filter chips
+  // FILTER CHIPS CONTENT - Inner wrapper for filter chips (DEPRECATED - no longer used)
   // ============================================================================
   filtersContent: {
     paddingHorizontal: 16, // Padding on left/right sides of chips row

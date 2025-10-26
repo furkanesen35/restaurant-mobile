@@ -35,7 +35,7 @@ const CartScreen = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <Text style={[styles.title, { color: colors.primary }]}>Your Cart</Text>
+      <Text style={styles.title}>Your Cart</Text>
       {cart.length === 0 ? (
         <Text style={{ color: colors.onBackground, fontSize: 18 }}>
           Cart is empty.
@@ -108,6 +108,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 16,
     alignSelf: "center",
+    color: "#fffbe8",
   },
   card: { marginBottom: 12, backgroundColor: "#2d2117" },
   qtyBtn: {
