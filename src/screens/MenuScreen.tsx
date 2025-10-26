@@ -10,6 +10,7 @@ import {
   UIManager,
   TextInput,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Card, useTheme, Chip } from "react-native-paper";
 import { useCart } from "../contexts/CartContext";
 import { useFavorites } from "../hooks/useFavorites";
@@ -232,7 +233,10 @@ const MenuScreen = () => {
   const hasMenu = menuCategories.length > 1 && menuItems.length > 0;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      edges={["top"]}
+    >
       <Text style={[styles.title, { color: colors.primary }]}>Menu</Text>
 
       {/* Search Bar */}
@@ -536,149 +540,238 @@ const MenuScreen = () => {
           </ScrollView>
         </>
       )}
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  // ============================================================================
+  // MAIN CONTAINER - The entire Menu screen wrapper
+  // ============================================================================
   container: {
-    flex: 1,
-    paddingTop: 24,
-    backgroundColor: "#231a13", // Very dark brown, bar & grill vibe
+    flex: 1, // Takes full available screen height
+    paddingTop: 8, // Small padding from SafeAreaView edge (SafeAreaView handles status bar)
+    backgroundColor: "#231a13", // Very dark brown background - main screen color
   },
+
+  // ============================================================================
+  // SCREEN TITLE - "Menu" text at the top
+  // ============================================================================
   title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    marginBottom: 12,
-    alignSelf: "center",
-    color: "#fffbe8", // Lighter yellowish/whitish
-    letterSpacing: 1,
-    textShadowColor: "#1a120b",
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
+    fontSize: 32, // Large text for main heading
+    fontWeight: "bold", // Makes text thick/bold
+    marginBottom: 12, // Space between title and search bar below
+    alignSelf: "center", // Centers horizontally on screen
+    color: "#fffbe8", // Light cream/yellowish color for text
+    letterSpacing: 1, // Adds 1px space between each letter for elegance
+    textShadowColor: "#1a120b", // Very dark shadow behind text
+    textShadowOffset: { width: 1, height: 1 }, // Shadow positioned 1px right and 1px down
+    textShadowRadius: 2, // How blurry the shadow is (2px blur)
   },
+
+  // ============================================================================
+  // SEARCH BAR - Container wrapping the search input field
+  // ============================================================================
   searchContainer: {
-    paddingHorizontal: 16,
-    marginBottom: 12,
+    paddingHorizontal: 16, // 16px padding on left and right sides
+    marginBottom: 12, // Space between search bar and dietary filters below
   },
+
+  // ============================================================================
+  // SEARCH INPUT - The actual text input field where users type
+  // ============================================================================
   searchInput: {
-    backgroundColor: "#2d2117",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: "#fffbe8",
-    borderWidth: 1,
-    borderColor: "#e0b97f40",
+    backgroundColor: "#2d2117", // Slightly lighter brown than main background
+    borderRadius: 12, // Rounded corners (12px radius)
+    paddingHorizontal: 16, // Inner spacing left/right for text inside input
+    paddingVertical: 12, // Inner spacing top/bottom for text inside input
+    fontSize: 16, // Size of text when user types
+    color: "#fffbe8", // Color of text user types (light cream)
+    borderWidth: 1, // 1px border around the input
+    borderColor: "#e0b97f40", // Gold/tan border color with 40 transparency (hex alpha)
   },
+
+  // ============================================================================
+  // DIETARY FILTERS - Horizontal scrollable row of filter chips
+  // ============================================================================
   filtersContainer: {
-    marginBottom: 12,
-    flexGrow: 0,
+    marginBottom: 12, // Space between filters and category buttons below
+    flexGrow: 0, // Prevents container from expanding to fill space
   },
+
+  // ============================================================================
+  // FILTER CHIPS CONTENT - Inner wrapper for filter chips
+  // ============================================================================
   filtersContent: {
-    paddingHorizontal: 16,
-    gap: 8,
+    paddingHorizontal: 16, // Padding on left/right sides of chips row
+    gap: 8, // 8px space between each chip (modern React Native feature)
   },
+
+  // ============================================================================
+  // FILTER CHIP - Individual filter button (Vegetarian, Vegan, etc.) - UNSELECTED
+  // ============================================================================
   filterChip: {
-    backgroundColor: "#2d2117",
-    marginRight: 8,
-    borderColor: "#e0b97f40",
-    borderWidth: 1,
+    backgroundColor: "#2d2117", // Dark brown background when not selected
+    marginRight: 8, // Space to the right of each chip
+    borderColor: "#e0b97f40", // Semi-transparent gold border
+    borderWidth: 1, // 1px border thickness
   },
+
+  // ============================================================================
+  // FILTER CHIP SELECTED - Individual filter button when ACTIVE/SELECTED
+  // ============================================================================
   filterChipSelected: {
-    backgroundColor: "#e0b97f",
-    borderColor: "#e0b97f",
+    backgroundColor: "#e0b97f", // Gold/tan background when selected
+    borderColor: "#e0b97f", // Solid gold border when selected
   },
+
+  // ============================================================================
+  // FILTER CHIP TEXT - Text inside filter chips (all states)
+  // ============================================================================
   filterChipText: {
-    color: "#fffbe8",
-    fontSize: 13,
+    color: "#fffbe8", // Light cream text color
+    fontSize: 13, // Small text for compact chips
   },
+
+  // ============================================================================
+  // CLEAR FILTER CHIP - The "Clear" button that appears when filters active
+  // ============================================================================
   clearFilterChip: {
-    backgroundColor: "#d32f2f20",
-    borderColor: "#d32f2f",
-    borderWidth: 1,
-    marginRight: 8,
+    backgroundColor: "#d32f2f20", // Red background with 20 transparency
+    borderColor: "#d32f2f", // Solid red border
+    borderWidth: 1, // 1px border
+    marginRight: 8, // Space to the right
   },
+
+  // ============================================================================
+  // CATEGORY BAR - Legacy style (might not be used, check categoryBarContainer)
+  // ============================================================================
   categoryBar: {
-    flexGrow: 0,
-    marginBottom: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    flexGrow: 0, // Prevents expansion
+    marginBottom: 12, // Space below
+    paddingHorizontal: 8, // Left/right padding
+    paddingVertical: 4, // Top/bottom padding
   },
+
+  // ============================================================================
+  // CATEGORY BAR CONTAINER - Wrapper for horizontal category buttons (All, Pizzas, etc.)
+  // ============================================================================
   categoryBarContainer: {
-    height: 60,
-    justifyContent: "center",
-    paddingHorizontal: 8,
-    marginBottom: 12,
+    height: 60, // Fixed height of 60px for category button row
+    justifyContent: "center", // Centers content vertically within 60px height
+    paddingHorizontal: 8, // Left/right padding
+    marginBottom: 12, // Space between category bar and menu items below
   },
+
+  // ============================================================================
+  // CATEGORY BAR CONTENT - Inner content wrapper for ScrollView of categories
+  // ============================================================================
   categoryBarContent: {
-    alignItems: "center",
-    paddingVertical: 4,
-    paddingRight: 8,
+    alignItems: "center", // Centers items vertically in ScrollView
+    paddingVertical: 4, // Top/bottom padding
+    paddingRight: 8, // Extra padding on right side
   },
+
+  // ============================================================================
+  // CATEGORY BUTTON - Individual category pill button (All, Pizzas, Pasta, etc.)
+  // ============================================================================
   categoryButton: {
-    paddingHorizontal: 18,
-    height: 44,
-    borderRadius: 22,
-    marginRight: 10,
-    backgroundColor: "#2d2117",
-    borderWidth: 2,
-    borderColor: "#fffbe8", // Lighter border for visibility
-    justifyContent: "center",
-    alignItems: "center",
+    paddingHorizontal: 18, // Left/right inner spacing
+    height: 44, // Fixed button height
+    borderRadius: 22, // Half of height (44/2) = perfect pill shape
+    marginRight: 10, // Space between category buttons
+    backgroundColor: "#2d2117", // Dark brown background (unselected state)
+    borderWidth: 2, // 2px border thickness
+    borderColor: "#fffbe8", // Light cream border
+    justifyContent: "center", // Centers text vertically
+    alignItems: "center", // Centers text horizontally
   },
+
+  // ============================================================================
+  // CATEGORY BUTTON TEXT - Text inside category buttons
+  // ============================================================================
   categoryButtonText: {
-    fontSize: 16,
-    color: "#fffbe8",
-    letterSpacing: 0.5,
-    fontWeight: "500",
-    opacity: 0.8,
-    lineHeight: 20,
+    fontSize: 16, // Medium text size
+    color: "#fffbe8", // Light cream color
+    letterSpacing: 0.5, // Slight letter spacing for readability
+    fontWeight: "500", // Medium font weight (between normal and bold)
+    opacity: 0.8, // 80% opacity for unselected state
+    lineHeight: 20, // Height of each line of text
   },
+
+  // ============================================================================
+  // CATEGORY SECTION - Wrapper for each category group (title + items)
+  // ============================================================================
   categorySection: {
-    marginBottom: 32,
+    marginBottom: 32, // Large space between different category sections
   },
+
+  // ============================================================================
+  // CATEGORY TITLE - The category name header (e.g., "Pizzas", "Pasta")
+  // ============================================================================
   categoryTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 10,
-    color: "#fffbe8", // Lighter yellowish/whitish
-    letterSpacing: 0.5,
-    textShadowColor: "#1a120b",
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 1,
+    fontSize: 22, // Large heading size
+    fontWeight: "bold", // Bold text
+    marginBottom: 10, // Space between title and first menu item
+    color: "#fffbe8", // Light cream color
+    letterSpacing: 0.5, // Slight letter spacing
+    textShadowColor: "#1a120b", // Very dark shadow
+    textShadowOffset: { width: 1, height: 1 }, // Shadow 1px right and down
+    textShadowRadius: 1, // 1px shadow blur
   },
+
+  // ============================================================================
+  // MENU LIST - ScrollView content container holding all menu items
+  // ============================================================================
   menuList: {
-    padding: 16,
+    padding: 16, // Padding on all sides (top, right, bottom, left)
   },
+
+  // ============================================================================
+  // MENU CARD - Individual menu item card (each dish/food item)
+  // ============================================================================
   menuCard: {
-    marginBottom: 16,
-    backgroundColor: "#2d2117", // Dark brown card
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#e0b97f",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 3,
-    minHeight: 84, // Fixed height for calculation
+    marginBottom: 16, // Space between each menu card
+    backgroundColor: "#2d2117", // Dark brown card background
+    borderRadius: 16, // Rounded corners (16px radius)
+    borderWidth: 1, // 1px border
+    borderColor: "#e0b97f", // Gold/tan border
+    shadowColor: "#000", // Black shadow
+    shadowOffset: { width: 0, height: 2 }, // Shadow 0px horizontal, 2px down
+    shadowOpacity: 0.15, // 15% shadow opacity (very subtle)
+    shadowRadius: 6, // 6px shadow blur
+    elevation: 3, // Android shadow depth (3 units)
+    minHeight: 84, // Minimum card height 84px
   },
+
+  // ============================================================================
+  // DIETARY BADGES CONTAINER - Row of dietary badges (V, VG, GF, 🌶)
+  // ============================================================================
   dietaryBadgesContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-    marginTop: 8,
+    flexDirection: "row", // Arrange badges horizontally
+    flexWrap: "wrap", // Allow badges to wrap to next line if too many
+    gap: 6, // 6px space between each badge
+    marginTop: 8, // Space above badges (below description)
   },
+
+  // ============================================================================
+  // DIETARY BADGE - Individual badge pill (Vegetarian, Vegan, etc.)
+  // ============================================================================
   dietaryBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
+    paddingHorizontal: 8, // Left/right inner padding
+    paddingVertical: 4, // Top/bottom inner padding
+    borderRadius: 12, // Rounded pill shape
+    borderWidth: 1, // 1px border (color set dynamically in component)
+    // backgroundColor and borderColor are set dynamically in the component code
   },
+
+  // ============================================================================
+  // DIETARY BADGE TEXT - Text inside badges (V, VG, GF, 🌶)
+  // ============================================================================
   dietaryBadgeText: {
-    fontSize: 11,
-    fontWeight: "600",
+    fontSize: 11, // Small text for compact badges
+    fontWeight: "600", // Semi-bold text
+    // color is set dynamically in the component code
   },
 });
 

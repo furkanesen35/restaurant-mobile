@@ -669,6 +669,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "bold",
     marginBottom: 24,
+    color: "#fffbe8",
   },
   section: {
     marginBottom: 24,
@@ -677,6 +678,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     marginBottom: 12,
+    color: "#fffbe8",
   },
   orderItem: {
     flexDirection: "row",

@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { TextInput, Button, Card, Title } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
 import { NavigationProps } from "../types";
@@ -45,13 +46,14 @@ const RegisterScreen = ({ navigation }: NavigationProps) => {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior="padding">
-      <Card style={styles.card}>
-        <Card.Content>
-          <Title style={styles.title}>Register</Title>
-          <TextInput
-            label="Email"
-            value={email}
+    <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
+      <KeyboardAvoidingView style={styles.container} behavior="padding">
+        <Card style={styles.card}>
+          <Card.Content>
+            <Title style={styles.title}>Register</Title>
+            <TextInput
+              label="Email"
+              value={email}
             onChangeText={setEmail}
             style={styles.input}
             autoCapitalize="none"
@@ -89,51 +91,91 @@ const RegisterScreen = ({ navigation }: NavigationProps) => {
         </Card.Content>
       </Card>
     </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  // ============================================================================
+  // MAIN CONTAINER - The entire Register screen wrapper
+  // Used by: Root View component wrapping the registration card
+  // ============================================================================
   container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#231a13",
+    flex: 1, // Takes full available screen height
+    justifyContent: "center", // Centers card vertically on screen
+    alignItems: "center", // Centers card horizontally on screen
+    backgroundColor: "#231a13", // Dark brown background (matches app theme)
   },
+
+  // ============================================================================
+  // REGISTRATION CARD - The card container holding the registration form
+  // Used by: Card component wrapping all registration form elements
+  // ============================================================================
   card: {
-    width: "90%",
-    backgroundColor: "#2d2117",
-    borderRadius: 16,
-    padding: 16,
+    width: "90%", // Card takes 90% of screen width (leaves 5% margin on each side)
+    backgroundColor: "#2d2117", // Lighter brown card surface
+    borderRadius: 16, // Rounded corners for modern, friendly look
+    padding: 16, // 16px padding on all sides
   },
+
+  // ============================================================================
+  // TITLE - "Create Account" heading at top of form
+  // Used by: Text component showing registration screen title
+  // ============================================================================
   title: {
-    color: "#fffbe8",
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 16,
-    textAlign: "center",
+    color: "#fffbe8", // Light cream color for high contrast on dark background
+    fontSize: 24, // Large text size for prominent heading
+    fontWeight: "bold", // Bold weight for emphasis and hierarchy
+    marginBottom: 16, // 16px space between title and first input field
+    textAlign: "center", // Centers text horizontally
   },
+
+  // ============================================================================
+  // INPUT FIELD - Text input boxes for name, email, password
+  // Used by: TextInput components for all registration fields
+  // ============================================================================
   input: {
-    marginBottom: 12,
-    backgroundColor: "#fffbe8",
+    marginBottom: 12, // 12px space between input fields
+    backgroundColor: "#fffbe8", // Light cream background for good contrast with dark text
   },
+
+  // ============================================================================
+  // REGISTER BUTTON - Primary action button to submit registration
+  // Used by: Button component for creating new account
+  // ============================================================================
   button: {
-    marginTop: 8,
-    marginBottom: 8,
+    marginTop: 8, // 8px space above button (from last input)
+    marginBottom: 8, // 8px space below button (before login link)
   },
+
+  // ============================================================================
+  // LINK TEXT - "Already have an account? Login" clickable text
+  // Used by: Text inside TouchableOpacity for navigation to LoginScreen
+  // ============================================================================
   link: {
-    color: "#e0b97f",
-    textAlign: "center",
-    marginTop: 8,
+    color: "#e0b97f", // Gold color to indicate interactivity
+    textAlign: "center", // Centers text horizontally
+    marginTop: 8, // 8px space above link
   },
+
+  // ============================================================================
+  // ERROR MESSAGE - Red text showing validation or API errors
+  // Used by: Text component displaying error messages
+  // ============================================================================
   error: {
-    color: "red",
-    marginBottom: 8,
-    textAlign: "center",
+    color: "red", // Red text indicates error/problem
+    marginBottom: 8, // 8px space below error message
+    textAlign: "center", // Centers error text for visibility
   },
+
+  // ============================================================================
+  // SUCCESS MESSAGE - Green text showing successful registration
+  // Used by: Text component displaying success confirmation
+  // ============================================================================
   success: {
-    color: "green",
-    marginBottom: 8,
-    textAlign: "center",
+    color: "green", // Green text indicates success/completion
+    marginBottom: 8, // 8px space below success message
+    textAlign: "center", // Centers success text for visibility
   },
 });
 

@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Alert,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useCart } from "../contexts/CartContext";
 import { useTheme, Card } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
@@ -33,7 +34,7 @@ const CartScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <Text style={[styles.title, { color: colors.primary }]}>Your Cart</Text>
       {cart.length === 0 ? (
         <Text style={{ color: colors.onBackground, fontSize: 18 }}>
@@ -96,7 +97,7 @@ const CartScreen = () => {
           Proceed to Checkout
         </Text>
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 };
 

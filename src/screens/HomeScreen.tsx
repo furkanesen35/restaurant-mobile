@@ -22,23 +22,27 @@ const HomeScreen = () => {
 };
 
 const styles = StyleSheet.create({
+  // ============================================================================
+  // MAIN CONTAINER - The entire Home screen wrapper
+  // Used by: Root SafeAreaView on HomeScreen
+  // ============================================================================
   container: {
-    // flex: 1 - Takes up all available screen space vertically
-    flex: 1,
-    // alignItems: "center" - Centers content horizontally
-    alignItems: "center",
-    // justifyContent: "center" - Centers content vertically
-    justifyContent: "center",
-    // padding: 24 - Adds 24dp space inside container on all sides
-    padding: 24,
+    flex: 1, // Takes up all available screen space vertically
+    alignItems: "center", // Centers all child elements horizontally
+    justifyContent: "center", // Centers all child elements vertically
+    padding: 24, // Adds 24px space inside container on all sides (prevents edge touch)
+    // backgroundColor is set dynamically from theme colors.background
   },
+
+  // ============================================================================
+  // WELCOME TITLE - "Welcome to Cozy Bar & Grill!" heading
+  // Used by: Main Text component on HomeScreen
+  // ============================================================================
   title: {
-    // fontSize: 28 - Large text size for main heading
-    fontSize: 28,
-    // fontWeight: "bold" - Makes text thick/heavy for emphasis
-    fontWeight: "bold",
-    // marginBottom: 16 - Adds 16dp space below title
-    marginBottom: 16,
+    fontSize: 28, // Large text size for main welcome heading
+    fontWeight: "bold", // Makes text thick/heavy for emphasis and visibility
+    marginBottom: 16, // Adds 16px space below title before subtitle text
+    // color is set dynamically from theme colors.primary
   },
 });
 

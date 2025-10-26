@@ -6,6 +6,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { TextInput, Button, Card, Title, HelperText } from "react-native-paper";
 import { NavigationProps } from "../types";
 import { validateEmail } from "../utils/validation";
@@ -55,7 +56,7 @@ const ForgotPasswordScreen: React.FC<NavigationProps> = ({ navigation }) => {
   };
 
   return (
-    <>
+    <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -130,7 +131,7 @@ const ForgotPasswordScreen: React.FC<NavigationProps> = ({ navigation }) => {
       <ErrorMessage error={error} onDismiss={() => setError(null)} />
 
       <LoadingOverlay visible={isLoading} message="Sending reset link..." />
-    </>
+    </SafeAreaView>
   );
 };
 

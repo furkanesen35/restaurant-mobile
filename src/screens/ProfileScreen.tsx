@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Card, Button, Avatar, Divider, IconButton } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
 import AddressesScreen from "./AddressesScreen";
@@ -32,7 +33,7 @@ const ProfileScreen = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       {/* Header Section */}
       <Card style={styles.headerCard}>
         <Card.Content style={styles.headerContent}>
@@ -176,218 +177,358 @@ const ProfileScreen = () => {
           <PaymentMethodsScreen />
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  // Login Prompt Styles
+  // ============================================================================
+  // LOGIN PROMPT CONTAINER - Shown when user is not logged in
+  // Used by: Root View when user needs to login to see profile
+  // ============================================================================
   loginPromptContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#231a13",
-    padding: 20,
+    flex: 1, // Takes full screen height
+    justifyContent: "center", // Centers card vertically
+    alignItems: "center", // Centers card horizontally
+    backgroundColor: "#231a13", // Dark brown background
+    padding: 20, // 20px padding on all sides
   },
+
+  // ============================================================================
+  // LOGIN PROMPT CARD - Card containing login message
+  // Used by: Card component in login prompt view
+  // ============================================================================
   loginPromptCard: {
-    width: "100%",
-    maxWidth: 350,
-    backgroundColor: "#2d2117",
-    borderRadius: 20,
-    elevation: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    width: "100%", // Full width of container
+    maxWidth: 350, // But never wider than 350px (looks better on tablets)
+    backgroundColor: "#2d2117", // Lighter brown card surface
+    borderRadius: 20, // Large rounded corners for friendly appearance
+    elevation: 8, // Android shadow depth (8 units)
+    shadowColor: "#000", // iOS shadow color (black)
+    shadowOffset: { width: 0, height: 4 }, // iOS shadow 4px down
+    shadowOpacity: 0.3, // iOS shadow 30% opacity
+    shadowRadius: 8, // iOS shadow 8px blur
   },
+
+  // ============================================================================
+  // LOGIN PROMPT CONTENT - Inner content of prompt card
+  // Used by: View inside prompt card
+  // ============================================================================
   loginPromptContent: {
-    alignItems: "center",
-    padding: 24,
+    alignItems: "center", // Centers content horizontally
+    padding: 24, // 24px padding on all sides
   },
+
+  // ============================================================================
+  // LOGIN PROMPT ICON - Icon at top of login prompt
+  // Used by: Avatar or icon component in prompt
+  // ============================================================================
   loginPromptIcon: {
-    backgroundColor: "#e0b97f",
-    marginBottom: 16,
+    backgroundColor: "#e0b97f", // Gold background for icon
+    marginBottom: 16, // 16px space below icon
   },
+
+  // ============================================================================
+  // LOGIN PROMPT TITLE - "Sign in to view profile" heading
+  // Used by: Text component showing main prompt message
+  // ============================================================================
   loginPromptTitle: {
-    color: "#ffffff",
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 12,
-    textAlign: "center",
+    color: "#ffffff", // White text for high contrast
+    fontSize: 24, // Large heading size
+    fontWeight: "bold", // Bold for emphasis
+    marginBottom: 12, // 12px space below title
+    textAlign: "center", // Centers text horizontally
   },
+
+  // ============================================================================
+  // LOGIN PROMPT SUBTITLE - Descriptive text below title
+  // Used by: Text component showing additional prompt info
+  // ============================================================================
   loginPromptSubtitle: {
-    color: "#f5f5f5",
-    fontSize: 16,
-    textAlign: "center",
-    lineHeight: 22,
-    opacity: 0.9,
+    color: "#f5f5f5", // Off-white text
+    fontSize: 16, // Medium text size
+    textAlign: "center", // Centers text horizontally
+    lineHeight: 22, // Line height for better readability with wrapping
+    opacity: 0.9, // Slightly transparent (90% visible)
   },
 
-  // Main Profile Styles
+  // ============================================================================
+  // MAIN CONTAINER - The entire Profile screen wrapper when logged in
+  // Used by: Root View component when user is authenticated
+  // ============================================================================
   container: {
-    flex: 1,
-    backgroundColor: "#231a13",
-    padding: 16,
+    flex: 1, // Takes full available screen height
+    backgroundColor: "#231a13", // Dark brown background
+    padding: 16, // 16px padding on all sides
   },
 
-  // Header Section
+  // ============================================================================
+  // HEADER CARD - Card showing user avatar, name, and email
+  // Used by: Card component at top of profile
+  // ============================================================================
   headerCard: {
-    backgroundColor: "#2d2117",
-    borderRadius: 16,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    marginBottom: 20,
+    backgroundColor: "#2d2117", // Lighter brown card background
+    borderRadius: 16, // Rounded corners
+    elevation: 4, // Android shadow depth
+    shadowColor: "#000", // iOS shadow color
+    shadowOffset: { width: 0, height: 2 }, // iOS shadow 2px down
+    shadowOpacity: 0.25, // iOS shadow 25% opacity
+    shadowRadius: 6, // iOS shadow 6px blur
+    marginBottom: 20, // 20px space below header card
   },
+
+  // ============================================================================
+  // HEADER CONTENT - Inner content of header card (avatar + user info)
+  // Used by: View inside header card arranging avatar and text
+  // ============================================================================
   headerContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 20,
+    flexDirection: "row", // Arranges avatar and user info horizontally
+    alignItems: "center", // Vertically aligns avatar with text
+    padding: 20, // 20px padding on all sides
   },
+
+  // ============================================================================
+  // AVATAR - Circular user avatar with initials
+  // Used by: Avatar component showing user's first letter
+  // ============================================================================
   avatar: {
-    backgroundColor: "#e0b97f",
-    marginRight: 16,
+    backgroundColor: "#e0b97f", // Gold circle background
+    marginRight: 16, // 16px space between avatar and user info
   },
+
+  // ============================================================================
+  // AVATAR LABEL - Text inside avatar (user initials)
+  // Used by: Text showing user's first letter
+  // ============================================================================
   avatarLabel: {
-    color: "#231a13",
-    fontSize: 28,
-    fontWeight: "bold",
+    color: "#231a13", // Dark text on gold background for contrast
+    fontSize: 28, // Large text for visibility
+    fontWeight: "bold", // Bold text
   },
+
+  // ============================================================================
+  // USER INFO - Container for username and email
+  // Used by: View wrapping name and email text
+  // ============================================================================
   userInfo: {
-    flex: 1,
+    flex: 1, // Takes remaining horizontal space
   },
+
+  // ============================================================================
+  // USER NAME - User's display name
+  // Used by: Text component showing user's full name
+  // ============================================================================
   userName: {
-    color: "#ffffff",
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 4,
+    color: "#ffffff", // White text for high visibility
+    fontSize: 22, // Large text for name prominence
+    fontWeight: "bold", // Bold for emphasis
+    marginBottom: 4, // 4px space below name
   },
+
+  // ============================================================================
+  // USER EMAIL - User's email address
+  // Used by: Text component showing user's email
+  // ============================================================================
   userEmail: {
-    color: "#f5f5f5",
-    fontSize: 16,
-    marginBottom: 8,
-    opacity: 0.9,
+    color: "#f5f5f5", // Off-white text
+    fontSize: 16, // Medium text size
+    marginBottom: 8, // 8px space below email
+    opacity: 0.9, // Slightly transparent (90% visible)
   },
+
+  // ============================================================================
+  // ADMIN BADGE - Badge showing "ADMIN" for admin users
+  // Used by: View/Badge component for admin indicator
+  // ============================================================================
   adminBadge: {
-    alignSelf: "flex-start",
-    backgroundColor: "#e0b97f",
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+    alignSelf: "flex-start", // Aligns to left edge (doesn't stretch)
+    backgroundColor: "#e0b97f", // Gold background
+    paddingHorizontal: 12, // 12px left/right padding
+    paddingVertical: 4, // 4px top/bottom padding
+    borderRadius: 12, // Rounded pill shape
   },
+
+  // ============================================================================
+  // ADMIN BADGE TEXT - "ADMIN" text inside badge
+  // Used by: Text inside admin badge
+  // ============================================================================
   adminBadgeText: {
-    color: "#231a13",
-    fontSize: 12,
-    fontWeight: "bold",
-    textTransform: "uppercase",
+    color: "#231a13", // Dark text on gold background
+    fontSize: 12, // Small text
+    fontWeight: "bold", // Bold for emphasis
+    textTransform: "uppercase", // Forces uppercase letters
   },
 
-  // Divider
+  // ============================================================================
+  // DIVIDER - Horizontal line separating sections
+  // Used by: Divider component between profile sections
+  // ============================================================================
   divider: {
-    backgroundColor: "#e0b97f",
-    height: 2,
-    marginVertical: 16,
+    backgroundColor: "#e0b97f", // Gold line color
+    height: 2, // 2px thick line
+    marginVertical: 16, // 16px space above and below
   },
 
+  // ============================================================================
+  // LOYALTY CARD - Card showing loyalty points
+  // Used by: Card component displaying user's loyalty points
+  // ============================================================================
   loyaltyCard: {
-    backgroundColor: "#2d2117",
-    borderRadius: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "#3d3127",
+    backgroundColor: "#2d2117", // Lighter brown card background
+    borderRadius: 16, // Rounded corners
+    marginBottom: 20, // 20px space below card
+    borderWidth: 1, // 1px border
+    borderColor: "#3d3127", // Subtle darker brown border
   },
+
+  // ============================================================================
+  // LOYALTY CONTENT - Inner content of loyalty card
+  // Used by: View inside loyalty card
+  // ============================================================================
   loyaltyContent: {
-    alignItems: "center",
-    paddingBottom: 20,
+    alignItems: "center", // Centers points horizontally
+    paddingBottom: 20, // 20px padding at bottom
   },
+
+  // ============================================================================
+  // LOYALTY POINTS - Large number showing points balance
+  // Used by: Text component showing loyalty points number (e.g., "250")
+  // ============================================================================
   loyaltyPoints: {
-    color: "#e0b97f",
-    fontSize: 36,
-    fontWeight: "bold",
-    marginBottom: 8,
+    color: "#e0b97f", // Gold text to highlight points
+    fontSize: 36, // Very large text for emphasis
+    fontWeight: "bold", // Bold for prominence
+    marginBottom: 8, // 8px space below number
   },
+
+  // ============================================================================
+  // LOYALTY CAPTION - "Loyalty Points" label text
+  // Used by: Text component below points number
+  // ============================================================================
   loyaltyCaption: {
-    color: "#f5f5f5",
-    fontSize: 14,
-    textAlign: "center",
-    opacity: 0.85,
+    color: "#f5f5f5", // Off-white text
+    fontSize: 14, // Small text size
+    textAlign: "center", // Centers text horizontally
+    opacity: 0.85, // Slightly transparent (85% visible)
   },
 
-  // Section Cards
+  // ============================================================================
+  // SECTION CARD - Generic card for profile sections (addresses, payments, etc.)
+  // Used by: Card components for various profile sections
+  // ============================================================================
   sectionCard: {
-    backgroundColor: "#2d2117",
-    borderRadius: 16,
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "#3d3127",
+    backgroundColor: "#2d2117", // Lighter brown card background
+    borderRadius: 16, // Rounded corners
+    elevation: 3, // Android shadow depth (3 units)
+    shadowColor: "#000", // iOS shadow color
+    shadowOffset: { width: 0, height: 2 }, // iOS shadow 2px down
+    shadowOpacity: 0.2, // iOS shadow 20% opacity
+    shadowRadius: 4, // iOS shadow 4px blur
+    marginBottom: 20, // 20px space between section cards
+    borderWidth: 1, // 1px border
+    borderColor: "#3d3127", // Subtle darker brown border
   },
+
+  // ============================================================================
+  // SECTION TITLE - Title of each section card
+  // Used by: Text component showing section heading (e.g., "My Addresses")
+  // ============================================================================
   sectionTitle: {
-    color: "#ffffff",
-    fontSize: 18,
-    fontWeight: "bold",
+    color: "#ffffff", // White text for high visibility
+    fontSize: 18, // Large text for section headings
+    fontWeight: "bold", // Bold for emphasis
   },
+
+  // ============================================================================
+  // SECTION ICON - Icon next to section title
+  // Used by: Icon component in section headers
+  // ============================================================================
   sectionIcon: {
-    backgroundColor: "#e0b97f",
+    backgroundColor: "#e0b97f", // Gold icon background
   },
+
+  // ============================================================================
+  // SECTION PLACEHOLDER - Text shown when section is empty
+  // Used by: Text shown when user has no addresses, payments, etc.
+  // ============================================================================
   sectionPlaceholder: {
-    color: "#f5f5f5",
-    fontSize: 14,
-    fontStyle: "italic",
-    opacity: 0.8,
-    textAlign: "center",
-    paddingVertical: 12,
+    color: "#f5f5f5", // Off-white text
+    fontSize: 14, // Small text size
+    fontStyle: "italic", // Italic to show it's placeholder/empty state
+    opacity: 0.8, // Slightly transparent (80% visible)
+    textAlign: "center", // Centers text horizontally
+    paddingVertical: 12, // 12px padding top/bottom
   },
 
-  // Logout Button
+  // ============================================================================
+  // LOGOUT BUTTON - Red button to sign out
+  // Used by: Button component for logging out
+  // ============================================================================
   logoutButton: {
-    backgroundColor: "#d32f2f",
-    borderRadius: 12,
-    marginTop: 20,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-  },
-  logoutButtonContent: {
-    paddingVertical: 8,
-  },
-  logoutButtonLabel: {
-    color: "#ffffff",
-    fontSize: 16,
-    fontWeight: "bold",
+    backgroundColor: "#d32f2f", // Red background (destructive action)
+    borderRadius: 12, // Rounded corners
+    marginTop: 20, // 20px space above button
+    elevation: 4, // Android shadow depth
+    shadowColor: "#000", // iOS shadow color
+    shadowOffset: { width: 0, height: 2 }, // iOS shadow 2px down
+    shadowOpacity: 0.25, // iOS shadow 25% opacity
+    shadowRadius: 4, // iOS shadow 4px blur
   },
 
-  // Modal Styles
+  // ============================================================================
+  // LOGOUT BUTTON CONTENT - Inner styling of logout button
+  // Used by: contentStyle prop of logout Button
+  // ============================================================================
+  logoutButtonContent: {
+    paddingVertical: 8, // 8px padding top/bottom
+  },
+
+  // ============================================================================
+  // LOGOUT BUTTON LABEL - Text inside logout button
+  // Used by: labelStyle prop of logout Button
+  // ============================================================================
+  logoutButtonLabel: {
+    color: "#ffffff", // White text on red background
+    fontSize: 16, // Standard button text size
+    fontWeight: "bold", // Bold for emphasis
+  },
+
+  // ============================================================================
+  // MODAL CONTAINER - Full screen container for modals (addresses, payments)
+  // Used by: Root View in modal screens
+  // ============================================================================
   modalContainer: {
-    flex: 1,
-    backgroundColor: "#231a13",
+    flex: 1, // Takes full screen height
+    backgroundColor: "#231a13", // Dark brown background matching main app
   },
+
+  // ============================================================================
+  // MODAL HEADER - Top bar of modal with title and close button
+  // Used by: View at top of modal screens
+  // ============================================================================
   modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: "#2d2117",
-    paddingHorizontal: 16,
-    paddingTop: 50,
-    paddingBottom: 16,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    flexDirection: "row", // Arranges title and close button horizontally
+    justifyContent: "space-between", // Pushes title and button to edges
+    alignItems: "center", // Vertically aligns title and button
+    backgroundColor: "#2d2117", // Lighter brown header background
+    paddingHorizontal: 16, // 16px padding left/right
+    paddingTop: 50, // 50px top padding (accounts for status bar)
+    paddingBottom: 16, // 16px bottom padding
+    elevation: 4, // Android shadow depth
+    shadowColor: "#000", // iOS shadow color
+    shadowOffset: { width: 0, height: 2 }, // iOS shadow 2px down
+    shadowOpacity: 0.25, // iOS shadow 25% opacity
+    shadowRadius: 4, // iOS shadow 4px blur
   },
+
+  // ============================================================================
+  // MODAL TITLE - Title text in modal header
+  // Used by: Text component showing modal screen title
+  // ============================================================================
   modalTitle: {
-    color: "#ffffff",
-    fontSize: 20,
-    fontWeight: "bold",
+    color: "#ffffff", // White text for high visibility
+    fontSize: 20, // Large text for modal heading
+    fontWeight: "bold", // Bold for emphasis
   },
 });
 

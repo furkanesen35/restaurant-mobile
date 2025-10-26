@@ -2,7 +2,7 @@ import * as React from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { PaperProvider } from "react-native-paper";
 import { NavigationContainer } from "@react-navigation/native";
-import { LogBox, UIManager, Platform } from "react-native";
+import { LogBox, UIManager, Platform, StatusBar } from "react-native";
 import { cozyTheme } from "./src/theme/cozyTheme";
 import { AuthProvider } from "./src/contexts/AuthContext";
 import { StripeProvider } from "@stripe/stripe-react-native";
@@ -47,6 +47,7 @@ const linking = {
 export default function App() {
   return (
     <SafeAreaProvider>
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
       <StripeProvider publishableKey={ENV.STRIPE_PUBLISHABLE_KEY}>
         <PaperProvider theme={cozyTheme}>
           <AuthProvider>

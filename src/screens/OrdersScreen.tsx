@@ -8,6 +8,7 @@ import {
   RefreshControl,
   Alert,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Card, Chip, useTheme, Button } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
 import { useIsFocused } from "@react-navigation/native";
@@ -226,7 +227,10 @@ const OrdersScreen = () => {
   });
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      edges={["top"]}
+    >
       <Text style={styles.title}>My Orders</Text>
 
       <View style={styles.tabContainer}>
@@ -313,174 +317,339 @@ const OrdersScreen = () => {
       </ScrollView>
 
       <ErrorMessage error={error} onDismiss={() => setError(null)} />
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  // ============================================================================
+  // MAIN CONTAINER - The entire Orders screen wrapper
+  // Used by: Root View component wrapping all orders content
+  // ============================================================================
   container: {
-    flex: 1,
-    padding: 16,
+    flex: 1, // Takes full available screen height
+    padding: 16, // 16px padding on all sides (top, right, bottom, left)
   },
+
+  // ============================================================================
+  // SCREEN TITLE - "My Orders" heading at top
+  // Used by: Text component showing screen title
+  // ============================================================================
   title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#fffbe8",
-    textAlign: "center",
-    marginBottom: 24,
+    fontSize: 28, // Large text for main heading
+    fontWeight: "bold", // Bold for emphasis
+    color: "#fffbe8", // Light cream color
+    textAlign: "center", // Centers text horizontally
+    marginBottom: 24, // 24px space before tabs below
   },
+
+  // ============================================================================
+  // TAB CONTAINER - Wrapper for "Current Orders" and "History" tabs
+  // Used by: View containing both tab buttons
+  // ============================================================================
   tabContainer: {
-    flexDirection: "row",
-    backgroundColor: "#2d2117",
-    borderRadius: 12,
-    padding: 4,
-    marginBottom: 16,
+    flexDirection: "row", // Arranges tabs horizontally side by side
+    backgroundColor: "#2d2117", // Dark brown background for tab bar
+    borderRadius: 12, // Rounded corners for pill-shaped tab bar
+    padding: 4, // 4px padding around tabs (creates gap from edges)
+    marginBottom: 16, // 16px space between tabs and orders list
   },
+
+  // ============================================================================
+  // TAB BUTTON - Individual tab (Current Orders / History) - UNSELECTED
+  // Used by: TouchableOpacity for each tab button
+  // ============================================================================
   tab: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: "center",
-    borderRadius: 8,
+    flex: 1, // Each tab takes equal width (50% each for 2 tabs)
+    paddingVertical: 12, // 12px padding top/bottom for touch target
+    alignItems: "center", // Centers tab text horizontally
+    borderRadius: 8, // Rounded corners for active tab highlight
   },
+
+  // ============================================================================
+  // ACTIVE TAB - Styling applied to currently selected tab
+  // Used by: Combined with tab style when tab is active
+  // ============================================================================
   activeTab: {
-    backgroundColor: "#e0b97f",
+    backgroundColor: "#e0b97f", // Gold background highlights active tab
   },
+
+  // ============================================================================
+  // TAB TEXT - Text inside tab buttons - UNSELECTED
+  // Used by: Text component inside tab TouchableOpacity
+  // ============================================================================
   tabText: {
-    color: "#fffbe8",
-    fontWeight: "bold",
+    color: "#fffbe8", // Light cream text for inactive tabs
+    fontWeight: "bold", // Bold text for all tabs
   },
+
+  // ============================================================================
+  // ACTIVE TAB TEXT - Text color when tab is selected
+  // Used by: Combined with tabText when tab is active
+  // ============================================================================
   activeTabText: {
-    color: "#231a13",
+    color: "#231a13", // Dark text on gold background for high contrast
   },
+
+  // ============================================================================
+  // ORDERS CONTAINER - ScrollView content wrapper for order cards
+  // Used by: ScrollView contentContainerStyle holding all order cards
+  // ============================================================================
   ordersContainer: {
-    paddingBottom: 20,
+    paddingBottom: 20, // 20px bottom padding for scroll overrun
   },
+
+  // ============================================================================
+  // ORDER CARD - Individual order card showing one order's details
+  // Used by: Card component for each order in the list
+  // ============================================================================
   orderCard: {
-    marginBottom: 16,
-    backgroundColor: "#2d2117",
-    borderRadius: 16,
+    marginBottom: 16, // 16px space between order cards
+    backgroundColor: "#2d2117", // Dark brown card background
+    borderRadius: 16, // Rounded corners for modern look
   },
+
+  // ============================================================================
+  // ORDER HEADER - Top row with order ID and timestamp
+  // Used by: View at top of each order card
+  // ============================================================================
   orderHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
+    flexDirection: "row", // Arranges ID and time horizontally
+    justifyContent: "space-between", // Pushes ID left and time right
+    alignItems: "center", // Vertically aligns ID and time
+    marginBottom: 12, // 12px space before status chip
   },
+
+  // ============================================================================
+  // ORDER ID - "#123" text showing order number
+  // Used by: Text component displaying order ID
+  // ============================================================================
   orderId: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#fffbe8",
+    fontSize: 18, // Large text for visibility
+    fontWeight: "bold", // Bold for emphasis
+    color: "#fffbe8", // Light cream color
   },
+
+  // ============================================================================
+  // ORDER TIME - "2 hours ago" relative timestamp
+  // Used by: Text component showing when order was placed
+  // ============================================================================
   orderTime: {
-    fontSize: 14,
-    color: "#e0b97f",
+    fontSize: 14, // Smaller than order ID (secondary info)
+    color: "#e0b97f", // Gold accent color
   },
+
+  // ============================================================================
+  // STATUS CHIP - Pill showing order status (preparing, cooking, etc.)
+  // Used by: Chip component displaying current order status
+  // ============================================================================
   statusChip: {
-    alignSelf: "flex-start",
-    marginBottom: 12,
-    backgroundColor: "transparent",
+    alignSelf: "flex-start", // Aligns chip to left edge (not stretched)
+    marginBottom: 12, // 12px space before progress bar
+    backgroundColor: "transparent", // No background (uses outline mode)
   },
+
+  // ============================================================================
+  // PROGRESS SECTION - Container for progress bar and ETA
+  // Used by: View wrapping progress bar and estimated time text
+  // ============================================================================
   progressSection: {
-    marginBottom: 16,
+    marginBottom: 16, // 16px space before items list
   },
+
+  // ============================================================================
+  // PROGRESS BAR - Background track for progress indicator
+  // Used by: View component that contains the filled progress
+  // ============================================================================
   progressBar: {
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#231a13",
-    marginBottom: 8,
-    overflow: "hidden",
+    height: 6, // 6px tall progress track
+    borderRadius: 3, // Rounded ends (half of height for pill shape)
+    backgroundColor: "#231a13", // Very dark brown background (empty track)
+    marginBottom: 8, // 8px space before estimated time text
+    overflow: "hidden", // Clips progress fill to rounded corners
   },
+
+  // ============================================================================
+  // PROGRESS FILL - Colored bar showing order completion percentage
+  // Used by: Animated View inside progressBar (width set dynamically)
+  // ============================================================================
   progressFill: {
-    height: "100%",
-    backgroundColor: "#e0b97f",
-    borderRadius: 3,
+    height: "100%", // Fills full height of progress bar (6px)
+    backgroundColor: "#e0b97f", // Gold color shows progress
+    borderRadius: 3, // Matches parent for smooth appearance
+    // width is set dynamically based on order status (e.g., "40%" for cooking)
   },
+
+  // ============================================================================
+  // ESTIMATED TIME - "Estimated: 25 min" text below progress bar
+  // Used by: Text showing remaining delivery time
+  // ============================================================================
   estimatedTime: {
-    fontSize: 12,
-    color: "#e0b97f",
-    textAlign: "center",
+    fontSize: 12, // Small text
+    color: "#e0b97f", // Gold accent color
+    textAlign: "center", // Centers text horizontally
   },
+
+  // ============================================================================
+  // ITEMS LIST - Container for order items ("• Pizza x2")
+  // Used by: View wrapping all order item Text components
+  // ============================================================================
   itemsList: {
-    marginBottom: 12,
+    marginBottom: 12, // 12px space before total/cancel section
   },
+
+  // ============================================================================
+  // ORDER ITEM - Single menu item line in order ("• Burger x1")
+  // Used by: Text component for each item in the order
+  // ============================================================================
   orderItem: {
-    color: "#fffbe8",
-    fontSize: 14,
-    marginBottom: 4,
+    color: "#fffbe8", // Light cream text
+    fontSize: 14, // Standard readable size
+    marginBottom: 4, // 4px space between items
   },
+
+  // ============================================================================
+  // ORDER TOTAL - "Total: €25.50" text
+  // Used by: Text component showing order total price
+  // ============================================================================
   orderTotal: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#e0b97f",
-    flex: 1,
+    fontSize: 16, // Medium-large for emphasis
+    fontWeight: "bold", // Bold for importance
+    color: "#e0b97f", // Gold accent color
+    flex: 1, // Takes remaining space (pushes cancel button right)
   },
+
+  // ============================================================================
+  // CANCEL BUTTON - Red outlined button to cancel order
+  // Used by: Button component for cancelling pending orders
+  // ============================================================================
   cancelButton: {
-    borderColor: "#d32f2f",
-    marginLeft: 8,
+    borderColor: "#d32f2f", // Red border for warning/destructive action
+    marginLeft: 8, // 8px space from total text
   },
+
+  // ============================================================================
+  // CANCEL BUTTON LABEL - Text inside cancel button
+  // Used by: labelStyle prop of cancel Button
+  // ============================================================================
   cancelButtonLabel: {
-    color: "#d32f2f",
-    fontSize: 12,
+    color: "#d32f2f", // Red text matching border
+    fontSize: 12, // Small compact text
   },
+
+  // ============================================================================
+  // EMPTY STATE - Container shown when no orders exist
+  // Used by: View displayed when orders list is empty
+  // ============================================================================
   emptyState: {
-    alignItems: "center",
-    paddingVertical: 40,
+    alignItems: "center", // Centers content horizontally
+    paddingVertical: 40, // 40px padding top/bottom for breathing room
   },
+
+  // ============================================================================
+  // EMPTY TEXT - "No orders yet" main message
+  // Used by: Text component in empty state
+  // ============================================================================
   emptyText: {
-    fontSize: 18,
-    color: "#fffbe8",
-    fontWeight: "bold",
-    marginBottom: 8,
+    fontSize: 18, // Medium-large text
+    color: "#fffbe8", // Light cream color
+    fontWeight: "bold", // Bold for visibility
+    marginBottom: 8, // 8px space before subtitle
   },
+
+  // ============================================================================
+  // EMPTY SUB TEXT - "Your order history will appear here" subtitle
+  // Used by: Text component below emptyText
+  // ============================================================================
   emptySubText: {
-    fontSize: 14,
-    color: "#e0b97f",
-    textAlign: "center",
+    fontSize: 14, // Smaller than main text
+    color: "#e0b97f", // Gold accent color
+    textAlign: "center", // Centers text for multi-line messages
   },
+
+  // ============================================================================
+  // LOADING CONTAINER - Wrapper shown while fetching orders
+  // Used by: View displayed during API loading state
+  // ============================================================================
   loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 40,
+    flex: 1, // Takes full available space
+    justifyContent: "center", // Centers spinner vertically
+    alignItems: "center", // Centers spinner horizontally
+    paddingVertical: 40, // 40px padding top/bottom
   },
+
+  // ============================================================================
+  // LOADING TEXT - "Loading orders..." text
+  // Used by: Text shown during loading state
+  // ============================================================================
   loadingText: {
-    color: "#fffbe8",
-    fontSize: 16,
+    color: "#fffbe8", // Light cream color
+    fontSize: 16, // Standard readable size
   },
+
+  // ============================================================================
+  // ERROR CONTAINER - Wrapper shown when order fetch fails
+  // Used by: View displayed on API error
+  // ============================================================================
   errorContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 40,
-    paddingHorizontal: 20,
+    flex: 1, // Takes full available space
+    justifyContent: "center", // Centers error message vertically
+    alignItems: "center", // Centers error message horizontally
+    paddingVertical: 40, // 40px padding top/bottom
+    paddingHorizontal: 20, // 20px padding left/right
   },
+
+  // ============================================================================
+  // ERROR TITLE - "Failed to load orders" heading
+  // Used by: Text showing main error message
+  // ============================================================================
   errorTitle: {
-    color: "#ff6b6b",
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 8,
-    textAlign: "center",
+    color: "#ff6b6b", // Red color indicates error
+    fontSize: 18, // Large for visibility
+    fontWeight: "bold", // Bold for emphasis
+    marginBottom: 8, // 8px space before error details
+    textAlign: "center", // Centers text
   },
+
+  // ============================================================================
+  // ERROR TEXT - Detailed error message
+  // Used by: Text showing error details/description
+  // ============================================================================
   errorText: {
-    color: "#fffbe8",
-    fontSize: 14,
-    textAlign: "center",
-    marginBottom: 20,
-    opacity: 0.8,
+    color: "#fffbe8", // Light cream color
+    fontSize: 14, // Standard size
+    textAlign: "center", // Centers text for readability
+    marginBottom: 20, // 20px space before retry button
+    opacity: 0.8, // Slightly transparent (80% visible)
   },
+
+  // ============================================================================
+  // RETRY BUTTON - Button to retry failed request
+  // Used by: TouchableOpacity to refresh orders after error
+  // ============================================================================
   retryButton: {
-    backgroundColor: "#e0b97f",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
+    backgroundColor: "#e0b97f", // Gold background
+    paddingHorizontal: 20, // 20px left/right padding
+    paddingVertical: 10, // 10px top/bottom padding
+    borderRadius: 8, // Rounded corners
   },
+
+  // ============================================================================
+  // RETRY BUTTON TEXT - "Try Again" text
+  // Used by: Text inside retry button
+  // ============================================================================
   retryButtonText: {
-    color: "#231a13",
-    fontSize: 14,
-    fontWeight: "600",
+    color: "#231a13", // Dark text on light button
+    fontSize: 14, // Standard size
+    fontWeight: "600", // Semi-bold
   },
+
+  // ============================================================================
+  // ORDER FOOTER - Bottom section with total and cancel button
+  // Used by: View at bottom of order card
+  // ============================================================================
   orderFooter: {
-    marginTop: 8,
+    marginTop: 8, // 8px space from items list above
   },
 });
 

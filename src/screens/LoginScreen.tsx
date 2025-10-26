@@ -249,170 +249,201 @@ const LoginScreen: React.FC<NavigationProps> = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  // ============================================================================
+  // MAIN CONTAINER - The entire Login screen wrapper
+  // Used by: KeyboardAvoidingView that wraps the login card
+  // ============================================================================
   container: {
-    // flex: 1 - Takes full screen height
-    flex: 1,
-    // justifyContent: "center" - Centers content vertically
-    justifyContent: "center",
-    // alignItems: "center" - Centers content horizontally
-    alignItems: "center",
-    // backgroundColor - Dark brown background matching theme
-    backgroundColor: "#231a13",
-    // paddingHorizontal: 16 - Adds 16dp padding on left and right sides
-    paddingHorizontal: 16,
+    flex: 1, // Takes full available screen height
+    justifyContent: "center", // Centers card vertically on screen
+    alignItems: "center", // Centers card horizontally on screen
+    backgroundColor: "#231a13", // Dark brown background (matches app theme)
+    paddingHorizontal: 16, // 16px padding on left and right to prevent edge touch
   },
+
+  // ============================================================================
+  // LOGIN CARD - The white/cream card container holding the form
+  // Used by: Card component wrapping all login form elements
+  // ============================================================================
   card: {
-    // width: "100%" - Card takes full width of parent
-    width: "100%",
-    // maxWidth: 400 - But never wider than 400dp (responsive for tablets)
-    maxWidth: 400,
-    // backgroundColor - Slightly lighter brown for card surface
-    backgroundColor: "#2d2117",
-    // borderRadius: 20 - Rounds all corners with 20dp radius
-    borderRadius: 20,
-    // elevation: 8 - Android shadow depth (higher = more shadow)
-    elevation: 8,
-    // iOS shadow properties below:
-    // shadowColor - Color of the shadow
-    shadowColor: "#000",
-    // shadowOffset - How far shadow moves from element (x, y)
-    shadowOffset: { width: 0, height: 4 },
-    // shadowOpacity - How transparent shadow is (0=invisible, 1=solid)
-    shadowOpacity: 0.3,
-    // shadowRadius - How blurred the shadow is (higher = more blur)
-    shadowRadius: 8,
+    width: "100%", // Card takes full width of container (minus padding)
+    maxWidth: 400, // But never wider than 400px (looks better on tablets/wide screens)
+    backgroundColor: "#2d2117", // Slightly lighter brown than background for card surface
+    borderRadius: 20, // Large rounded corners for modern, friendly look
+    elevation: 8, // Android shadow depth (8 units) - higher number = more prominent shadow
+    // iOS shadow properties:
+    shadowColor: "#000", // Black shadow color
+    shadowOffset: { width: 0, height: 4 }, // Shadow offset: 0px horizontal, 4px down
+    shadowOpacity: 0.3, // 30% opacity for subtle shadow
+    shadowRadius: 8, // 8px blur radius for soft shadow edges
   },
+
+  // ============================================================================
+  // TITLE - "Welcome Back" heading at top of form
+  // Used by: Title component from react-native-paper
+  // ============================================================================
   title: {
-    // color - Light cream text color
-    color: "#fffbe8",
-    // fontSize: 28 - Large text for main heading
-    fontSize: 28,
-    // fontWeight: "bold" - Makes text thick/heavy
-    fontWeight: "bold",
-    // marginBottom: 8 - Space below title
-    marginBottom: 8,
-    // textAlign: "center" - Centers text horizontally
-    textAlign: "center",
+    color: "#fffbe8", // Light cream color for high contrast on dark background
+    fontSize: 28, // Large text size for prominent heading
+    fontWeight: "bold", // Bold weight for emphasis and hierarchy
+    marginBottom: 8, // 8px space between title and subtitle
+    textAlign: "center", // Centers text horizontally
   },
+
+  // ============================================================================
+  // SUBTITLE - "Sign in to your account" text below title
+  // Used by: Text component below main title
+  // ============================================================================
   subtitle: {
-    // color - Gold/beige for accent
-    color: "#e0b97f",
-    // fontSize: 16 - Medium size for subtitle
-    fontSize: 16,
-    // textAlign: "center" - Centers text
-    textAlign: "center",
-    // marginBottom: 32 - Large space before form starts
-    marginBottom: 32,
-    // opacity: 0.9 - Slightly transparent (90% visible)
-    opacity: 0.9,
+    color: "#e0b97f", // Gold/tan accent color (theme primary color)
+    fontSize: 16, // Medium size for secondary text
+    textAlign: "center", // Centers text horizontally
+    marginBottom: 32, // Large 32px gap before form inputs start
+    opacity: 0.9, // Slightly transparent (90% visible) for subtle hierarchy
   },
+
+  // ============================================================================
+  // INPUT CONTAINER - Wrapper for each input field + error message
+  // Used by: View wrapping TextInput and HelperText for email and password
+  // ============================================================================
   inputContainer: {
-    // marginBottom: 16 - Space between input fields
-    marginBottom: 16,
+    marginBottom: 16, // 16px space between input fields
   },
+
+  // ============================================================================
+  // INPUT FIELD - Email and Password text input boxes
+  // Used by: TextInput components for email and password entry
+  // ============================================================================
   input: {
-    // backgroundColor - Light cream background for text input
-    backgroundColor: "#fffbe8",
+    backgroundColor: "#fffbe8", // Light cream background for good contrast with dark text
   },
+
+  // ============================================================================
+  // SIGN IN BUTTON - Primary action button
+  // Used by: Main "Sign In" Button component
+  // ============================================================================
   button: {
-    // marginTop: 16 - Space above button
-    marginTop: 16,
-    // marginBottom: 16 - Space below button
-    marginBottom: 16,
-    // borderRadius: 12 - Rounded corners on button
-    borderRadius: 12,
+    marginTop: 16, // 16px space above button (from last input)
+    marginBottom: 16, // 16px space below button (before forgot password link)
+    borderRadius: 12, // Rounded corners matching input fields
   },
+
+  // ============================================================================
+  // SIGN IN BUTTON CONTENT - Inner styling of button
+  // Used by: contentStyle prop of Button component
+  // ============================================================================
   buttonContent: {
-    // backgroundColor - Gold/beige button color
-    backgroundColor: "#e0b97f",
-    // paddingVertical: 4 - Vertical padding inside button
-    paddingVertical: 4,
+    backgroundColor: "#e0b97f", // Gold/tan background (theme primary color)
+    paddingVertical: 4, // 4px vertical padding for comfortable touch target
   },
+
+  // ============================================================================
+  // SIGN IN BUTTON LABEL - Text inside button
+  // Used by: labelStyle prop of Button component
+  // ============================================================================
   buttonLabel: {
-    // color - Dark text on light button
-    color: "#231a13",
-    // fontSize: 16 - Button text size
-    fontSize: 16,
-    // fontWeight: "600" - Semi-bold text
-    fontWeight: "600",
+    color: "#231a13", // Dark text on light button for high contrast
+    fontSize: 16, // Standard button text size
+    fontWeight: "600", // Semi-bold for emphasis
   },
+
+  // ============================================================================
+  // FORGOT PASSWORD CONTAINER - Wrapper for forgot password link
+  // Used by: TouchableOpacity wrapper around forgot password text
+  // ============================================================================
   forgotPasswordContainer: {
-    // alignItems: "center" - Centers content horizontally
-    alignItems: "center",
-    // marginTop: 12 - Space above forgot password link
-    marginTop: 12,
-    // marginBottom: 8 - Space below
-    marginBottom: 8,
+    alignItems: "center", // Centers link horizontally
+    marginTop: 12, // 12px space above link
+    marginBottom: 8, // 8px space below link (before OR divider)
   },
+
+  // ============================================================================
+  // FORGOT PASSWORD TEXT - The clickable "Forgot Password?" link
+  // Used by: Text inside TouchableOpacity for forgot password
+  // ============================================================================
   forgotPasswordText: {
-    // color - Gold accent color for link
-    color: "#e0b97f",
-    // fontSize: 14 - Smaller text for secondary action
-    fontSize: 14,
-    // textDecorationLine: "underline" - Underlines text to show it's a link
-    textDecorationLine: "underline",
+    color: "#e0b97f", // Gold accent color to show it's interactive
+    fontSize: 14, // Smaller than main text (secondary action)
+    textDecorationLine: "underline", // Underline indicates it's a clickable link
   },
+
+  // ============================================================================
+  // DIVIDER CONTAINER - Wrapper for "OR" section with lines
+  // Used by: View containing left line, "OR" text, and right line
+  // ============================================================================
   dividerContainer: {
-    // flexDirection: "row" - Arranges children horizontally (line-text-line)
-    flexDirection: "row",
-    // alignItems: "center" - Vertically centers items
-    alignItems: "center",
-    // marginVertical: 16 - Space above and below divider
-    marginVertical: 16,
+    flexDirection: "row", // Arranges children horizontally (line-text-line)
+    alignItems: "center", // Vertically centers all items (aligns lines with text)
+    marginVertical: 16, // 16px space above and below divider section
   },
+
+  // ============================================================================
+  // DIVIDER LINE - Horizontal lines on left and right of "OR"
+  // Used by: Divider components on both sides of "OR" text
+  // ============================================================================
   divider: {
-    // flex: 1 - Takes up remaining space (stretches the line)
-    flex: 1,
-    // backgroundColor - Gold line color
-    backgroundColor: "#e0b97f",
-    // height: 1 - Thin 1dp line
-    height: 1,
+    flex: 1, // Takes up all remaining horizontal space (makes lines stretch)
+    backgroundColor: "#e0b97f", // Gold color matching theme
+    height: 1, // Thin 1px line
   },
+
+  // ============================================================================
+  // DIVIDER TEXT - "OR" text between the lines
+  // Used by: Text component in middle of divider section
+  // ============================================================================
   dividerText: {
-    // color - Gold text between lines
-    color: "#e0b97f",
-    // marginHorizontal: 12 - Space on left and right of text
-    marginHorizontal: 12,
-    // fontSize: 14 - Small text size
-    fontSize: 14,
+    color: "#e0b97f", // Gold color matching divider lines
+    marginHorizontal: 12, // 12px space on left and right of text (gap from lines)
+    fontSize: 14, // Small text size
   },
+
+  // ============================================================================
+  // GOOGLE BUTTON - "Sign in with Google" button (currently commented out)
+  // Used by: Button component for Google OAuth (when enabled)
+  // ============================================================================
   googleButton: {
-    // marginBottom: 16 - Space below Google button
-    marginBottom: 16,
-    // borderRadius: 12 - Rounded corners
-    borderRadius: 12,
-    // borderColor - Gold border color
-    borderColor: "#e0b97f",
-    // borderWidth: 2 - 2dp thick border
-    borderWidth: 2,
+    marginBottom: 16, // 16px space below button
+    borderRadius: 12, // Rounded corners matching other buttons
+    borderColor: "#e0b97f", // Gold border color
+    borderWidth: 2, // 2px thick border (outline style)
   },
+
+  // ============================================================================
+  // GOOGLE BUTTON CONTENT - Inner styling of Google button
+  // Used by: contentStyle prop of Google sign-in Button (when enabled)
+  // ============================================================================
   googleButtonContent: {
-    // paddingVertical: 4 - Vertical padding inside button
-    paddingVertical: 4,
+    paddingVertical: 4, // 4px vertical padding for comfortable touch target
   },
+
+  // ============================================================================
+  // GOOGLE BUTTON LABEL - Text inside Google button
+  // Used by: labelStyle prop of Google sign-in Button (when enabled)
+  // ============================================================================
   googleButtonLabel: {
-    // color - Gold text for outline button
-    color: "#e0b97f",
-    // fontSize: 16 - Same size as primary button
-    fontSize: 16,
-    // fontWeight: "600" - Semi-bold
-    fontWeight: "600",
+    color: "#e0b97f", // Gold text for outline button (matches border)
+    fontSize: 16, // Same size as primary button text
+    fontWeight: "600", // Semi-bold for consistency with primary button
   },
+
+  // ============================================================================
+  // FOOTER - Bottom section with registration link
+  // Used by: View containing "Don't have an account?" link
+  // ============================================================================
   footer: {
-    // alignItems: "center" - Centers footer content
-    alignItems: "center",
-    // marginTop: 8 - Space above footer
-    marginTop: 8,
+    alignItems: "center", // Centers link horizontally
+    marginTop: 8, // 8px space above footer section
   },
+
+  // ============================================================================
+  // LINK TEXT - "Don't have an account? Register" clickable text
+  // Used by: Text inside TouchableOpacity for navigation to RegisterScreen
+  // ============================================================================
   link: {
-    // color - Gold link color
-    color: "#e0b97f",
-    // textAlign: "center" - Centers text
-    textAlign: "center",
-    // fontSize: 16 - Standard link size
-    fontSize: 16,
-    // textDecorationLine: "underline" - Shows it's clickable
-    textDecorationLine: "underline",
+    color: "#e0b97f", // Gold color to indicate interactivity
+    textAlign: "center", // Centers text horizontally
+    fontSize: 16, // Standard link text size
+    textDecorationLine: "underline", // Underline shows it's clickable
   },
 });
 

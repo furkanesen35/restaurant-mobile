@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Card, TextInput, useTheme } from "react-native-paper";
 
 const ReservationsScreen = () => {
@@ -46,13 +47,14 @@ const ReservationsScreen = () => {
   };
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-    >
-      <Text style={styles.title}>Reserve Your Table</Text>
-      <Text style={styles.subtitle}>Book a table at our cozy bar & grill</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#231a13" }} edges={["top"]}>
+      <ScrollView
+        style={[styles.container, { backgroundColor: colors.background }]}
+      >
+        <Text style={styles.title}>Reserve Your Table</Text>
+        <Text style={styles.subtitle}>Book a table at our cozy bar & grill</Text>
 
-      {/* Date Selection */}
+        {/* Date Selection */}
       <Card style={styles.card}>
         <Card.Title title="Select Date" />
         <Card.Content>
@@ -157,6 +159,7 @@ const ReservationsScreen = () => {
         Reserve Table
       </Button>
     </ScrollView>
+    </SafeAreaView>
   );
 };
 
