@@ -28,7 +28,7 @@ const STATUS_OPTIONS = [
 const AdminScreen = () => {
   const { colors } = useTheme();
   const { token, user } = useAuth();
-  const [activeTab, setActiveTab] = useState<"orders" | "menu">("orders");
+  const [activeTab, setActiveTab] = useState<"orders" | "menu" | "settings">("orders");
   const [orders, setOrders] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [menuItems, setMenuItems] = useState<any[]>([]);
@@ -56,6 +56,10 @@ const AdminScreen = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
     null
   );
+
+  // Settings states
+  const [minOrderValue, setMinOrderValue] = useState("");
+  const [savingSettings, setSavingSettings] = useState(false);
 
   const fetchOrders = useCallback(async () => {
     if (!token) return;
@@ -115,10 +119,48 @@ const AdminScreen = () => {
     }
   }, []);
 
+  const fetchSettings = useCallback(async () => {
+    try {
+      const response = await fetch(`${ENV.API_URL}/api/settings/minOrderValue`);
+      if (response.ok) {
+        const data = await response.json();
+        setMinOrderValue(data.value || "0");
+      }
+    } catch (err: any) {
+      console.error("Failed to fetch settings:", err);
+    }
+  }, []);
+
+  const saveMinOrderValue = async () => {
+    if (!token) return;
+    setSavingSettings(true);
+    try {
+      const response = await fetch(`${ENV.API_URL}/api/settings/minOrderValue`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          value: minOrderValue,
+          description: "Minimum order value in EUR",
+        }),
+      });
+      if (!response.ok) throw new Error("Failed to save setting");
+      Alert.alert("Success", "Minimum order value updated successfully");
+    } catch (err: any) {
+      Alert.alert("Error", err.message || "Failed to save setting");
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
   useEffect(() => {
     if (isFocused && user && token) {
       if (activeTab === "orders") {
         fetchOrders();
+      } else if (activeTab === "settings") {
+        fetchSettings();
       } else {
         fetchCategories();
         fetchMenuItems();
@@ -132,6 +174,7 @@ const AdminScreen = () => {
     fetchOrders,
     fetchCategories,
     fetchMenuItems,
+    fetchSettings,
   ]);
 
   const updateStatus = async (orderId: number, status: string) => {
@@ -330,6 +373,19 @@ const AdminScreen = () => {
               ]}
             >
               Menu
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === "settings" && styles.activeTab]}
+            onPress={() => setActiveTab("settings")}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "settings" && styles.activeTabText,
+              ]}
+            >
+              Settings
             </Text>
           </TouchableOpacity>
         </View>
@@ -806,6 +862,40 @@ const AdminScreen = () => {
             </ScrollView>
           </View>
         </Modal>
+
+        {/* Settings Tab */}
+        {activeTab === "settings" && (
+          <ScrollView>
+            <Card style={styles.card}>
+              <Card.Title title="Minimum Order Value" />
+              <Card.Content>
+                <Text style={styles.settingDescription}>
+                  Set the minimum order value in EUR. Orders below this amount will be rejected.
+                </Text>
+                <View style={styles.settingRow}>
+                  <Text style={styles.settingLabel}>Minimum Value (€):</Text>
+                  <TextInput
+                    style={styles.settingInput}
+                    keyboardType="numeric"
+                    value={minOrderValue}
+                    onChangeText={setMinOrderValue}
+                    placeholder="15.00"
+                    placeholderTextColor="#999"
+                  />
+                </View>
+                <TouchableOpacity
+                  style={styles.saveButton}
+                  onPress={saveMinOrderValue}
+                  disabled={savingSettings}
+                >
+                  <Text style={styles.saveButtonText}>
+                    {savingSettings ? "Saving..." : "Save Setting"}
+                  </Text>
+                </TouchableOpacity>
+              </Card.Content>
+            </Card>
+          </ScrollView>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -1015,6 +1105,44 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-around",
     marginTop: 16,
+  },
+  settingDescription: {
+    color: "#b8a68a",
+    fontSize: 14,
+    marginBottom: 16,
+  },
+  settingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  settingLabel: {
+    color: "#fffbe8",
+    fontSize: 16,
+    fontWeight: "600",
+    flex: 1,
+  },
+  settingInput: {
+    backgroundColor: "#231a13",
+    color: "#fffbe8",
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#e0b97f",
+    width: 120,
+    textAlign: "center",
+    fontSize: 16,
+  },
+  saveButton: {
+    backgroundColor: "#e0b97f",
+    borderRadius: 8,
+    padding: 14,
+    alignItems: "center",
+  },
+  saveButtonText: {
+    color: "#231a13",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
 

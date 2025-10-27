@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,15 +11,33 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useCart } from "../contexts/CartContext";
 import { useTheme, Card } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useIsFocused } from "@react-navigation/native";
+import axios from "axios";
 
 const CartScreen = () => {
   const { cart, updateQuantity, removeFromCart } = useCart();
   const { colors } = useTheme();
   const { user } = useAuth();
   const navigation = useNavigation();
+  const isFocused = useIsFocused();
+  const [minOrderValue, setMinOrderValue] = useState<number>(0);
+
+  useEffect(() => {
+    // Fetch minimum order value setting when screen is focused
+    if (isFocused) {
+      axios
+        .get("http://192.168.1.110:3000/api/settings/minOrderValue")
+        .then((response: any) => {
+          setMinOrderValue(parseFloat(response.data.value));
+        })
+        .catch((error: any) => {
+          console.log("Could not fetch minimum order value:", error);
+        });
+    }
+  }, [isFocused]);
 
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const isBelowMinimum = minOrderValue > 0 && total < minOrderValue;
 
   const handleProceedToCheckout = () => {
     if (!user) {
@@ -28,6 +46,13 @@ const CartScreen = () => {
     }
     if (cart.length === 0) {
       Alert.alert("Empty cart", "Please add items to your cart first.");
+      return;
+    }
+    if (isBelowMinimum) {
+      Alert.alert(
+        "Minimum order not met",
+        `Minimum order value is €${minOrderValue.toFixed(2)}. Please add €${(minOrderValue - total).toFixed(2)} more to your cart.`
+      );
       return;
     }
     navigation.navigate("Checkout" as never);
@@ -83,13 +108,24 @@ const CartScreen = () => {
           )}
         />
       )}
+      {minOrderValue > 0 && isBelowMinimum && cart.length > 0 && (
+        <View style={styles.minOrderWarning}>
+          <Text style={styles.minOrderWarningText}>
+            ⚠️ Minimum order: €{minOrderValue.toFixed(2)} • Add €
+            {(minOrderValue - total).toFixed(2)} more
+          </Text>
+        </View>
+      )}
       <Text style={[styles.total, { color: colors.primary }]}>
         Total: €{total.toFixed(2)}
       </Text>
       <TouchableOpacity
-        style={[styles.orderBtn, { backgroundColor: colors.primary }]}
+        style={[
+          styles.orderBtn,
+          { backgroundColor: isBelowMinimum ? "#666" : colors.primary },
+        ]}
         onPress={handleProceedToCheckout}
-        disabled={cart.length === 0}
+        disabled={cart.length === 0 || isBelowMinimum}
       >
         <Text
           style={{ color: colors.onPrimary, fontWeight: "bold", fontSize: 18 }}
@@ -125,6 +161,18 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   removeBtn: { marginLeft: 16 },
+  minOrderWarning: {
+    backgroundColor: "#8b4513",
+    padding: 12,
+    borderRadius: 8,
+    marginVertical: 8,
+  },
+  minOrderWarningText: {
+    color: "#fffbe8",
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
+  },
   total: {
     fontSize: 22,
     fontWeight: "bold",
