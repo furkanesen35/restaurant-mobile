@@ -451,7 +451,18 @@ const MenuScreen = () => {
                     items.map((item) => (
                       <Card key={item.id} style={styles.menuCard}>
                         <Card.Title
-                          title={item.name}
+                          title={
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                              <Text style={{ fontSize: 16, fontWeight: '600', color: colors.onBackground }}>{item.name}</Text>
+                              {item.loyaltyPointsMultiplier && item.loyaltyPointsMultiplier > 1.0 && (
+                                <View style={styles.bonusPointsBadge}>
+                                  <Text style={styles.bonusPointsText}>
+                                    🌟 {item.loyaltyPointsMultiplier}x Points
+                                  </Text>
+                                </View>
+                              )}
+                            </View>
+                          }
                           subtitle={`€${item.price.toFixed(2)}`}
                           right={() => (
                             <TouchableOpacity
@@ -502,7 +513,18 @@ const MenuScreen = () => {
                         {items.map((item) => (
                           <Card key={item.id} style={styles.menuCard}>
                             <Card.Title
-                              title={item.name}
+                              title={
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                  <Text style={{ fontSize: 16, fontWeight: '600', color: colors.onBackground }}>{item.name}</Text>
+                                  {item.loyaltyPointsMultiplier && item.loyaltyPointsMultiplier > 1.0 && (
+                                    <View style={styles.bonusPointsBadge}>
+                                      <Text style={styles.bonusPointsText}>
+                                        🌟 {item.loyaltyPointsMultiplier}x Points
+                                      </Text>
+                                    </View>
+                                  )}
+                                </View>
+                              }
                               subtitle={`€${item.price.toFixed(2)}`}
                               right={() => (
                                 <TouchableOpacity
@@ -791,6 +813,28 @@ const styles = StyleSheet.create({
     fontSize: 11, // Small text for compact badges
     fontWeight: "600", // Semi-bold text
     // color is set dynamically in the component code
+  },
+
+  // ============================================================================
+  // BONUS POINTS BADGE - Badge showing loyalty points multiplier
+  // ============================================================================
+  bonusPointsBadge: {
+    backgroundColor: "#ff9800",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    marginLeft: 8,
+    borderWidth: 1,
+    borderColor: "#f57c00",
+  },
+
+  // ============================================================================
+  // BONUS POINTS TEXT - Text inside loyalty points badge
+  // ============================================================================
+  bonusPointsText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "bold",
   },
 });
 

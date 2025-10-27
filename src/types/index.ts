@@ -27,6 +27,7 @@ export interface MenuItem {
   isGlutenFree?: boolean;
   isSpicy?: boolean;
   allergens?: string;
+  loyaltyPointsMultiplier?: number;
 }
 
 // Order types

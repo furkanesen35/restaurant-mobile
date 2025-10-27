@@ -27,7 +27,7 @@ const STATUS_OPTIONS = [
 
 const AdminScreen = () => {
   const { colors } = useTheme();
-  const { token, user } = useAuth();
+  const { token, user, updateUser } = useAuth();
   const [activeTab, setActiveTab] = useState<"orders" | "menu" | "settings">("orders");
   const [orders, setOrders] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -50,6 +50,7 @@ const AdminScreen = () => {
     categoryId: "",
     imageUrl: "",
     available: true,
+    loyaltyPointsMultiplier: "1.0",
   });
 
   // Selected category for viewing menu items
@@ -177,7 +178,11 @@ const AdminScreen = () => {
     fetchSettings,
   ]);
 
-  const updateStatus = async (orderId: number, status: string) => {
+  const updateStatus = async (
+    orderId: number,
+    status: string,
+    orderUserId?: number
+  ) => {
     if (!token) return;
     try {
       const response = await fetch(`${ENV.API_URL}/order/${orderId}/status`, {
@@ -189,7 +194,34 @@ const AdminScreen = () => {
         body: JSON.stringify({ status }),
       });
       if (!response.ok) throw new Error("Failed to update status");
-      Alert.alert("Success", `Order #${orderId} status updated to ${status}`);
+
+      const data = await response.json();
+
+      if (
+        status === "cancelled" &&
+        typeof data.loyaltyPointsBalance === "number" &&
+        orderUserId === user?.id
+      ) {
+        await updateUser({ loyaltyPoints: data.loyaltyPointsBalance });
+      }
+
+      // Show message with loyalty points info if order was cancelled
+      if (status === "cancelled" && data.loyaltyPointsDeducted > 0) {
+        Alert.alert(
+          "Success", 
+          `Order #${orderId} cancelled.\n${data.loyaltyPointsDeducted} loyalty points deducted from customer.`
+        );
+      } else if (status === "cancelled") {
+        Alert.alert(
+          "Success",
+          `Order #${orderId} cancelled. Loyalty points balance: ${
+            data.loyaltyPointsBalance ?? "unchanged"
+          }.`
+        );
+      } else {
+        Alert.alert("Success", `Order #${orderId} status updated to ${status}`);
+      }
+      
       fetchOrders();
     } catch (err: any) {
       Alert.alert("Error", err.message || "Failed to update order status");
@@ -287,6 +319,7 @@ const AdminScreen = () => {
           ...itemForm,
           price: parseFloat(itemForm.price),
           categoryId: parseInt(itemForm.categoryId),
+          loyaltyPointsMultiplier: parseFloat(itemForm.loyaltyPointsMultiplier),
         }),
       });
 
@@ -303,6 +336,7 @@ const AdminScreen = () => {
         categoryId: "",
         imageUrl: "",
         available: true,
+        loyaltyPointsMultiplier: "1.0",
       });
       setEditingItem(null);
       fetchMenuItems();
@@ -504,7 +538,30 @@ const AdminScreen = () => {
                                           );
                                           if (!response.ok)
                                             throw new Error("Failed");
-                                          Alert.alert("Order cancelled");
+                                          const data = await response.json();
+
+                                          if (
+                                            typeof data.loyaltyPointsBalance ===
+                                              "number" &&
+                                            item.userId === user?.id
+                                          ) {
+                                            await updateUser({
+                                              loyaltyPoints:
+                                                data.loyaltyPointsBalance,
+                                            });
+                                          }
+
+                                          if (
+                                            data.loyaltyPointsDeducted &&
+                                            data.loyaltyPointsDeducted > 0
+                                          ) {
+                                            Alert.alert(
+                                              "Order cancelled",
+                                              `${data.loyaltyPointsDeducted} loyalty points deducted. New balance: ${data.loyaltyPointsBalance}.`
+                                            );
+                                          } else {
+                                            Alert.alert("Order cancelled");
+                                          }
                                           fetchOrders();
                                         } catch (err: any) {
                                           Alert.alert("Error", err.message);
@@ -538,7 +595,9 @@ const AdminScreen = () => {
                                       : "#fffbe8",
                                 },
                               ]}
-                              onPress={() => updateStatus(item.id, status)}
+                              onPress={() =>
+                                updateStatus(item.id, status, item.userId)
+                              }
                               disabled={item.status === status}
                             >
                               <Text
@@ -670,7 +729,16 @@ const AdminScreen = () => {
               renderItem={({ item }) => (
                 <Card style={styles.menuItemCard}>
                   <Card.Content>
-                    <Text style={styles.itemName}>{item.name}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Text style={styles.itemName}>{item.name}</Text>
+                      {item.loyaltyPointsMultiplier && item.loyaltyPointsMultiplier > 1.0 && (
+                        <View style={styles.bonusPointsBadge}>
+                          <Text style={styles.bonusPointsText}>
+                            {item.loyaltyPointsMultiplier}x Points
+                          </Text>
+                        </View>
+                      )}
+                    </View>
                     <Text style={styles.itemDesc}>{item.description}</Text>
                     <Text style={styles.itemPrice}>${item.price}</Text>
                     <Text style={styles.itemCategory}>
@@ -697,6 +765,7 @@ const AdminScreen = () => {
                             ).toString(),
                             imageUrl: item.imageUrl || "",
                             available: item.available !== false,
+                            loyaltyPointsMultiplier: (item.loyaltyPointsMultiplier || 1.0).toString(),
                           });
                           setShowItemModal(true);
                         }}
@@ -728,6 +797,7 @@ const AdminScreen = () => {
                   categoryId: categories[0]?.id?.toString() || "",
                   imageUrl: "",
                   available: true,
+                  loyaltyPointsMultiplier: "1.0",
                 });
                 setShowItemModal(true);
               }}
@@ -806,6 +876,16 @@ const AdminScreen = () => {
                   value={itemForm.price}
                   onChangeText={(text) =>
                     setItemForm({ ...itemForm, price: text })
+                  }
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Loyalty Points Multiplier (e.g., 1.5 = 150% points)"
+                  placeholderTextColor="#999"
+                  keyboardType="numeric"
+                  value={itemForm.loyaltyPointsMultiplier}
+                  onChangeText={(text) =>
+                    setItemForm({ ...itemForm, loyaltyPointsMultiplier: text })
                   }
                 />
                 <TextInput
@@ -1142,6 +1222,17 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: "#231a13",
     fontSize: 16,
+    fontWeight: "bold",
+  },
+  bonusPointsBadge: {
+    backgroundColor: "#4caf50",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  bonusPointsText: {
+    color: "#fff",
+    fontSize: 11,
     fontWeight: "bold",
   },
 });
