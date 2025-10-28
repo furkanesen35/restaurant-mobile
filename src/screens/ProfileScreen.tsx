@@ -5,9 +5,11 @@ import { Card, Button, Avatar, Divider, IconButton } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
 import AddressesScreen from "./AddressesScreen";
 import PaymentMethodsScreen from "./PaymentMethodsScreen";
+import { useNavigation } from "@react-navigation/native";
 
 const ProfileScreen = () => {
   const { user, logout } = useAuth();
+  const navigation = useNavigation();
   const [showAddresses, setShowAddresses] = useState(false);
   const [showPayments, setShowPayments] = useState(false);
 
@@ -123,6 +125,31 @@ const ProfileScreen = () => {
           <Card.Content>
             <Text style={styles.sectionPlaceholder}>
               Tap to manage your payment methods
+            </Text>
+          </Card.Content>
+        </Card>
+      </TouchableOpacity>
+
+      {/* Cookie Settings Section */}
+      <TouchableOpacity onPress={() => navigation.navigate("CookieSettings" as never)}>
+        <Card style={styles.sectionCard}>
+          <Card.Title
+            title="Cookie & Datenschutz"
+            titleStyle={styles.sectionTitle}
+            left={(props) => (
+              <Avatar.Icon
+                {...props}
+                icon="cookie"
+                style={styles.sectionIcon}
+              />
+            )}
+            right={(props) => (
+              <IconButton {...props} icon="chevron-right" iconColor="#ffffff" />
+            )}
+          />
+          <Card.Content>
+            <Text style={styles.sectionPlaceholder}>
+              Verwalten Sie Ihre Cookie-Einstellungen
             </Text>
           </Card.Content>
         </Card>

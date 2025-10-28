@@ -17,6 +17,7 @@ import {
   ApiError,
 } from "../types";
 import apiClient from "../utils/apiClient";
+import { useCookieConsent } from "./CookieConsentContext";
 
 interface AuthContextType {
   user: User | null;
@@ -79,6 +80,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { hasConsent } = useCookieConsent();
 
   const persistUser = useCallback(async (userData: User | null) => {
     if (userData) {
@@ -141,6 +143,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Register push notification token with backend
   const registerPushToken = useCallback(async () => {
+    // Only register push tokens if user has consented to marketing or analytics
+    if (!hasConsent("marketing") && !hasConsent("analytics")) {
+      console.log("Push notifications disabled - no consent for marketing/analytics");
+      return;
+    }
+
     try {
       const pushToken = await registerForPushNotifications();
       if (pushToken) {
@@ -152,7 +160,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error("Failed to register push token:", error);
     }
-  }, []);
+  }, [hasConsent]);
 
   const storeAuthData = useCallback(
     async (authData: AuthResponse) => {

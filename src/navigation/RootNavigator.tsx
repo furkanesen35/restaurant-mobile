@@ -5,6 +5,7 @@ import RegisterScreen from "../screens/RegisterScreen";
 import ForgotPasswordScreen from "../screens/ForgotPasswordScreen";
 import ResetPasswordScreen from "../screens/ResetPasswordScreen";
 import VerifyEmailScreen from "../screens/VerifyEmailScreen";
+import CookieSettingsScreen from "../screens/CookieSettingsScreen";
 import { useAuth } from "../contexts/AuthContext";
 import MenuScreen from "../screens/MenuScreen";
 import ReservationsScreen from "../screens/ReservationsScreen";
@@ -117,6 +118,15 @@ function MainStack() {
           title: "Checkout",
           headerStyle: { backgroundColor: "#231a13" },
           headerTintColor: "#d4af37",
+        }}
+      />
+      <Stack.Screen
+        name="CookieSettings"
+        component={CookieSettingsScreen}
+        options={{
+          title: "Cookie-Einstellungen",
+          headerStyle: { backgroundColor: "#231a13" },
+          headerTintColor: "#e0b97f",
         }}
       />
     </Stack.Navigator>
