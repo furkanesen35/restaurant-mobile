@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Modal } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Card, Button, Avatar, Divider, IconButton } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
@@ -36,6 +36,7 @@ const ProfileScreen = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
       {/* Header Section */}
       <Card style={styles.headerCard}>
         <Card.Content style={styles.headerContent}>
@@ -130,6 +131,31 @@ const ProfileScreen = () => {
         </Card>
       </TouchableOpacity>
 
+      {/* QR Scanner Section */}
+      <TouchableOpacity onPress={() => navigation.navigate("QRScanner" as never)}>
+        <Card style={styles.sectionCard}>
+          <Card.Title
+            title="QR-Code scannen"
+            titleStyle={styles.sectionTitle}
+            left={(props) => (
+              <Avatar.Icon
+                {...props}
+                icon="qrcode-scan"
+                style={styles.sectionIcon}
+              />
+            )}
+            right={(props) => (
+              <IconButton {...props} icon="chevron-right" iconColor="#ffffff" />
+            )}
+          />
+          <Card.Content>
+            <Text style={styles.sectionDescription}>
+              Scannen Sie QR-Codes im Restaurant, um Treuepunkte zu sammeln
+            </Text>
+          </Card.Content>
+        </Card>
+      </TouchableOpacity>
+
       {/* Cookie Settings Section */}
       <TouchableOpacity onPress={() => navigation.navigate("CookieSettings" as never)}>
         <Card style={styles.sectionCard}>
@@ -166,6 +192,7 @@ const ProfileScreen = () => {
       >
         Logout
       </Button>
+      </ScrollView>
 
       {/* Addresses Modal */}
       <Modal
@@ -286,7 +313,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1, // Takes full available screen height
     backgroundColor: "#231a13", // Dark brown background
+  },
+
+  // ============================================================================
+  // SCROLL CONTENT - ScrollView content container
+  // Used by: ScrollView contentContainerStyle
+  // ============================================================================
+  scrollContent: {
     padding: 16, // 16px padding on all sides
+    paddingBottom: 32, // Extra bottom padding for comfortable scrolling
   },
 
   // ============================================================================
@@ -464,6 +499,16 @@ const styles = StyleSheet.create({
     color: "#ffffff", // White text for high visibility
     fontSize: 18, // Large text for section headings
     fontWeight: "bold", // Bold for emphasis
+  },
+
+  // ============================================================================
+  // SECTION DESCRIPTION - Description text in section cards
+  // Used by: Text component showing section description
+  // ============================================================================
+  sectionDescription: {
+    color: "#f5f5f5", // Off-white text
+    fontSize: 14, // Standard text size
+    opacity: 0.9, // Slightly transparent
   },
 
   // ============================================================================

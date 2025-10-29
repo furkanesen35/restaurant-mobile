@@ -15,6 +15,7 @@ import { Card, useTheme, Button, FAB } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
 import { useIsFocused } from "@react-navigation/native";
 import ENV from "../config/env";
+import QRTokenManagement from "../components/QRTokenManagement";
 
 const STATUS_OPTIONS = [
   "pending",
@@ -28,7 +29,7 @@ const STATUS_OPTIONS = [
 const AdminScreen = () => {
   const { colors } = useTheme();
   const { token, user, updateUser } = useAuth();
-  const [activeTab, setActiveTab] = useState<"orders" | "menu" | "settings">("orders");
+  const [activeTab, setActiveTab] = useState<"orders" | "menu" | "qr" | "settings">("orders");
   const [orders, setOrders] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [menuItems, setMenuItems] = useState<any[]>([]);
@@ -407,6 +408,19 @@ const AdminScreen = () => {
               ]}
             >
               Menu
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === "qr" && styles.activeTab]}
+            onPress={() => setActiveTab("qr")}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "qr" && styles.activeTabText,
+              ]}
+            >
+              QR-Codes
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -942,6 +956,9 @@ const AdminScreen = () => {
             </ScrollView>
           </View>
         </Modal>
+
+        {/* QR Codes Tab */}
+        {activeTab === "qr" && <QRTokenManagement />}
 
         {/* Settings Tab */}
         {activeTab === "settings" && (

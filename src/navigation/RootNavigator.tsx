@@ -6,6 +6,7 @@ import ForgotPasswordScreen from "../screens/ForgotPasswordScreen";
 import ResetPasswordScreen from "../screens/ResetPasswordScreen";
 import VerifyEmailScreen from "../screens/VerifyEmailScreen";
 import CookieSettingsScreen from "../screens/CookieSettingsScreen";
+import QRScannerScreen from "../screens/QRScannerScreen";
 import { useAuth } from "../contexts/AuthContext";
 import MenuScreen from "../screens/MenuScreen";
 import ReservationsScreen from "../screens/ReservationsScreen";
@@ -127,6 +128,16 @@ function MainStack() {
           title: "Cookie-Einstellungen",
           headerStyle: { backgroundColor: "#231a13" },
           headerTintColor: "#e0b97f",
+        }}
+      />
+      <Stack.Screen
+        name="QRScanner"
+        component={QRScannerScreen}
+        options={{
+          title: "QR-Code scannen",
+          headerStyle: { backgroundColor: "#231a13" },
+          headerTintColor: "#e0b97f",
+          headerShown: false,
         }}
       />
     </Stack.Navigator>
