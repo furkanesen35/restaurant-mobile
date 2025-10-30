@@ -125,7 +125,7 @@ function MainStack() {
         name="CookieSettings"
         component={CookieSettingsScreen}
         options={{
-          title: "Cookie-Einstellungen",
+          title: "Cookie Settings",
           headerStyle: { backgroundColor: "#231a13" },
           headerTintColor: "#e0b97f",
         }}
@@ -134,7 +134,7 @@ function MainStack() {
         name="QRScanner"
         component={QRScannerScreen}
         options={{
-          title: "QR-Code scannen",
+          title: "Scan QR Code",
           headerStyle: { backgroundColor: "#231a13" },
           headerTintColor: "#e0b97f",
           headerShown: false,

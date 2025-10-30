@@ -42,16 +42,15 @@ const CookieConsentBanner = () => {
       {showBanner && !showSettings && (
         <View style={styles.bannerContainer}>
           <View style={styles.banner}>
-            <Text style={styles.title}>🍪 Cookies & Datenschutz</Text>
+            <Text style={styles.title}>🍪 Cookies & Privacy</Text>
             <Text style={styles.description}>
-              Wir verwenden Cookies und ähnliche Technologien, um Ihre Erfahrung zu
-              verbessern, Inhalte zu personalisieren und unseren Datenverkehr zu
-              analysieren. Durch Klicken auf "Alle akzeptieren" stimmen Sie der
-              Verwendung ALLER Cookies zu. Sie können Ihre Einstellungen jederzeit
-              anpassen.
+              We use cookies and similar technologies to enhance your experience,
+              personalize content, and analyze our traffic. By clicking "Accept All"
+              you consent to the use of ALL cookies. You can adjust your
+              settings at any time.
             </Text>
             <Text style={styles.privacyLink}>
-              Weitere Informationen finden Sie in unserer Datenschutzerklärung.
+              For more information, please see our Privacy Policy.
             </Text>
 
             <View style={styles.buttonContainer}>
@@ -59,21 +58,21 @@ const CookieConsentBanner = () => {
                 style={[styles.button, styles.rejectButton]}
                 onPress={rejectAll}
               >
-                <Text style={styles.rejectButtonText}>Alle ablehnen</Text>
+                <Text style={styles.rejectButtonText}>Reject All</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.button, styles.settingsButton]}
                 onPress={() => setShowSettings(true)}
               >
-                <Text style={styles.settingsButtonText}>Einstellungen</Text>
+                <Text style={styles.settingsButtonText}>Settings</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.button, styles.acceptButton]}
                 onPress={acceptAll}
               >
-                <Text style={styles.acceptButtonText}>Alle akzeptieren</Text>
+                <Text style={styles.acceptButtonText}>Accept All</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -89,17 +88,16 @@ const CookieConsentBanner = () => {
       >
         <SafeAreaView style={styles.modalContainer} edges={["top", "bottom"]}>
           <ScrollView style={styles.settingsContent}>
-            <Text style={styles.modalTitle}>Cookie-Einstellungen</Text>
+            <Text style={styles.modalTitle}>Cookie Settings</Text>
             <Text style={styles.modalDescription}>
-              Wir verwenden Cookies, um Ihnen die bestmögliche Erfahrung auf unserer
-              Website zu bieten. Sie können wählen, welche Kategorien von Cookies Sie
-              zulassen möchten.
+              We use cookies to provide you with the best possible experience on our
+              website. You can choose which categories of cookies you want to allow.
             </Text>
 
             {/* Necessary Cookies */}
             <View style={styles.cookieCategory}>
               <View style={styles.categoryHeader}>
-                <Text style={styles.categoryTitle}>Notwendige Cookies</Text>
+                <Text style={styles.categoryTitle}>Necessary Cookies</Text>
                 <Switch
                   value={true}
                   disabled={true}
@@ -108,18 +106,17 @@ const CookieConsentBanner = () => {
                 />
               </View>
               <Text style={styles.categoryDescription}>
-                Diese Cookies sind für die Funktion der Website erforderlich und können
-                nicht deaktiviert werden. Sie werden normalerweise nur als Reaktion auf
-                von Ihnen vorgenommene Aktionen gesetzt, wie z.B. das Setzen Ihrer
-                Datenschutzeinstellungen, das Anmelden oder das Ausfüllen von
-                Formularen.
+                These cookies are essential for the website to function and cannot be
+                disabled. They are usually only set in response to actions you take,
+                such as setting your privacy preferences, logging in, or filling out
+                forms.
               </Text>
             </View>
 
             {/* Analytics Cookies */}
             <View style={styles.cookieCategory}>
               <View style={styles.categoryHeader}>
-                <Text style={styles.categoryTitle}>Analyse-Cookies</Text>
+                <Text style={styles.categoryTitle}>Analytics Cookies</Text>
                 <Switch
                   value={preferences.analytics}
                   onValueChange={() => togglePreference("analytics")}
@@ -128,17 +125,17 @@ const CookieConsentBanner = () => {
                 />
               </View>
               <Text style={styles.categoryDescription}>
-                Diese Cookies ermöglichen es uns, Besuche und Verkehrsquellen zu zählen,
-                damit wir die Leistung unserer Website messen und verbessern können. Sie
-                helfen uns zu verstehen, welche Seiten am beliebtesten sind und wie
-                Besucher sich auf der Website bewegen.
+                These cookies allow us to count visits and traffic sources so we can
+                measure and improve the performance of our website. They help us
+                understand which pages are most popular and how visitors move around
+                the site.
               </Text>
             </View>
 
             {/* Marketing Cookies */}
             <View style={styles.cookieCategory}>
               <View style={styles.categoryHeader}>
-                <Text style={styles.categoryTitle}>Marketing-Cookies</Text>
+                <Text style={styles.categoryTitle}>Marketing Cookies</Text>
                 <Switch
                   value={preferences.marketing}
                   onValueChange={() => togglePreference("marketing")}
@@ -147,17 +144,16 @@ const CookieConsentBanner = () => {
                 />
               </View>
               <Text style={styles.categoryDescription}>
-                Diese Cookies können von unseren Werbepartnern über unsere Website
-                gesetzt werden. Sie können verwendet werden, um ein Profil Ihrer
-                Interessen zu erstellen und Ihnen relevante Anzeigen auf anderen
-                Websites zu zeigen.
+                These cookies may be set by our advertising partners through our website.
+                They may be used to build a profile of your interests and show you
+                relevant ads on other websites.
               </Text>
             </View>
 
             {/* Preference Cookies */}
             <View style={styles.cookieCategory}>
               <View style={styles.categoryHeader}>
-                <Text style={styles.categoryTitle}>Präferenz-Cookies</Text>
+                <Text style={styles.categoryTitle}>Preference Cookies</Text>
                 <Switch
                   value={preferences.preferences}
                   onValueChange={() => togglePreference("preferences")}
@@ -166,9 +162,9 @@ const CookieConsentBanner = () => {
                 />
               </View>
               <Text style={styles.categoryDescription}>
-                Diese Cookies ermöglichen es der Website, sich an Ihre Auswahl zu
-                erinnern (wie Ihren Benutzernamen, Ihre Sprache oder die Region, in der
-                Sie sich befinden) und bieten verbesserte, persönlichere Funktionen.
+                These cookies enable the website to remember your choices (such as
+                your username, language, or region) and provide enhanced, more
+                personalized features.
               </Text>
             </View>
           </ScrollView>
@@ -178,13 +174,13 @@ const CookieConsentBanner = () => {
               style={[styles.modalButton, styles.modalCancelButton]}
               onPress={() => setShowSettings(false)}
             >
-              <Text style={styles.modalCancelButtonText}>Abbrechen</Text>
+              <Text style={styles.modalCancelButtonText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.modalButton, styles.modalSaveButton]}
               onPress={handleSavePreferences}
             >
-              <Text style={styles.modalSaveButtonText}>Einstellungen speichern</Text>
+              <Text style={styles.modalSaveButtonText}>Save Settings</Text>
             </TouchableOpacity>
           </View>
         </SafeAreaView>

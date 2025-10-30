@@ -61,7 +61,7 @@ export default function QRTokenManagement() {
       setTokens(data.tokens || []);
     } catch (error: any) {
       console.error('Failed to fetch tokens:', error);
-      Alert.alert('Fehler', 'Tokens konnten nicht geladen werden');
+      Alert.alert('Error', 'Failed to load tokens');
     } finally {
       setLoading(false);
     }
@@ -69,7 +69,7 @@ export default function QRTokenManagement() {
 
   const createToken = async () => {
     if (!points || parseInt(points) <= 0) {
-      Alert.alert('Fehler', 'Bitte geben Sie eine gültige Punktzahl ein');
+      Alert.alert('Error', 'Please enter a valid points value');
       return;
     }
 
@@ -84,7 +84,7 @@ export default function QRTokenManagement() {
 
       const data = response.data as any;
       if (data.success) {
-        Alert.alert('Erfolg', 'QR-Code erfolgreich erstellt!');
+        Alert.alert('Success', 'QR code created successfully!');
         setShowCreateModal(false);
         resetForm();
         fetchTokens();
@@ -95,8 +95,8 @@ export default function QRTokenManagement() {
       }
     } catch (error: any) {
       Alert.alert(
-        'Fehler',
-        error.response?.data?.error || 'Token konnte nicht erstellt werden'
+        'Error',
+        error.response?.data?.error || 'Failed to create token'
       );
     } finally {
       setCreating(false);
@@ -105,21 +105,21 @@ export default function QRTokenManagement() {
 
   const deactivateToken = async (tokenId: number) => {
     Alert.alert(
-      'Token deaktivieren',
-      'Möchten Sie diesen Token wirklich deaktivieren?',
+      'Deactivate Token',
+      'Are you sure you want to deactivate this token?',
       [
-        { text: 'Abbrechen', style: 'cancel' },
+        { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Deaktivieren',
+          text: 'Deactivate',
           style: 'destructive',
           onPress: async () => {
             try {
               await apiClient.delete(`/api/loyalty/tokens/${tokenId}`);
-              Alert.alert('Erfolg', 'Token wurde deaktiviert');
+              Alert.alert('Success', 'Token has been deactivated');
               fetchTokens();
             } catch (err) {
               console.error('Failed to deactivate token:', err);
-              Alert.alert('Fehler', 'Token konnte nicht deaktiviert werden');
+              Alert.alert('Error', 'Failed to deactivate token');
             }
           },
         },
@@ -136,7 +136,7 @@ export default function QRTokenManagement() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleString('de-DE', {
+    return date.toLocaleString('en-US', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -155,12 +155,12 @@ export default function QRTokenManagement() {
       : '#9ca3af';
 
     const statusText = item.isRedeemed
-      ? 'Eingelöst'
+      ? 'Redeemed'
       : item.isExpired
-      ? 'Abgelaufen'
+      ? 'Expired'
       : item.isActive
-      ? 'Aktiv'
-      : 'Inaktiv';
+      ? 'Active'
+      : 'Inactive';
 
     return (
       <View style={styles.tokenCard}>
@@ -174,20 +174,20 @@ export default function QRTokenManagement() {
         <View style={styles.tokenDetails}>
           <View style={styles.detailRow}>
             <Ionicons name="star" size={16} color={cozyTheme.colors.primary} />
-            <Text style={styles.detailText}>{item.points} Punkte</Text>
+            <Text style={styles.detailText}>{item.points} Points</Text>
           </View>
 
           <View style={styles.detailRow}>
             <Ionicons name="time" size={16} color="#9ca3af" />
             <Text style={styles.detailText}>
-              Erstellt: {formatDate(item.createdAt)}
+              Created: {formatDate(item.createdAt)}
             </Text>
           </View>
 
           <View style={styles.detailRow}>
             <Ionicons name="hourglass" size={16} color="#9ca3af" />
             <Text style={styles.detailText}>
-              Läuft ab: {formatDate(item.expiresAt)}
+              Expires: {formatDate(item.expiresAt)}
             </Text>
           </View>
 
@@ -201,10 +201,10 @@ export default function QRTokenManagement() {
           {item.redeemedBy && (
             <View style={styles.redeemedInfo}>
               <Text style={styles.redeemedText}>
-                Eingelöst von: {item.redeemedBy.name}
+                Redeemed by: {item.redeemedBy.name}
               </Text>
               <Text style={styles.redeemedText}>
-                Am: {formatDate(item.redeemedAt!)}
+                On: {formatDate(item.redeemedAt!)}
               </Text>
             </View>
           )}
@@ -219,7 +219,7 @@ export default function QRTokenManagement() {
             }}
           >
             <Ionicons name="qr-code" size={20} color={cozyTheme.colors.primary} />
-            <Text style={styles.actionButtonText}>QR anzeigen</Text>
+            <Text style={styles.actionButtonText}>Show QR</Text>
           </TouchableOpacity>
 
           {item.isActive && !item.isRedeemed && (
@@ -229,7 +229,7 @@ export default function QRTokenManagement() {
             >
               <Ionicons name="close-circle" size={20} color="#ef4444" />
               <Text style={[styles.actionButtonText, styles.deleteButtonText]}>
-                Deaktivieren
+                Deactivate
               </Text>
             </TouchableOpacity>
           )}
@@ -241,7 +241,7 @@ export default function QRTokenManagement() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>QR-Code Verwaltung</Text>
+        <Text style={styles.title}>QR Code Management</Text>
         <TouchableOpacity
           style={styles.filterButton}
           onPress={() => setShowActiveOnly(!showActiveOnly)}
@@ -252,7 +252,7 @@ export default function QRTokenManagement() {
             color={cozyTheme.colors.primary}
           />
           <Text style={styles.filterText}>
-            {showActiveOnly ? 'Nur Aktive' : 'Alle'}
+            {showActiveOnly ? 'Active Only' : 'All'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -270,9 +270,9 @@ export default function QRTokenManagement() {
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Ionicons name="qr-code-outline" size={64} color="#9ca3af" />
-              <Text style={styles.emptyText}>Keine Tokens vorhanden</Text>
+              <Text style={styles.emptyText}>No tokens available</Text>
               <Text style={styles.emptySubtext}>
-                Erstellen Sie einen neuen QR-Code
+                Create a new QR code to get started
               </Text>
             </View>
           }
@@ -296,14 +296,14 @@ export default function QRTokenManagement() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Neuen QR-Code erstellen</Text>
+              <Text style={styles.modalTitle}>Create New QR Code</Text>
               <TouchableOpacity onPress={() => setShowCreateModal(false)}>
                 <Ionicons name="close" size={24} color={cozyTheme.colors.onSurface} />
               </TouchableOpacity>
             </View>
 
             <ScrollView>
-              <Text style={styles.label}>Punkte *</Text>
+              <Text style={styles.label}>Points *</Text>
               <TextInput
                 style={styles.input}
                 placeholder="50"
@@ -312,7 +312,7 @@ export default function QRTokenManagement() {
                 keyboardType="number-pad"
               />
 
-              <Text style={styles.label}>Gültigkeit (Stunden) *</Text>
+              <Text style={styles.label}>Validity (Hours) *</Text>
               <View style={styles.expiryButtons}>
                 {[1, 24, 168].map((hours) => (
                   <TouchableOpacity
@@ -330,24 +330,24 @@ export default function QRTokenManagement() {
                           styles.expiryButtonTextActive,
                       ]}
                     >
-                      {hours === 1 ? '1h' : hours === 24 ? '24h' : '1 Woche'}
+                      {hours === 1 ? '1h' : hours === 24 ? '24h' : '1 Week'}
                     </Text>
                   </TouchableOpacity>
                 ))}
               </View>
 
-              <Text style={styles.label}>Standort (optional)</Text>
+              <Text style={styles.label}>Location (optional)</Text>
               <TextInput
                 style={styles.input}
-                placeholder="z.B. Hauptrestaurant"
+                placeholder="e.g. Main Restaurant"
                 value={location}
                 onChangeText={setLocation}
               />
 
-              <Text style={styles.label}>Notizen (optional)</Text>
+              <Text style={styles.label}>Notes (optional)</Text>
               <TextInput
                 style={[styles.input, styles.textArea]}
-                placeholder="z.B. Wochenend-Aktion"
+                placeholder="e.g. Weekend promotion"
                 value={notes}
                 onChangeText={setNotes}
                 multiline
@@ -362,7 +362,7 @@ export default function QRTokenManagement() {
                 {creating ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text style={styles.createButtonText}>QR-Code erstellen</Text>
+                  <Text style={styles.createButtonText}>Create QR Code</Text>
                 )}
               </TouchableOpacity>
             </ScrollView>
@@ -398,13 +398,13 @@ export default function QRTokenManagement() {
                 </View>
 
                 <Text style={styles.qrCode}>{selectedToken.code}</Text>
-                <Text style={styles.qrPoints}>{selectedToken.points} Punkte</Text>
+                <Text style={styles.qrPoints}>{selectedToken.points} Points</Text>
                 <Text style={styles.qrExpiry}>
-                  Gültig bis: {formatDate(selectedToken.expiresAt)}
+                  Valid until: {formatDate(selectedToken.expiresAt)}
                 </Text>
 
                 <Text style={styles.qrInstructions}>
-                  Kunden können diesen QR-Code mit der App scannen, um Punkte zu sammeln
+                  Customers can scan this QR code with the app to collect points
                 </Text>
               </>
             )}

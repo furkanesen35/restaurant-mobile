@@ -47,11 +47,11 @@ const CookieSettingsScreen = () => {
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView style={styles.content}>
-        <Text style={styles.title}>Cookie & Datenschutz-Einstellungen</Text>
+        <Text style={styles.title}>Cookie & Privacy Settings</Text>
         <Text style={styles.description}>
-          Verwalten Sie Ihre Cookie-Einstellungen und Datenschutzpräferenzen.
-          Notwendige Cookies können nicht deaktiviert werden, da sie für die
-          Funktionalität der App erforderlich sind.
+          Manage your cookie settings and privacy preferences.
+          Necessary cookies cannot be disabled as they are required for
+          the app to function.
         </Text>
 
         {/* Necessary Cookies */}
@@ -59,8 +59,8 @@ const CookieSettingsScreen = () => {
           <Card.Content>
             <View style={styles.categoryHeader}>
               <View style={styles.categoryTitleContainer}>
-                <Text style={styles.categoryTitle}>Notwendige Cookies</Text>
-                <Text style={styles.categoryBadge}>Immer aktiv</Text>
+                <Text style={styles.categoryTitle}>Necessary Cookies</Text>
+                <Text style={styles.categoryBadge}>Always Active</Text>
               </View>
               <Switch
                 value={true}
@@ -70,14 +70,14 @@ const CookieSettingsScreen = () => {
               />
             </View>
             <Text style={styles.categoryDescription}>
-              Diese Cookies sind für die Funktion der App erforderlich und können
-              nicht deaktiviert werden. Sie umfassen:
+              These cookies are essential for the app to function and cannot
+              be disabled. They include:
             </Text>
             <Text style={styles.cookieList}>
-              • Authentifizierung und Sitzungsverwaltung{"\n"}
-              • Warenkorb und Bestellfunktionen{"\n"}
-              • Sicherheit und Betrugsschutz{"\n"}
-              • Cookie-Einwilligungsverwaltung
+              • Authentication and session management{"\n"}
+              • Shopping cart and order functions{"\n"}
+              • Security and fraud protection{"\n"}
+              • Cookie consent management
             </Text>
           </Card.Content>
         </Card>
@@ -86,7 +86,7 @@ const CookieSettingsScreen = () => {
         <Card style={styles.card}>
           <Card.Content>
             <View style={styles.categoryHeader}>
-              <Text style={styles.categoryTitle}>Analyse-Cookies</Text>
+              <Text style={styles.categoryTitle}>Analytics Cookies</Text>
               <Switch
                 value={localPreferences.analytics}
                 onValueChange={() => togglePreference("analytics")}
@@ -95,14 +95,13 @@ const CookieSettingsScreen = () => {
               />
             </View>
             <Text style={styles.categoryDescription}>
-              Diese Cookies helfen uns, die Nutzung der App zu verstehen und zu
-              verbessern:
+              These cookies help us understand and improve app usage:
             </Text>
             <Text style={styles.cookieList}>
-              • Besuchsstatistiken und Nutzungsmuster{"\n"}
-              • Leistungsüberwachung{"\n"}
-              • Fehlerberichterstattung{"\n"}
-              • A/B-Testing und Funktionsoptimierung
+              • Visit statistics and usage patterns{"\n"}
+              • Performance monitoring{"\n"}
+              • Error reporting{"\n"}
+              • A/B testing and feature optimization
             </Text>
           </Card.Content>
         </Card>
@@ -111,7 +110,7 @@ const CookieSettingsScreen = () => {
         <Card style={styles.card}>
           <Card.Content>
             <View style={styles.categoryHeader}>
-              <Text style={styles.categoryTitle}>Marketing-Cookies</Text>
+              <Text style={styles.categoryTitle}>Marketing Cookies</Text>
               <Switch
                 value={localPreferences.marketing}
                 onValueChange={() => togglePreference("marketing")}
@@ -120,13 +119,13 @@ const CookieSettingsScreen = () => {
               />
             </View>
             <Text style={styles.categoryDescription}>
-              Diese Cookies werden für personalisierte Werbung verwendet:
+              These cookies are used for personalized advertising:
             </Text>
             <Text style={styles.cookieList}>
-              • Personalisierte Angebote und Empfehlungen{"\n"}
-              • Werbe-Tracking und Conversion-Messung{"\n"}
-              • Retargeting und zielgerichtete Werbung{"\n"}
-              • Social-Media-Integration
+              • Personalized offers and recommendations{"\n"}
+              • Ad tracking and conversion measurement{"\n"}
+              • Retargeting and targeted advertising{"\n"}
+              • Social media integration
             </Text>
           </Card.Content>
         </Card>
@@ -135,7 +134,7 @@ const CookieSettingsScreen = () => {
         <Card style={styles.card}>
           <Card.Content>
             <View style={styles.categoryHeader}>
-              <Text style={styles.categoryTitle}>Präferenz-Cookies</Text>
+              <Text style={styles.categoryTitle}>Preference Cookies</Text>
               <Switch
                 value={localPreferences.preferences}
                 onValueChange={() => togglePreference("preferences")}
@@ -144,13 +143,13 @@ const CookieSettingsScreen = () => {
               />
             </View>
             <Text style={styles.categoryDescription}>
-              Diese Cookies speichern Ihre persönlichen Einstellungen:
+              These cookies store your personal settings:
             </Text>
             <Text style={styles.cookieList}>
-              • Sprachpräferenzen{"\n"}
-              • Regionale Einstellungen{"\n"}
-              • Anzeigepräferenzen{"\n"}
-              • Gespeicherte Favoriten und Listen
+              • Language preferences{"\n"}
+              • Regional settings{"\n"}
+              • Display preferences{"\n"}
+              • Saved favorites and lists
             </Text>
           </Card.Content>
         </Card>
@@ -158,11 +157,10 @@ const CookieSettingsScreen = () => {
         {/* Info Section */}
         <Card style={styles.infoCard}>
           <Card.Content>
-            <Text style={styles.infoTitle}>ℹ️ Weitere Informationen</Text>
+            <Text style={styles.infoTitle}>ℹ️ More Information</Text>
             <Text style={styles.infoText}>
-              Weitere Informationen zur Datenverarbeitung und Ihren Rechten finden
-              Sie in unserer Datenschutzerklärung. Sie können Ihre Einstellungen
-              jederzeit hier ändern.
+              For more information about data processing and your rights, please see
+              our Privacy Policy. You can change your settings here at any time.
             </Text>
           </Card.Content>
         </Card>
@@ -171,10 +169,10 @@ const CookieSettingsScreen = () => {
       {/* Action Buttons */}
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
-          <Text style={styles.resetButtonText}>Zurücksetzen</Text>
+          <Text style={styles.resetButtonText}>Reset</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-          <Text style={styles.saveButtonText}>Einstellungen speichern</Text>
+          <Text style={styles.saveButtonText}>Save Settings</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

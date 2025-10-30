@@ -135,7 +135,7 @@ const ProfileScreen = () => {
       <TouchableOpacity onPress={() => navigation.navigate("QRScanner" as never)}>
         <Card style={styles.sectionCard}>
           <Card.Title
-            title="QR-Code scannen"
+            title="Scan QR Code"
             titleStyle={styles.sectionTitle}
             left={(props) => (
               <Avatar.Icon
@@ -150,7 +150,7 @@ const ProfileScreen = () => {
           />
           <Card.Content>
             <Text style={styles.sectionDescription}>
-              Scannen Sie QR-Codes im Restaurant, um Treuepunkte zu sammeln
+              Scan QR codes in the restaurant to earn loyalty points
             </Text>
           </Card.Content>
         </Card>
@@ -160,7 +160,7 @@ const ProfileScreen = () => {
       <TouchableOpacity onPress={() => navigation.navigate("CookieSettings" as never)}>
         <Card style={styles.sectionCard}>
           <Card.Title
-            title="Cookie & Datenschutz"
+            title="Cookie & Privacy"
             titleStyle={styles.sectionTitle}
             left={(props) => (
               <Avatar.Icon
@@ -175,7 +175,7 @@ const ProfileScreen = () => {
           />
           <Card.Content>
             <Text style={styles.sectionPlaceholder}>
-              Verwalten Sie Ihre Cookie-Einstellungen
+              Manage your cookie settings
             </Text>
           </Card.Content>
         </Card>

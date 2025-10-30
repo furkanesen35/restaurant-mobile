@@ -93,8 +93,8 @@ export default function QRScannerScreen({ navigation }: any) {
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.message ||
-        'Fehler beim Einlösen des QR-Codes';
-      Alert.alert('Fehler', errorMessage);
+        'Error redeeming QR code';
+      Alert.alert('Error', errorMessage);
       setScanned(false);
     } finally {
       setIsProcessing(false);
@@ -113,7 +113,7 @@ export default function QRScannerScreen({ navigation }: any) {
 
   const handleManualSubmit = () => {
     if (manualCode.length < 10) {
-      Alert.alert('Fehler', 'Bitte geben Sie einen gültigen Code ein');
+      Alert.alert('Error', 'Please enter a valid code');
       return;
     }
     setScanned(true);
@@ -148,16 +148,16 @@ export default function QRScannerScreen({ navigation }: any) {
       <SafeAreaView style={styles.container}>
       <View style={styles.permissionDenied}>
         <Ionicons name="camera-outline" size={64} color="#9ca3af" />
-        <Text style={styles.permissionTitle}>Kein Kamera-Zugriff</Text>
+        <Text style={styles.permissionTitle}>No Camera Access</Text>
           <Text style={styles.permissionText}>
-            Bitte erlauben Sie den Kamera-Zugriff in den Einstellungen, um QR-Codes zu scannen.
+            Please allow camera access in settings to scan QR codes.
           </Text>
           <TouchableOpacity
             style={styles.manualButton}
             onPress={() => setShowManualEntry(true)}
           >
             <Ionicons name="keypad" size={20} color={cozyTheme.colors.primary} />
-            <Text style={styles.manualButtonText}>Code manuell eingeben</Text>
+            <Text style={styles.manualButtonText}>Enter Code Manually</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -173,7 +173,7 @@ export default function QRScannerScreen({ navigation }: any) {
         >
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>QR-Code scannen</Text>
+        <Text style={styles.headerTitle}>Scan QR Code</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -199,17 +199,17 @@ export default function QRScannerScreen({ navigation }: any) {
         {scanned && isProcessing && (
           <View style={styles.processingOverlay}>
             <ActivityIndicator size="large" color="#fff" />
-            <Text style={styles.processingText}>Wird eingelöst...</Text>
+            <Text style={styles.processingText}>Redeeming...</Text>
           </View>
         )}
       </View>
 
       <View style={styles.instructionsContainer}>
         <Text style={styles.instructionsTitle}>
-          Scannen Sie den QR-Code
+          Scan the QR Code
         </Text>
         <Text style={styles.instructionsText}>
-          Halten Sie den QR-Code innerhalb des Rahmens. Der Code wird automatisch erkannt.
+          Hold the QR code within the frame. The code will be automatically detected.
         </Text>
 
         <TouchableOpacity
@@ -217,13 +217,13 @@ export default function QRScannerScreen({ navigation }: any) {
           onPress={() => setShowManualEntry(true)}
         >
           <Ionicons name="keypad" size={20} color={cozyTheme.colors.primary} />
-          <Text style={styles.manualButtonText}>Code manuell eingeben</Text>
+          <Text style={styles.manualButtonText}>Enter code manually</Text>
         </TouchableOpacity>
 
         <View style={styles.tipContainer}>
           <Ionicons name="bulb-outline" size={20} color={cozyTheme.colors.primary} />
           <Text style={styles.tipText}>
-            Tipp: Halten Sie den Code gut beleuchtet für schnelles Scannen
+            Tip: Keep the code well lit for faster scanning
           </Text>
         </View>
 
@@ -232,7 +232,7 @@ export default function QRScannerScreen({ navigation }: any) {
             style={styles.scanAgainButton}
             onPress={() => setScanned(false)}
           >
-            <Text style={styles.scanAgainText}>Erneut scannen</Text>
+            <Text style={styles.scanAgainText}>Scan again</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -295,18 +295,18 @@ export default function QRScannerScreen({ navigation }: any) {
             <View style={styles.successIconContainer}>
               <Ionicons name="checkmark-circle" size={80} color="#22c55e" />
             </View>
-            <Text style={styles.successTitle}>🎉 Erfolg!</Text>
+            <Text style={styles.successTitle}>🎉 Success!</Text>
             <Text style={styles.pointsText}>
-              +{successData?.points} Treuepunkte
+              +{successData?.points} Loyalty Points
             </Text>
             <Text style={styles.balanceText}>
-              Neuer Kontostand: {successData?.newBalance} Punkte
+              New Balance: {successData?.newBalance} Points
             </Text>
             <TouchableOpacity
               style={styles.successButton}
               onPress={closeSuccessModal}
             >
-              <Text style={styles.successButtonText}>Großartig!</Text>
+              <Text style={styles.successButtonText}>Great!</Text>
             </TouchableOpacity>
           </Animated.View>
         </View>
