@@ -19,7 +19,7 @@ import AdminScreen from "../screens/AdminScreen";
 import CheckoutScreen from "../screens/CheckoutScreen";
 import Icon from "react-native-paper/src/components/Icon";
 import { useTranslation } from "../hooks/useTranslation";
-
+import logger from '../utils/logger';
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -155,7 +155,7 @@ function MainStack() {
 const RootNavigator = () => {
   const { token, isLoading } = useAuth();
 
-  console.log(
+  logger.log(
     "RootNavigator render - token:",
     !!token,
     "isLoading:",
@@ -188,3 +188,5 @@ const RootNavigator = () => {
 };
 
 export default RootNavigator;
+
+

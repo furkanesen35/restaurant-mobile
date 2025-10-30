@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
 import apiClient from '../utils/apiClient';
 import { cozyTheme } from '../theme/cozyTheme';
-
+import logger from '../utils/logger';
 interface Token {
   id: number;
   code: string;
@@ -60,7 +60,7 @@ export default function QRTokenManagement() {
       const data = response.data as any;
       setTokens(data.tokens || []);
     } catch (error: any) {
-      console.error('Failed to fetch tokens:', error);
+      logger.error('Failed to fetch tokens:', error);
       Alert.alert('Error', 'Failed to load tokens');
     } finally {
       setLoading(false);
@@ -118,7 +118,7 @@ export default function QRTokenManagement() {
               Alert.alert('Success', 'Token has been deactivated');
               fetchTokens();
             } catch (err) {
-              console.error('Failed to deactivate token:', err);
+              logger.error('Failed to deactivate token:', err);
               Alert.alert('Error', 'Failed to deactivate token');
             }
           },
@@ -696,3 +696,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 });
+
+
+

@@ -7,6 +7,7 @@ import React, {
   ReactNode,
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import logger from "../utils/logger";
 
 export type CookieConsent = {
   necessary: boolean; // Always true, cannot be disabled
@@ -58,7 +59,7 @@ export const CookieConsentProvider = ({ children }: { children: ReactNode }) => 
         setShowBanner(true);
       }
     } catch (error) {
-      console.error("Failed to load cookie consent:", error);
+      logger.error("Failed to load cookie consent:", error);
       setShowBanner(true);
     }
   };
@@ -69,7 +70,7 @@ export const CookieConsentProvider = ({ children }: { children: ReactNode }) => 
       setConsent(newConsent);
       setShowBanner(false);
     } catch (error) {
-      console.error("Failed to save cookie consent:", error);
+      logger.error("Failed to save cookie consent:", error);
     }
   };
 
@@ -100,7 +101,7 @@ export const CookieConsentProvider = ({ children }: { children: ReactNode }) => 
       setConsent(null);
       setShowBanner(true);
     } catch (error) {
-      console.error("Failed to reset consent:", error);
+      logger.error("Failed to reset consent:", error);
     }
   }, []);
 

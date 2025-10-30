@@ -19,7 +19,7 @@ import { useTheme } from "react-native-paper";
 import { CardField, useStripe } from "@stripe/stripe-react-native";
 import ENV from "../config/env";
 import { useNavigation } from "@react-navigation/native";
-
+import logger from '../utils/logger';
 type PaymentMethod = {
   id: number;
   type: string;
@@ -94,7 +94,7 @@ const CheckoutScreen = () => {
           setSelectedMethodId(-1); // Select "Add New Card" option
         }
       } catch (err) {
-        console.error("Error fetching payment methods:", err);
+        logger.error("Error fetching payment methods:", err);
         // If no saved methods, select new card option
         setSelectedMethodId(-1);
       } finally {
@@ -122,7 +122,7 @@ const CheckoutScreen = () => {
           setSelectedAddressId(data[0].id);
         }
       } catch (err) {
-        console.error("Error fetching addresses:", err);
+        logger.error("Error fetching addresses:", err);
       } finally {
         setLoadingAddresses(false);
       }
@@ -307,7 +307,7 @@ const CheckoutScreen = () => {
         ]
       );
     } catch (err: any) {
-      console.error("Order placement error:", err);
+      logger.error("Order placement error:", err);
       Alert.alert("Error", err.message || "Failed to place order");
     } finally {
       setLoading(false);
@@ -768,3 +768,5 @@ const styles = StyleSheet.create({
 });
 
 export default CheckoutScreen;
+
+

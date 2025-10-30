@@ -18,7 +18,7 @@ import { formatCurrency, parseErrorMessage } from "../utils/validation";
 import apiClient from "../utils/apiClient";
 import ErrorMessage from "../components/common/ErrorMessage";
 import { useTranslation } from "../hooks/useTranslation";
-
+import logger from '../utils/logger';
 interface Favorite {
   id: number;
   menuItem: MenuItem;
@@ -50,7 +50,7 @@ const FavoritesScreen = () => {
       } catch (err: any) {
         const errorMessage = parseErrorMessage(err);
         setError(errorMessage);
-        console.error("Error fetching favorites:", err);
+        logger.error("Error fetching favorites:", err);
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -73,7 +73,7 @@ const FavoritesScreen = () => {
       );
       Alert.alert(t("common.success"), t("menu.removeFromFavorites"));
     } catch (err: any) {
-      console.error("Error removing favorite:", err);
+      logger.error("Error removing favorite:", err);
       Alert.alert(t("common.error"), t("errors.somethingWentWrong"));
     }
   };
@@ -477,3 +477,5 @@ const styles = StyleSheet.create({
 });
 
 export default FavoritesScreen;
+
+

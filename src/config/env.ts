@@ -1,4 +1,6 @@
 // Get environment variables from Expo's environment
+import logger from '../utils/logger';
+
 const ENV = {
   API_URL: process.env.EXPO_PUBLIC_API_URL || "http://192.168.1.110:3000",
   STRIPE_PUBLISHABLE_KEY: process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || "",
@@ -7,7 +9,7 @@ const ENV = {
 
 // Validate required environment variables
 if (!ENV.STRIPE_PUBLISHABLE_KEY && __DEV__) {
-  console.warn(
+  logger.warn(
     "⚠️  EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY is not set in .env file"
   );
 }

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import i18n from '../i18n';
 import { getInitialLanguage, saveLanguagePreference } from '../i18n';
 import { LanguageCode } from '../i18n/languages';
+import logger from '../utils/logger';
 
 interface LanguageContextType {
   currentLanguage: LanguageCode;
@@ -27,7 +28,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
         await i18n.changeLanguage(savedLanguage);
         setCurrentLanguage(savedLanguage as LanguageCode);
       } catch (error) {
-        console.error('Error loading language:', error);
+        logger.error('Error loading language:', error);
       } finally {
         setIsLoading(false);
       }
@@ -42,7 +43,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
       await saveLanguagePreference(language);
       setCurrentLanguage(language);
     } catch (error) {
-      console.error('Error changing language:', error);
+      logger.error('Error changing language:', error);
       throw error;
     }
   };

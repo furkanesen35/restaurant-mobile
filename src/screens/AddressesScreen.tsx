@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { useAuth } from "../contexts/AuthContext";
 import ENV from "../config/env";
-
+import logger from '../utils/logger';
 type Address = {
   id: number;
   label: string;
@@ -50,12 +50,12 @@ const AddressesScreen = () => {
 
   const handleSave = async () => {
     try {
-      console.log("Saving address:", form);
+      logger.log("Saving address:", form);
       const method = editingId ? "PUT" : "POST";
       const url = editingId ? `${ENV.API_URL + "/api/address"}/${editingId}` : ENV.API_URL + "/api/address";
-      console.log("Request URL:", url);
-      console.log("Request method:", method);
-      console.log("Request body:", JSON.stringify(form, null, 2));
+      logger.log("Request URL:", url);
+      logger.log("Request method:", method);
+      logger.log("Request body:", JSON.stringify(form, null, 2));
 
       const res = await fetch(url, {
         method,
@@ -66,9 +66,9 @@ const AddressesScreen = () => {
         body: JSON.stringify(form),
       });
 
-      console.log("Response status:", res.status);
+      logger.log("Response status:", res.status);
       const responseData = await res.text();
-      console.log("Response data:", responseData);
+      logger.log("Response data:", responseData);
 
       if (!res.ok)
         throw new Error(
@@ -86,7 +86,7 @@ const AddressesScreen = () => {
       fetchAddresses();
       Alert.alert("Success", "Address saved successfully");
     } catch (err) {
-      console.error("Error saving address:", err);
+      logger.error("Error saving address:", err);
       Alert.alert("Error", (err as Error).message);
     }
   };
@@ -225,3 +225,5 @@ const styles = StyleSheet.create({
 });
 
 export default AddressesScreen;
+
+

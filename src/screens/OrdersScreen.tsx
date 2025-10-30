@@ -22,7 +22,7 @@ import {
 import apiClient from "../utils/apiClient";
 import ErrorMessage from "../components/common/ErrorMessage";
 import { useTranslation } from "../hooks/useTranslation";
-
+import logger from '../utils/logger';
 const OrdersScreen = () => {
   const { colors } = useTheme();
   const { user, token, updateUser } = useAuth();
@@ -47,7 +47,7 @@ const OrdersScreen = () => {
       } catch (err: any) {
         const errorMessage = parseErrorMessage(err);
         setError(errorMessage);
-        console.error("Error fetching orders:", err);
+        logger.error("Error fetching orders:", err);
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -58,7 +58,7 @@ const OrdersScreen = () => {
 
   const cancelOrder = async (orderId: string | number) => {
     try {
-      console.log("Cancelling order:", orderId);
+      logger.log("Cancelling order:", orderId);
       const response = await apiClient.patch<{
         loyaltyPointsBalance?: number;
         loyaltyPointsDeducted?: number;
@@ -74,7 +74,7 @@ const OrdersScreen = () => {
       Alert.alert(t("common.success"), t("orders.cancelled"));
       fetchOrders(); // Refresh orders
     } catch (err: any) {
-      console.error("Error cancelling order:", err);
+      logger.error("Error cancelling order:", err);
       Alert.alert(t("common.error"), t("errors.somethingWentWrong"));
     }
   };
@@ -656,3 +656,5 @@ const styles = StyleSheet.create({
 });
 
 export default OrdersScreen;
+
+

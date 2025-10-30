@@ -17,7 +17,7 @@ import { useIsFocused } from "@react-navigation/native";
 import ENV from "../config/env";
 import QRTokenManagement from "../components/QRTokenManagement";
 import { useTranslation } from "../hooks/useTranslation";
-
+import logger from '../utils/logger';
 const STATUS_OPTIONS = [
   "pending",
   "confirmed",
@@ -69,7 +69,7 @@ const AdminScreen = () => {
     if (!token) return;
     try {
       setLoading(true);
-      console.log("Admin fetching orders with token:", token);
+      logger.log("Admin fetching orders with token:", token);
       const response = await fetch(`${ENV.API_URL}/order/all`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -83,10 +83,10 @@ const AdminScreen = () => {
         );
       }
       const data = await response.json();
-      console.log("Admin orders fetched:", data.length, "orders");
+      logger.log("Admin orders fetched:", data.length, "orders");
       setOrders(data);
     } catch (err: any) {
-      console.error("Admin fetch error:", err);
+      logger.error("Admin fetch error:", err);
       Alert.alert("Error", err.message || "Failed to fetch orders");
     } finally {
       setLoading(false);
@@ -97,10 +97,10 @@ const AdminScreen = () => {
     try {
       const response = await fetch(`${ENV.API_URL}/menu/categories`);
       const data = await response.json();
-      console.log("Categories fetched:", data);
+      logger.log("Categories fetched:", data);
       setCategories(data || []);
     } catch (err: any) {
-      console.error("Failed to fetch categories:", err);
+      logger.error("Failed to fetch categories:", err);
       Alert.alert("Error", "Failed to fetch categories");
       setCategories([]);
     }
@@ -110,14 +110,14 @@ const AdminScreen = () => {
     try {
       const response = await fetch(`${ENV.API_URL}/menu`);
       const data = await response.json();
-      console.log("Menu items fetched:", data);
+      logger.log("Menu items fetched:", data);
       // The API returns { categories: [...], items: [...] }
       // We need to extract the items array
       const itemsArray = data.items || data || [];
-      console.log("Extracted items array:", itemsArray);
+      logger.log("Extracted items array:", itemsArray);
       setMenuItems(itemsArray);
     } catch (err: any) {
-      console.error("Failed to fetch menu items:", err);
+      logger.error("Failed to fetch menu items:", err);
       Alert.alert("Error", "Failed to fetch menu items");
       setMenuItems([]);
     }
@@ -131,7 +131,7 @@ const AdminScreen = () => {
         setMinOrderValue(data.value || "0");
       }
     } catch (err: any) {
-      console.error("Failed to fetch settings:", err);
+      logger.error("Failed to fetch settings:", err);
     }
   }, []);
 
@@ -667,7 +667,7 @@ const AdminScreen = () => {
                     <TouchableOpacity
                       activeOpacity={0.7}
                       onPress={() => {
-                        console.log("Category clicked:", cat.id, cat.name);
+                        logger.log("Category clicked:", cat.id, cat.name);
                         setSelectedCategoryId(
                           selectedCategoryId === cat.id ? null : cat.id
                         );
@@ -1258,3 +1258,5 @@ const styles = StyleSheet.create({
 });
 
 export default AdminScreen;
+
+

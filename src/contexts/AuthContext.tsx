@@ -18,6 +18,7 @@ import {
 } from "../types";
 import apiClient from "../utils/apiClient";
 import { useCookieConsent } from "./CookieConsentContext";
+import logger from "../utils/logger";
 
 interface AuthContextType {
   user: User | null;
@@ -60,17 +61,17 @@ async function registerForPushNotifications() {
     }
 
     if (finalStatus !== "granted") {
-      console.log("Push notification permission not granted");
+      logger.log("Push notification permission not granted");
       return null;
     }
 
     const token = (await Notifications.getExpoPushTokenAsync({
       projectId: "34d8bfb4-2a86-49ed-a4d6-b29eee48d18d",
     })).data;
-    console.log("Expo Push Token:", token);
+    logger.log("Expo Push Token:", token);
     return token;
   } catch (error) {
-    console.error("Error getting push token:", error);
+    logger.error("Error getting push token:", error);
     return null;
   }
 }
@@ -110,30 +111,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           storedToken = localStorage.getItem("token");
           storedUser = localStorage.getItem("user");
         }
-        console.log("[AuthContext] Loaded session:", {
+        logger.debug("[AuthContext] Loaded session:", {
           storedToken,
           storedUser,
         });
         if (storedToken) {
           setToken(storedToken);
-          console.log("[AuthContext] Token set:", storedToken);
+          logger.debug("[AuthContext] Token set:", storedToken);
           // Optionally validate token here
         }
         if (storedUser) {
           try {
             const parsedUser = JSON.parse(storedUser);
             setUser(parsedUser);
-            console.log("[AuthContext] User set:", parsedUser);
+            logger.debug("[AuthContext] User set:", parsedUser);
           } catch (parseError) {
-            console.warn("Failed to parse stored user data:", parseError);
+            logger.warn("Failed to parse stored user data:", parseError);
             await AsyncStorage.removeItem("user");
           }
         }
       } catch (error) {
-        console.warn("Failed to load session:", error);
+        logger.warn("Failed to load session:", error);
       } finally {
         setIsLoading(false);
-        console.log("[AuthContext] isLoading set to false");
+        logger.debug("[AuthContext] isLoading set to false");
       }
     };
     loadSession();
@@ -145,7 +146,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const registerPushToken = useCallback(async () => {
     // Only register push tokens if user has consented to marketing or analytics
     if (!hasConsent("marketing") && !hasConsent("analytics")) {
-      console.log("Push notifications disabled - no consent for marketing/analytics");
+      logger.log("Push notifications disabled - no consent for marketing/analytics");
       return;
     }
 
@@ -155,10 +156,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await apiClient.post("/notifications/register", {
           token: pushToken,
         });
-        console.log("Push token registered with backend");
+        logger.log("Push token registered with backend");
       }
     } catch (error) {
-      console.error("Failed to register push token:", error);
+      logger.error("Failed to register push token:", error);
     }
   }, [hasConsent]);
 
@@ -179,7 +180,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       setToken(token);
       setUser(user);
-      console.log("[AuthContext] storeAuthData called:", {
+      logger.debug("[AuthContext] storeAuthData called:", {
         token,
         user,
         refreshToken,
@@ -194,13 +195,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (credentials: LoginCredentials) => {
     setIsLoading(true);
     setError(null);
-    console.log("[AuthContext] login called with:", credentials);
+    logger.debug("[AuthContext] login called with:", credentials);
     try {
       const response = await apiClient.post<AuthResponse>(
         "/auth/login",
         credentials
       );
-      console.log("[AuthContext] login response:", response.data);
+      logger.debug("[AuthContext] login response:", response.data);
       if (response.data) {
         await storeAuthData(response.data);
       } else {
@@ -211,24 +212,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const errorMessage =
         apiError.message || "Login failed. Please try again.";
       setError(errorMessage);
-      console.error("[AuthContext] login error:", errorMessage);
+      logger.error("[AuthContext] login error:", errorMessage);
       throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
-      console.log("[AuthContext] login finished, isLoading set to false");
+      logger.debug("[AuthContext] login finished, isLoading set to false");
     }
   };
 
   const register = async (credentials: RegisterCredentials) => {
     setIsLoading(true);
     setError(null);
-    console.log("[AuthContext] register called with:", credentials);
+    logger.debug("[AuthContext] register called with:", credentials);
     try {
       const response = await apiClient.post<AuthResponse>(
         "/auth/register",
         credentials
       );
-      console.log("[AuthContext] register response:", response.data);
+      logger.debug("[AuthContext] register response:", response.data);
       if (response.data) {
         await storeAuthData(response.data);
       } else {
@@ -239,11 +240,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const errorMessage =
         apiError.message || "Registration failed. Please try again.";
       setError(errorMessage);
-      console.error("[AuthContext] register error:", errorMessage);
+      logger.error("[AuthContext] register error:", errorMessage);
       throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
-      console.log("[AuthContext] register finished, isLoading set to false");
+      logger.debug("[AuthContext] register finished, isLoading set to false");
     }
   };
 
@@ -254,13 +255,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }) => {
     setIsLoading(true);
     setError(null);
-    console.log("[AuthContext] Google sign-in called with:", googleUser.email);
+    logger.debug("[AuthContext] Google sign-in called with:", googleUser.email);
     try {
       const response = await apiClient.post<AuthResponse>(
         "/auth/google",
         googleUser
       );
-      console.log("[AuthContext] Google sign-in response:", response.data);
+      logger.debug("[AuthContext] Google sign-in response:", response.data);
       if (response.data) {
         await storeAuthData(response.data);
       } else {
@@ -271,11 +272,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const errorMessage =
         apiError.message || "Google sign-in failed. Please try again.";
       setError(errorMessage);
-      console.error("[AuthContext] Google sign-in error:", errorMessage);
+      logger.error("[AuthContext] Google sign-in error:", errorMessage);
       throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
-      console.log(
+      logger.debug(
         "[AuthContext] Google sign-in finished, isLoading set to false"
       );
     }
@@ -283,7 +284,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = useCallback(async () => {
     try {
-      console.log("[AuthContext] logout initiated");
+      logger.debug("[AuthContext] logout initiated");
 
       // Clear storage first to prevent any async issues
       await AsyncStorage.multiRemove(["token", "user", "refreshToken"]);
@@ -298,9 +299,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
       setError(null);
 
-      console.log("[AuthContext] logout successful");
+      logger.debug("[AuthContext] logout successful");
     } catch (error) {
-      console.warn("Error during logout:", error);
+      logger.warn("Error during logout:", error);
     }
   }, []);
 
@@ -321,14 +322,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error) {
       // If refresh fails, logout user (but avoid infinite loops)
-      console.log("[AuthContext] Refresh failed, logging out");
+      logger.debug("[AuthContext] Refresh failed, logging out");
       try {
         setToken(null);
         setUser(null);
         setError(null);
         await AsyncStorage.multiRemove(["token", "user", "refreshToken"]);
       } catch (logoutError) {
-        console.warn("Error during logout after refresh failure:", logoutError);
+        logger.warn("Error during logout after refresh failure:", logoutError);
       }
       throw error;
     }

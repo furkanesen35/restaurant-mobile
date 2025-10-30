@@ -14,7 +14,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useNavigation, useIsFocused } from "@react-navigation/native";
 import axios from "axios";
 import { useTranslation } from "../hooks/useTranslation";
-
+import logger from '../utils/logger';
 const CartScreen = () => {
   const { cart, updateQuantity, removeFromCart } = useCart();
   const { colors } = useTheme();
@@ -33,7 +33,7 @@ const CartScreen = () => {
           setMinOrderValue(parseFloat(response.data.value));
         })
         .catch((error: any) => {
-          console.log("Could not fetch minimum order value:", error);
+          logger.log("Could not fetch minimum order value:", error);
         });
     }
   }, [isFocused]);
@@ -189,3 +189,5 @@ const styles = StyleSheet.create({
 });
 
 export default CartScreen;
+
+

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import apiClient from "../utils/apiClient";
 import { useAuth } from "../contexts/AuthContext";
+import logger from "../utils/logger";
 
 export const useFavorites = () => {
   const { user, token } = useAuth();
@@ -19,7 +20,7 @@ export const useFavorites = () => {
       );
       setFavorites(favoriteIds);
     } catch (err) {
-      console.error("Error fetching favorites:", err);
+      logger.error("Error fetching favorites:", err);
     } finally {
       setLoading(false);
     }
@@ -52,7 +53,7 @@ export const useFavorites = () => {
         await apiClient.post("/api/favorites", { menuItemId });
       }
     } catch (err) {
-      console.error("Error toggling favorite:", err);
+      logger.error("Error toggling favorite:", err);
       // Revert optimistic update on error
       setFavorites((prev) => {
         const newSet = new Set(prev);
@@ -76,3 +77,5 @@ export const useFavorites = () => {
     refetch: fetchFavorites,
   };
 };
+
+

@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ApiResponse, ApiError } from "../types";
 import ENV from "../config/env";
+import logger from "./logger";
 
 // Environment configuration
 const config = {
@@ -30,7 +31,7 @@ class ApiClient {
         headers["Authorization"] = `Bearer ${token}`;
       }
     } catch (error) {
-      console.warn("Failed to get token from storage:", error);
+      logger.warn("Failed to get token from storage:", error);
     }
 
     return headers;
@@ -138,3 +139,5 @@ class ApiClient {
 
 export const apiClient = new ApiClient(config.baseURL, config.timeout);
 export default apiClient;
+
+

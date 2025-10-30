@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLanguage } from '../contexts/LanguageContext';
 import { LANGUAGES, LanguageCode } from '../i18n/languages';
 import { useTranslation } from '../hooks/useTranslation';
-
+import logger from '../utils/logger';
 interface LanguageSwitcherProps {
   iconColor?: string;
   iconSize?: number;
@@ -49,7 +49,7 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
       await changeLanguage(languageCode);
       handleCloseModal();
     } catch (error) {
-      console.error('Error changing language:', error);
+      logger.error('Error changing language:', error);
     }
   };
 
@@ -248,3 +248,6 @@ const styles = StyleSheet.create({
 });
 
 export default LanguageSwitcher;
+
+
+

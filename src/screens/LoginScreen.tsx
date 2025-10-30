@@ -18,14 +18,11 @@ import {
 } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
 import { NavigationProps } from "../types";
+import logger from "../utils/logger";
 import { validateEmail } from "../utils/validation";
 import ErrorMessage from "../components/common/ErrorMessage";
 import LoadingOverlay from "../components/common/LoadingOverlay";
 import { useTranslation } from "../hooks/useTranslation";
-// import * as Google from 'expo-auth-session/providers/google';
-// import * as WebBrowser from 'expo-web-browser';
-// import Constants from 'expo-constants';
-// WebBrowser.maybeCompleteAuthSession();
 
 const LoginScreen: React.FC<NavigationProps> = ({ navigation }) => {
   const { login, isLoading, error, clearError } = useAuth();
@@ -70,7 +67,7 @@ const LoginScreen: React.FC<NavigationProps> = ({ navigation }) => {
       // Navigation will be handled automatically by the navigation structure
     } catch (e: any) {
       // Error is handled by the AuthContext and displayed via the error prop
-      console.error("Login error:", e);
+      logger.error("Login error:", e);
     }
   };
 
@@ -97,7 +94,7 @@ const LoginScreen: React.FC<NavigationProps> = ({ navigation }) => {
   //           });
   //         })
   //         .catch(err => {
-  //           console.error('Failed to fetch Google user info:', err);
+  //           logger.error('Failed to fetch Google user info:', err);
   //         });
   //     }
   //   }
@@ -452,3 +449,6 @@ const styles = StyleSheet.create({
 });
 
 export default LoginScreen;
+
+
+
