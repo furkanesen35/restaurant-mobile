@@ -16,6 +16,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useIsFocused } from "@react-navigation/native";
 import ENV from "../config/env";
 import QRTokenManagement from "../components/QRTokenManagement";
+import { useTranslation } from "../hooks/useTranslation";
 
 const STATUS_OPTIONS = [
   "pending",
@@ -28,6 +29,7 @@ const STATUS_OPTIONS = [
 
 const AdminScreen = () => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const { token, user, updateUser } = useAuth();
   const [activeTab, setActiveTab] = useState<"orders" | "menu" | "qr" | "settings">("orders");
   const [orders, setOrders] = useState<any[]>([]);
@@ -209,23 +211,23 @@ const AdminScreen = () => {
       // Show message with loyalty points info if order was cancelled
       if (status === "cancelled" && data.loyaltyPointsDeducted > 0) {
         Alert.alert(
-          "Success", 
+          t("common.success"), 
           `Order #${orderId} cancelled.\n${data.loyaltyPointsDeducted} loyalty points deducted from customer.`
         );
       } else if (status === "cancelled") {
         Alert.alert(
-          "Success",
+          t("common.success"),
           `Order #${orderId} cancelled. Loyalty points balance: ${
             data.loyaltyPointsBalance ?? "unchanged"
           }.`
         );
       } else {
-        Alert.alert("Success", `Order #${orderId} status updated to ${status}`);
+        Alert.alert(t("common.success"), `Order #${orderId} status updated to ${status}`);
       }
       
       fetchOrders();
     } catch (err: any) {
-      Alert.alert("Error", err.message || "Failed to update order status");
+      Alert.alert(t("common.error"), err.message || t("admin.orders.statusUpdateFailed"));
     }
   };
 
@@ -394,7 +396,7 @@ const AdminScreen = () => {
                 activeTab === "orders" && styles.activeTabText,
               ]}
             >
-              Orders
+              {t("admin.tabs.orders")}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -407,7 +409,7 @@ const AdminScreen = () => {
                 activeTab === "menu" && styles.activeTabText,
               ]}
             >
-              Menu
+              {t("admin.tabs.menu")}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -420,7 +422,7 @@ const AdminScreen = () => {
                 activeTab === "qr" && styles.activeTabText,
               ]}
             >
-              QR-Codes
+              {t("admin.tabs.qr")}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -433,7 +435,7 @@ const AdminScreen = () => {
                 activeTab === "settings" && styles.activeTabText,
               ]}
             >
-              Settings
+              {t("admin.tabs.settings")}
             </Text>
           </TouchableOpacity>
         </View>
@@ -441,10 +443,10 @@ const AdminScreen = () => {
         {/* Orders Tab */}
         {activeTab === "orders" && (
           <>
-            <Text style={[styles.title, { color: "#e0b97f" }]}>All Orders</Text>
+            <Text style={[styles.title, { color: "#e0b97f" }]}>{t("admin.orders.title")}</Text>
             {loading ? (
               <Text style={{ color: colors.onBackground }}>
-                Loading orders...
+                {t("admin.orders.loadingOrders")}
               </Text>
             ) : orders.length === 0 ? (
               <View
@@ -455,7 +457,7 @@ const AdminScreen = () => {
                 }}
               >
                 <Text style={{ color: colors.onBackground, fontSize: 16 }}>
-                  No orders found
+                  {t("admin.orders.noOrders")}
                 </Text>
               </View>
             ) : (
@@ -465,12 +467,12 @@ const AdminScreen = () => {
                 renderItem={({ item }) => (
                   <Card style={styles.card}>
                     <Card.Title
-                      title={`Order #${item.id}`}
-                      subtitle={`Status: ${item.status}`}
+                      title={t("admin.orders.orderNumber", { id: item.id })}
+                      subtitle={`${t("admin.orders.status")}: ${item.status}`}
                     />
                     <Card.Content>
                       <Text style={{ color: colors.onBackground }}>
-                        User: {item.userId}
+                        {t("admin.orders.user")}: {item.userId}
                       </Text>
                       {item.address && (
                         <View
@@ -489,7 +491,7 @@ const AdminScreen = () => {
                               marginBottom: 4,
                             }}
                           >
-                            📍 Delivery Address:
+                            📍 {t("admin.orders.deliveryAddress")}:
                           </Text>
                           <Text style={{ color: colors.onBackground }}>
                             {item.address.street}
@@ -502,7 +504,7 @@ const AdminScreen = () => {
                           </Text>
                         </View>
                       )}
-                      <Text style={{ color: colors.onBackground }}>Items:</Text>
+                      <Text style={{ color: colors.onBackground }}>{t("admin.orders.items")}:</Text>
                       {item.items.map((orderItem: any) => (
                         <Text
                           key={orderItem.id}
@@ -532,12 +534,12 @@ const AdminScreen = () => {
                               ]}
                               onPress={() => {
                                 Alert.alert(
-                                  "Cancel Order",
-                                  "Are you sure you want to cancel this order?",
+                                  t("admin.orders.cancelOrderTitle"),
+                                  t("admin.orders.cancelOrderMessage"),
                                   [
-                                    { text: "No", style: "cancel" },
+                                    { text: t("common.no"), style: "cancel" },
                                     {
-                                      text: "Yes",
+                                      text: t("common.yes"),
                                       style: "destructive",
                                       onPress: async () => {
                                         try {
@@ -570,15 +572,15 @@ const AdminScreen = () => {
                                             data.loyaltyPointsDeducted > 0
                                           ) {
                                             Alert.alert(
-                                              "Order cancelled",
+                                              t("admin.orders.orderCancelled"),
                                               `${data.loyaltyPointsDeducted} loyalty points deducted. New balance: ${data.loyaltyPointsBalance}.`
                                             );
                                           } else {
-                                            Alert.alert("Order cancelled");
+                                            Alert.alert(t("admin.orders.orderCancelled"));
                                           }
                                           fetchOrders();
                                         } catch (err: any) {
-                                          Alert.alert("Error", err.message);
+                                          Alert.alert(t("admin.orders.orderCancelFailed"), err.message);
                                         }
                                       },
                                     },
@@ -640,11 +642,11 @@ const AdminScreen = () => {
         {activeTab === "menu" && (
           <>
             <Text style={[styles.title, { color: "#e0b97f" }]}>
-              Menu Management
+              {t("admin.menu.title")}
             </Text>
 
             {/* Categories Section */}
-            <Text style={styles.sectionTitle}>Categories</Text>
+            <Text style={styles.sectionTitle}>{t("admin.menu.categories")}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -682,13 +684,13 @@ const AdminScreen = () => {
                           setShowCategoryModal(true);
                         }}
                       >
-                        <Text style={styles.btnText}>Edit</Text>
+                        <Text style={styles.btnText}>{t("common.edit")}</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={styles.deleteBtn}
                         onPress={() => deleteCategory(cat.id)}
                       >
-                        <Text style={styles.btnText}>Delete</Text>
+                        <Text style={styles.btnText}>{t("common.delete")}</Text>
                       </TouchableOpacity>
                     </View>
                   </Card.Content>
@@ -702,18 +704,19 @@ const AdminScreen = () => {
                   setShowCategoryModal(true);
                 }}
               >
-                <Text style={styles.addBtnText}>+ Add Category</Text>
+                <Text style={styles.addBtnText}>{t("admin.menu.addCategory")}</Text>
               </TouchableOpacity>
             </ScrollView>
 
             {/* Menu Items Section */}
             <Text style={styles.sectionTitle}>
-              Menu Items
-              {selectedCategoryId &&
-                ` (${
-                  categories.find((c) => c.id === selectedCategoryId)?.name ||
-                  "Category"
-                })`}
+              {selectedCategoryId
+                ? t("admin.menu.categoryFilter", {
+                    categoryName:
+                      categories.find((c) => c.id === selectedCategoryId)
+                        ?.name || "Category",
+                  })
+                : t("admin.menu.menuItems")}
             </Text>
             <FlatList
               data={
@@ -736,8 +739,8 @@ const AdminScreen = () => {
                   }}
                 >
                   {selectedCategoryId
-                    ? "No menu items in this category. Use the + button to add items."
-                    : "No menu items yet. Select a category or use the + button to add items."}
+                    ? t("admin.menu.noItemsInCategory")
+                    : t("admin.menu.noItems")}
                 </Text>
               }
               renderItem={({ item }) => (
@@ -748,7 +751,7 @@ const AdminScreen = () => {
                       {item.loyaltyPointsMultiplier && item.loyaltyPointsMultiplier > 1.0 && (
                         <View style={styles.bonusPointsBadge}>
                           <Text style={styles.bonusPointsText}>
-                            {item.loyaltyPointsMultiplier}x Points
+                            {t("admin.menu.bonusPoints", { multiplier: item.loyaltyPointsMultiplier })}
                           </Text>
                         </View>
                       )}
@@ -756,7 +759,7 @@ const AdminScreen = () => {
                     <Text style={styles.itemDesc}>{item.description}</Text>
                     <Text style={styles.itemPrice}>${item.price}</Text>
                     <Text style={styles.itemCategory}>
-                      Category:{" "}
+                      {t("admin.menu.categoryLabel")}:{" "}
                       {
                         categories.find(
                           (c) =>
@@ -784,13 +787,13 @@ const AdminScreen = () => {
                           setShowItemModal(true);
                         }}
                       >
-                        <Text style={styles.btnText}>Edit</Text>
+                        <Text style={styles.btnText}>{t("common.edit")}</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={styles.deleteBtn}
                         onPress={() => deleteMenuItem(item.id)}
                       >
-                        <Text style={styles.btnText}>Delete</Text>
+                        <Text style={styles.btnText}>{t("common.delete")}</Text>
                       </TouchableOpacity>
                     </View>
                   </Card.Content>
@@ -829,21 +832,21 @@ const AdminScreen = () => {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>
-                {editingCategory ? "Edit Category" : "New Category"}
+                {editingCategory ? t("admin.modals.editCategory") : t("admin.modals.newCategory")}
               </Text>
               <TextInput
                 style={styles.input}
-                placeholder="Category Name"
+                placeholder={t("admin.modals.categoryNamePlaceholder")}
                 placeholderTextColor="#999"
                 value={categoryForm.name}
                 onChangeText={(text) => setCategoryForm({ name: text })}
               />
               <View style={styles.modalActions}>
                 <Button onPress={() => setShowCategoryModal(false)}>
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
                 <Button mode="contained" onPress={saveCategory}>
-                  Save
+                  {t("common.save")}
                 </Button>
               </View>
             </View>
@@ -861,11 +864,11 @@ const AdminScreen = () => {
             <ScrollView contentContainerStyle={styles.modalScrollContent}>
               <View style={styles.modalContent}>
                 <Text style={styles.modalTitle}>
-                  {editingItem ? "Edit Menu Item" : "New Menu Item"}
+                  {editingItem ? t("admin.modals.editItem") : t("admin.modals.newItem")}
                 </Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Item Name"
+                  placeholder={t("admin.modals.itemNamePlaceholder")}
                   placeholderTextColor="#999"
                   value={itemForm.name}
                   onChangeText={(text) =>
@@ -874,7 +877,7 @@ const AdminScreen = () => {
                 />
                 <TextInput
                   style={styles.input}
-                  placeholder="Description"
+                  placeholder={t("admin.modals.descriptionPlaceholder")}
                   placeholderTextColor="#999"
                   value={itemForm.description}
                   onChangeText={(text) =>
@@ -884,7 +887,7 @@ const AdminScreen = () => {
                 />
                 <TextInput
                   style={styles.input}
-                  placeholder="Price"
+                  placeholder={t("admin.modals.pricePlaceholder")}
                   placeholderTextColor="#999"
                   keyboardType="numeric"
                   value={itemForm.price}
@@ -894,7 +897,7 @@ const AdminScreen = () => {
                 />
                 <TextInput
                   style={styles.input}
-                  placeholder="Loyalty Points Multiplier (e.g., 1.5 = 150% points)"
+                  placeholder={t("admin.modals.loyaltyMultiplierPlaceholder")}
                   placeholderTextColor="#999"
                   keyboardType="numeric"
                   value={itemForm.loyaltyPointsMultiplier}
@@ -904,14 +907,14 @@ const AdminScreen = () => {
                 />
                 <TextInput
                   style={styles.input}
-                  placeholder="Image URL (optional)"
+                  placeholder={t("admin.modals.imageUrlPlaceholder")}
                   placeholderTextColor="#999"
                   value={itemForm.imageUrl}
                   onChangeText={(text) =>
                     setItemForm({ ...itemForm, imageUrl: text })
                   }
                 />
-                <Text style={styles.label}>Category:</Text>
+                <Text style={styles.label}>{t("admin.menu.categoryLabel")}:</Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -946,10 +949,10 @@ const AdminScreen = () => {
                 </ScrollView>
                 <View style={styles.modalActions}>
                   <Button onPress={() => setShowItemModal(false)}>
-                    Cancel
+                    {t("common.cancel")}
                   </Button>
                   <Button mode="contained" onPress={saveMenuItem}>
-                    Save
+                    {t("common.save")}
                   </Button>
                 </View>
               </View>
@@ -964,19 +967,19 @@ const AdminScreen = () => {
         {activeTab === "settings" && (
           <ScrollView>
             <Card style={styles.card}>
-              <Card.Title title="Minimum Order Value" />
+              <Card.Title title={t("admin.settings.minOrderTitle")} />
               <Card.Content>
                 <Text style={styles.settingDescription}>
-                  Set the minimum order value in EUR. Orders below this amount will be rejected.
+                  {t("admin.settings.minOrderDescription")}
                 </Text>
                 <View style={styles.settingRow}>
-                  <Text style={styles.settingLabel}>Minimum Value (€):</Text>
+                  <Text style={styles.settingLabel}>{t("admin.settings.minOrderLabel")}</Text>
                   <TextInput
                     style={styles.settingInput}
                     keyboardType="numeric"
                     value={minOrderValue}
                     onChangeText={setMinOrderValue}
-                    placeholder="15.00"
+                    placeholder={t("admin.settings.minOrderPlaceholder")}
                     placeholderTextColor="#999"
                   />
                 </View>
@@ -986,7 +989,7 @@ const AdminScreen = () => {
                   disabled={savingSettings}
                 >
                   <Text style={styles.saveButtonText}>
-                    {savingSettings ? "Saving..." : "Save Setting"}
+                    {savingSettings ? t("admin.settings.saving") : t("admin.settings.saveSetting")}
                   </Text>
                 </TouchableOpacity>
               </Card.Content>

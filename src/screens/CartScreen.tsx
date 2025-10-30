@@ -13,6 +13,7 @@ import { useTheme, Card } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigation, useIsFocused } from "@react-navigation/native";
 import axios from "axios";
+import { useTranslation } from "../hooks/useTranslation";
 
 const CartScreen = () => {
   const { cart, updateQuantity, removeFromCart } = useCart();
@@ -20,6 +21,7 @@ const CartScreen = () => {
   const { user } = useAuth();
   const navigation = useNavigation();
   const isFocused = useIsFocused();
+  const { t } = useTranslation();
   const [minOrderValue, setMinOrderValue] = useState<number>(0);
 
   useEffect(() => {
@@ -41,17 +43,17 @@ const CartScreen = () => {
 
   const handleProceedToCheckout = () => {
     if (!user) {
-      Alert.alert("Login required", "Please log in to place an order.");
+      Alert.alert(t("auth.login"), t("auth.login"));
       return;
     }
     if (cart.length === 0) {
-      Alert.alert("Empty cart", "Please add items to your cart first.");
+      Alert.alert(t("cart.emptyCart"), t("cart.emptyCart"));
       return;
     }
     if (isBelowMinimum) {
       Alert.alert(
-        "Minimum order not met",
-        `Minimum order value is €${minOrderValue.toFixed(2)}. Please add €${(minOrderValue - total).toFixed(2)} more to your cart.`
+        t("cart.title"),
+        `${t("cart.total")}: €${minOrderValue.toFixed(2)}. ${t("cart.continueShopping")}`
       );
       return;
     }
@@ -60,10 +62,10 @@ const CartScreen = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <Text style={styles.title}>Your Cart</Text>
+      <Text style={styles.title}>{t("cart.title")}</Text>
       {cart.length === 0 ? (
         <Text style={{ color: colors.onBackground, fontSize: 18 }}>
-          Cart is empty.
+          {t("cart.emptyCart")}
         </Text>
       ) : (
         <FlatList
@@ -99,7 +101,7 @@ const CartScreen = () => {
                     style={styles.removeBtn}
                   >
                     <Text style={{ color: "red", fontWeight: "bold" }}>
-                      Remove
+                      {t("cart.removeItem")}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -111,13 +113,12 @@ const CartScreen = () => {
       {minOrderValue > 0 && isBelowMinimum && cart.length > 0 && (
         <View style={styles.minOrderWarning}>
           <Text style={styles.minOrderWarningText}>
-            ⚠️ Minimum order: €{minOrderValue.toFixed(2)} • Add €
-            {(minOrderValue - total).toFixed(2)} more
+            ⚠️ {t("cart.total")}: €{minOrderValue.toFixed(2)} • {t("cart.continueShopping")}
           </Text>
         </View>
       )}
       <Text style={[styles.total, { color: colors.primary }]}>
-        Total: €{total.toFixed(2)}
+        {t("cart.total")}: €{total.toFixed(2)}
       </Text>
       <TouchableOpacity
         style={[
@@ -130,7 +131,7 @@ const CartScreen = () => {
         <Text
           style={{ color: colors.onPrimary, fontWeight: "bold", fontSize: 18 }}
         >
-          Proceed to Checkout
+          {t("cart.checkout")}
         </Text>
       </TouchableOpacity>
     </SafeAreaView>

@@ -16,11 +16,13 @@ import { useCart } from "../contexts/CartContext";
 import { useFavorites } from "../hooks/useFavorites";
 import ENV from "../config/env";
 import { MenuItem } from "../types";
+import { useTranslation } from "../hooks/useTranslation";
 
 const MenuScreen = () => {
   const { colors } = useTheme();
   const { addToCart } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { t } = useTranslation();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -86,7 +88,7 @@ const MenuScreen = () => {
           ? data.categories
           : [];
         const items = Array.isArray(data.items) ? data.items : [];
-        setMenuCategories([{ id: "all", name: "All" }, ...categories]);
+        setMenuCategories([{ id: "all", name: t("menu.allCategories") }, ...categories]);
         setMenuItems(items);
       } catch (err) {
         setError((err as Error).message || "Failed to connect to server");
@@ -95,7 +97,7 @@ const MenuScreen = () => {
       }
     };
     fetchMenu();
-  }, [debouncedSearchQuery]);
+  }, [debouncedSearchQuery, t]);
 
   // Auto-expand categories when searching
   useEffect(() => {
@@ -257,13 +259,13 @@ const MenuScreen = () => {
       style={[styles.container, { backgroundColor: colors.background }]}
       edges={["top"]}
     >
-      <Text style={styles.title}>Menu</Text>
+      <Text style={styles.title}>{t("menu.title")}</Text>
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
-          placeholder="Search menu..."
+          placeholder={t("menu.search")}
           placeholderTextColor="#e0b97f80"
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -287,7 +289,7 @@ const MenuScreen = () => {
           textStyle={styles.filterChipText}
           icon="leaf"
         >
-          Vegetarian
+          {t("menu.vegetarian")}
         </Chip>
         <Chip
           selected={dietaryFilters.isVegan}
@@ -304,7 +306,7 @@ const MenuScreen = () => {
           textStyle={styles.filterChipText}
           icon="sprout"
         >
-          Vegan
+          {t("menu.vegan")}
         </Chip>
         <Chip
           selected={dietaryFilters.isGlutenFree}
@@ -321,7 +323,7 @@ const MenuScreen = () => {
           textStyle={styles.filterChipText}
           icon="barley-off"
         >
-          Gluten-Free
+          {t("menu.glutenFree")}
         </Chip>
         <Chip
           selected={dietaryFilters.isSpicy}
@@ -338,7 +340,7 @@ const MenuScreen = () => {
           textStyle={styles.filterChipText}
           icon="chili-hot"
         >
-          Spicy
+          {t("menu.spicy")}
         </Chip>
         {(dietaryFilters.isVegetarian ||
           dietaryFilters.isVegan ||
@@ -357,7 +359,7 @@ const MenuScreen = () => {
             textStyle={styles.filterChipText}
             icon="close"
           >
-            Clear
+            {t("common.clear")}
           </Chip>
         )}
       </View>
@@ -502,7 +504,7 @@ const MenuScreen = () => {
                                 fontWeight: "bold",
                               }}
                             >
-                              Add to Cart
+                              {t("menu.addToCart")}
                             </Text>
                           </TouchableOpacity>
                         </Card.Content>
@@ -564,7 +566,7 @@ const MenuScreen = () => {
                                     fontWeight: "bold",
                                   }}
                                 >
-                                  Add to Cart
+                                  {t("menu.addToCart")}
                                 </Text>
                               </TouchableOpacity>
                             </Card.Content>

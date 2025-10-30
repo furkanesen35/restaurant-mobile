@@ -21,6 +21,7 @@ import { NavigationProps } from "../types";
 import { validateEmail } from "../utils/validation";
 import ErrorMessage from "../components/common/ErrorMessage";
 import LoadingOverlay from "../components/common/LoadingOverlay";
+import { useTranslation } from "../hooks/useTranslation";
 // import * as Google from 'expo-auth-session/providers/google';
 // import * as WebBrowser from 'expo-web-browser';
 // import Constants from 'expo-constants';
@@ -28,6 +29,7 @@ import LoadingOverlay from "../components/common/LoadingOverlay";
 
 const LoginScreen: React.FC<NavigationProps> = ({ navigation }) => {
   const { login, isLoading, error, clearError } = useAuth();
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [validationErrors, setValidationErrors] = useState<{
@@ -45,13 +47,13 @@ const LoginScreen: React.FC<NavigationProps> = ({ navigation }) => {
     const errors: { email?: string; password?: string } = {};
 
     if (!email.trim()) {
-      errors.email = "Email is required";
+      errors.email = t("auth.emailRequired");
     } else if (!validateEmail(email)) {
-      errors.email = "Please enter a valid email address";
+      errors.email = t("errors.invalidEmail");
     }
 
     if (!password.trim()) {
-      errors.password = "Password is required";
+      errors.password = t("auth.passwordRequired");
     }
 
     setValidationErrors(errors);
@@ -119,12 +121,12 @@ const LoginScreen: React.FC<NavigationProps> = ({ navigation }) => {
         >
           <Card style={styles.card}>
             <Card.Content>
-              <Title style={styles.title}>Welcome Back</Title>
-              <Text style={styles.subtitle}>Sign in to your account</Text>
+              <Title style={styles.title}>{t("auth.login")}</Title>
+              <Text style={styles.subtitle}>{t("auth.loginSuccess")}</Text>
 
               <View style={styles.inputContainer}>
                 <TextInput
-                  label="Email"
+                  label={t("auth.email")}
                   value={email}
                   onChangeText={(text) => {
                     setEmail(text);
@@ -142,6 +144,7 @@ const LoginScreen: React.FC<NavigationProps> = ({ navigation }) => {
                   textContentType="emailAddress"
                   error={!!validationErrors.email}
                   disabled={isLoading}
+                  placeholder={t("auth.emailPlaceholder")}
                 />
                 {validationErrors.email && (
                   <HelperText type="error" visible={!!validationErrors.email}>
@@ -152,7 +155,7 @@ const LoginScreen: React.FC<NavigationProps> = ({ navigation }) => {
 
               <View style={styles.inputContainer}>
                 <TextInput
-                  label="Password"
+                  label={t("auth.password")}
                   value={password}
                   onChangeText={(text) => {
                     setPassword(text);
@@ -169,6 +172,7 @@ const LoginScreen: React.FC<NavigationProps> = ({ navigation }) => {
                   textContentType="password"
                   error={!!validationErrors.password}
                   disabled={isLoading}
+                  placeholder={t("auth.passwordPlaceholder")}
                   right={
                     <TextInput.Icon
                       icon={showPassword ? "eye-off" : "eye"}
@@ -195,7 +199,7 @@ const LoginScreen: React.FC<NavigationProps> = ({ navigation }) => {
                 contentStyle={styles.buttonContent}
                 labelStyle={styles.buttonLabel}
               >
-                {isLoading ? "Signing In..." : "Sign In"}
+                {isLoading ? `${t("common.loading")}` : t("auth.login")}
               </Button>
 
               <TouchableOpacity
@@ -203,12 +207,12 @@ const LoginScreen: React.FC<NavigationProps> = ({ navigation }) => {
                 disabled={isLoading}
                 style={styles.forgotPasswordContainer}
               >
-                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+                <Text style={styles.forgotPasswordText}>{t("auth.forgotPassword")}</Text>
               </TouchableOpacity>
 
               <View style={styles.dividerContainer}>
                 <Divider style={styles.divider} />
-                <Text style={styles.dividerText}>OR</Text>
+                <Text style={styles.dividerText}>{t("auth.or")}</Text>
                 <Divider style={styles.divider} />
               </View>
 
@@ -232,7 +236,7 @@ const LoginScreen: React.FC<NavigationProps> = ({ navigation }) => {
                   disabled={isLoading}
                 >
                   <Text style={styles.link}>
-                    Don't have an account? Register
+                    {t("auth.dontHaveAccount")} {t("auth.register")}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -242,7 +246,7 @@ const LoginScreen: React.FC<NavigationProps> = ({ navigation }) => {
 
         <ErrorMessage error={error} onDismiss={clearError} />
 
-        <LoadingOverlay visible={isLoading} message="Signing you in..." />
+        <LoadingOverlay visible={isLoading} message={t("common.loading")} />
       </SafeAreaView>
     </>
   );

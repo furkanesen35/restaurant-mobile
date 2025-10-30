@@ -18,11 +18,14 @@ import CartScreen from "../screens/CartScreen";
 import AdminScreen from "../screens/AdminScreen";
 import CheckoutScreen from "../screens/CheckoutScreen";
 import Icon from "react-native-paper/src/components/Icon";
+import { useTranslation } from "../hooks/useTranslation";
+
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function MainTabs() {
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   const getTabIcon = (routeName: string, focused: boolean, color: string, size: number) => {
     let iconName = "home";
@@ -56,20 +59,20 @@ function MainTabs() {
 
   const screens = React.useMemo(() => {
     const baseScreens = [
-      { name: "Menu", component: MenuScreen },
-      { name: "Favorites", component: FavoritesScreen },
-      { name: "Cart", component: CartScreen },
-      { name: "Reservations", component: ReservationsScreen },
-      { name: "Orders", component: OrdersScreen },
-      { name: "Profile", component: ProfileScreen },
+      { name: "Menu", component: MenuScreen, label: t("navigation.menu") },
+      { name: "Favorites", component: FavoritesScreen, label: t("navigation.favorites") },
+      { name: "Cart", component: CartScreen, label: t("navigation.cart") },
+      { name: "Reservations", component: ReservationsScreen, label: t("navigation.reservations") },
+      { name: "Orders", component: OrdersScreen, label: t("navigation.orders") },
+      { name: "Profile", component: ProfileScreen, label: t("navigation.profile") },
     ];
 
     if (user && user.role === "admin") {
-      baseScreens.push({ name: "Admin", component: AdminScreen });
+      baseScreens.push({ name: "Admin", component: AdminScreen, label: t("navigation.admin") });
     }
 
     return baseScreens;
-  }, [user]);
+  }, [user, t]);
 
   return (
     <Tab.Navigator 
@@ -98,6 +101,9 @@ function MainTabs() {
           key={screen.name}
           name={screen.name}
           component={screen.component}
+          options={{
+            tabBarLabel: screen.label,
+          }}
         />
       ))}
     </Tab.Navigator>
@@ -105,6 +111,8 @@ function MainTabs() {
 }
 
 function MainStack() {
+  const { t } = useTranslation();
+  
   return (
     <Stack.Navigator>
       <Stack.Screen
@@ -116,7 +124,7 @@ function MainStack() {
         name="Checkout"
         component={CheckoutScreen}
         options={{
-          title: "Checkout",
+          title: t("navigation.checkout"),
           headerStyle: { backgroundColor: "#231a13" },
           headerTintColor: "#d4af37",
         }}
@@ -125,7 +133,7 @@ function MainStack() {
         name="CookieSettings"
         component={CookieSettingsScreen}
         options={{
-          title: "Cookie Settings",
+          title: t("navigation.cookieSettings"),
           headerStyle: { backgroundColor: "#231a13" },
           headerTintColor: "#e0b97f",
         }}
@@ -134,7 +142,7 @@ function MainStack() {
         name="QRScanner"
         component={QRScannerScreen}
         options={{
-          title: "Scan QR Code",
+          title: t("navigation.scanQRCode"),
           headerStyle: { backgroundColor: "#231a13" },
           headerTintColor: "#e0b97f",
           headerShown: false,

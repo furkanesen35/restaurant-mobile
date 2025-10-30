@@ -12,7 +12,9 @@ import ENV from "./src/config/env";
 import RootNavigator from "./src/navigation/RootNavigator";
 import { CartProvider } from "./src/contexts/CartContext";
 import { CookieConsentProvider } from "./src/contexts/CookieConsentContext";
+import { LanguageProvider } from "./src/contexts/LanguageContext";
 import CookieConsentBanner from "./src/components/CookieConsentBanner";
+import "./src/i18n"; // Initialize i18n
 
 // Configure how notifications are displayed when app is in foreground
 Notifications.setNotificationHandler({
@@ -66,16 +68,18 @@ export default function App() {
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
       <StripeProvider publishableKey={ENV.STRIPE_PUBLISHABLE_KEY}>
         <PaperProvider theme={cozyTheme}>
-          <CookieConsentProvider>
-            <AuthProvider>
-              <CartProvider>
-                <NavigationContainer linking={linking}>
-                  <RootNavigator />
-                  <CookieConsentBanner />
-                </NavigationContainer>
-              </CartProvider>
-            </AuthProvider>
-          </CookieConsentProvider>
+          <LanguageProvider>
+            <CookieConsentProvider>
+              <AuthProvider>
+                <CartProvider>
+                  <NavigationContainer linking={linking}>
+                    <RootNavigator />
+                    <CookieConsentBanner />
+                  </NavigationContainer>
+                </CartProvider>
+              </AuthProvider>
+            </CookieConsentProvider>
+          </LanguageProvider>
         </PaperProvider>
       </StripeProvider>
     </SafeAreaProvider>

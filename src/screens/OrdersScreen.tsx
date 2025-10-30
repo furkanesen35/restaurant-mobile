@@ -21,10 +21,12 @@ import {
 } from "../utils/validation";
 import apiClient from "../utils/apiClient";
 import ErrorMessage from "../components/common/ErrorMessage";
+import { useTranslation } from "../hooks/useTranslation";
 
 const OrdersScreen = () => {
   const { colors } = useTheme();
   const { user, token, updateUser } = useAuth();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<"current" | "history">("current");
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,22 +71,22 @@ const OrdersScreen = () => {
         await updateUser({ loyaltyPoints: response.data.loyaltyPointsBalance });
       }
       
-      Alert.alert("Success", "Order cancelled successfully");
+      Alert.alert(t("common.success"), t("orders.cancelled"));
       fetchOrders(); // Refresh orders
     } catch (err: any) {
       console.error("Error cancelling order:", err);
-      Alert.alert("Error", "Failed to cancel order");
+      Alert.alert(t("common.error"), t("errors.somethingWentWrong"));
     }
   };
 
   const handleCancelOrder = (order: Order) => {
     Alert.alert(
-      "Cancel Order",
-      `Are you sure you want to cancel order #${order.id}?`,
+      t("orders.cancelOrder"),
+      `${t("common.confirm")} #${order.id}?`,
       [
-        { text: "No", style: "cancel" },
+        { text: t("common.no"), style: "cancel" },
         {
-          text: "Yes",
+          text: t("common.yes"),
           style: "destructive",
           onPress: () => cancelOrder(order.id),
         },
@@ -207,7 +209,7 @@ const OrdersScreen = () => {
           </View>
           <View style={styles.orderFooter}>
             <Text style={styles.orderTotal}>
-              Total: {formatCurrency(total)}
+              {t("cart.total")}: {formatCurrency(total)}
             </Text>
             {order.status === "pending" && (
               <Button
@@ -217,7 +219,7 @@ const OrdersScreen = () => {
                 labelStyle={styles.cancelButtonLabel}
                 compact
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
             )}
           </View>
@@ -231,7 +233,7 @@ const OrdersScreen = () => {
       style={[styles.container, { backgroundColor: colors.background }]}
       edges={["top"]}
     >
-      <Text style={styles.title}>My Orders</Text>
+      <Text style={styles.title}>{t("orders.myOrders")}</Text>
 
       <View style={styles.tabContainer}>
         <TouchableOpacity
@@ -244,7 +246,7 @@ const OrdersScreen = () => {
               activeTab === "current" && styles.activeTabText,
             ]}
           >
-            Current Orders
+            {t("orders.myOrders")}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -257,7 +259,7 @@ const OrdersScreen = () => {
               activeTab === "history" && styles.activeTabText,
             ]}
           >
-            Order History
+            {t("orders.orderHistory")}
           </Text>
         </TouchableOpacity>
       </View>
@@ -296,9 +298,9 @@ const OrdersScreen = () => {
             ))
           ) : (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>No current orders</Text>
+              <Text style={styles.emptyText}>{t("orders.noOrders")}</Text>
               <Text style={styles.emptySubText}>
-                Place an order from our menu to get started!
+                {t("menu.title")}
               </Text>
             </View>
           )
@@ -308,9 +310,9 @@ const OrdersScreen = () => {
           ))
         ) : (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No order history</Text>
+            <Text style={styles.emptyText}>{t("orders.noOrders")}</Text>
             <Text style={styles.emptySubText}>
-              Your completed orders will appear here.
+              {t("orders.orderHistory")}
             </Text>
           </View>
         )}

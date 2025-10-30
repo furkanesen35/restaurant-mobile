@@ -6,9 +6,12 @@ import { useAuth } from "../contexts/AuthContext";
 import AddressesScreen from "./AddressesScreen";
 import PaymentMethodsScreen from "./PaymentMethodsScreen";
 import { useNavigation } from "@react-navigation/native";
+import LanguageSwitcher from "../components/LanguageSwitcher";
+import { useTranslation } from "../hooks/useTranslation";
 
 const ProfileScreen = () => {
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const [showAddresses, setShowAddresses] = useState(false);
   const [showPayments, setShowPayments] = useState(false);
@@ -23,10 +26,9 @@ const ProfileScreen = () => {
               icon="account-circle"
               style={styles.loginPromptIcon}
             />
-            <Text style={styles.loginPromptTitle}>Welcome to Your Profile</Text>
+            <Text style={styles.loginPromptTitle}>{t("profile.myProfile")}</Text>
             <Text style={styles.loginPromptSubtitle}>
-              Please log in to access your profile, manage addresses, and
-              payment methods.
+              {t("auth.login")}
             </Text>
           </Card.Content>
         </Card>
@@ -62,7 +64,7 @@ const ProfileScreen = () => {
 
       <Card style={styles.loyaltyCard}>
         <Card.Title
-          title="Loyalty Points"
+          title={t("profile.loyaltyPoints")}
           titleStyle={styles.sectionTitle}
           left={(props) => (
             <Avatar.Icon
@@ -75,8 +77,7 @@ const ProfileScreen = () => {
         <Card.Content style={styles.loyaltyContent}>
           <Text style={styles.loyaltyPoints}>{user.loyaltyPoints ?? 0}</Text>
           <Text style={styles.loyaltyCaption}>
-            Earn 1 point for every €1 spent. Points accumulate automatically
-            after each successful payment.
+            {t("loyalty.earnWithPurchase", { points: 1 })}
           </Text>
         </Card.Content>
       </Card>
@@ -85,7 +86,7 @@ const ProfileScreen = () => {
       <TouchableOpacity onPress={() => setShowAddresses(true)}>
         <Card style={styles.sectionCard}>
           <Card.Title
-            title="My Addresses"
+            title={t("profile.addresses")}
             titleStyle={styles.sectionTitle}
             left={(props) => (
               <Avatar.Icon
@@ -100,7 +101,7 @@ const ProfileScreen = () => {
           />
           <Card.Content>
             <Text style={styles.sectionPlaceholder}>
-              Tap to manage your delivery addresses
+              {t("profile.addresses")}
             </Text>
           </Card.Content>
         </Card>
@@ -110,7 +111,7 @@ const ProfileScreen = () => {
       <TouchableOpacity onPress={() => setShowPayments(true)}>
         <Card style={styles.sectionCard}>
           <Card.Title
-            title="Payment Methods"
+            title={t("profile.paymentMethods")}
             titleStyle={styles.sectionTitle}
             left={(props) => (
               <Avatar.Icon
@@ -125,7 +126,7 @@ const ProfileScreen = () => {
           />
           <Card.Content>
             <Text style={styles.sectionPlaceholder}>
-              Tap to manage your payment methods
+              {t("profile.paymentMethods")}
             </Text>
           </Card.Content>
         </Card>
@@ -135,7 +136,7 @@ const ProfileScreen = () => {
       <TouchableOpacity onPress={() => navigation.navigate("QRScanner" as never)}>
         <Card style={styles.sectionCard}>
           <Card.Title
-            title="Scan QR Code"
+            title={t("profile.scanQR")}
             titleStyle={styles.sectionTitle}
             left={(props) => (
               <Avatar.Icon
@@ -150,7 +151,7 @@ const ProfileScreen = () => {
           />
           <Card.Content>
             <Text style={styles.sectionDescription}>
-              Scan QR codes in the restaurant to earn loyalty points
+              {t("loyalty.scanToEarn")}
             </Text>
           </Card.Content>
         </Card>
@@ -160,7 +161,7 @@ const ProfileScreen = () => {
       <TouchableOpacity onPress={() => navigation.navigate("CookieSettings" as never)}>
         <Card style={styles.sectionCard}>
           <Card.Title
-            title="Cookie & Privacy"
+            title={t("profile.cookieSettings")}
             titleStyle={styles.sectionTitle}
             left={(props) => (
               <Avatar.Icon
@@ -175,11 +176,16 @@ const ProfileScreen = () => {
           />
           <Card.Content>
             <Text style={styles.sectionPlaceholder}>
-              Manage your cookie settings
+              {t("profile.cookieSettings")}
             </Text>
           </Card.Content>
         </Card>
       </TouchableOpacity>
+
+      {/* Language Settings Section */}
+      <View style={styles.languageSwitcherContainer}>
+        <LanguageSwitcher iconColor="#e0b97f" iconSize={24} />
+      </View>
 
       {/* Logout Button */}
       <Button
@@ -190,7 +196,7 @@ const ProfileScreen = () => {
         contentStyle={styles.logoutButtonContent}
         icon="logout"
       >
-        Logout
+        {t("auth.logout")}
       </Button>
       </ScrollView>
 
@@ -202,7 +208,7 @@ const ProfileScreen = () => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>My Addresses</Text>
+            <Text style={styles.modalTitle}>{t("profile.addresses")}</Text>
             <IconButton
               icon="close"
               onPress={() => setShowAddresses(false)}
@@ -221,7 +227,7 @@ const ProfileScreen = () => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Payment Methods</Text>
+            <Text style={styles.modalTitle}>{t("profile.paymentMethods")}</Text>
             <IconButton
               icon="close"
               onPress={() => setShowPayments(false)}
@@ -530,6 +536,14 @@ const styles = StyleSheet.create({
     opacity: 0.8, // Slightly transparent (80% visible)
     textAlign: "center", // Centers text horizontally
     paddingVertical: 12, // 12px padding top/bottom
+  },
+
+  // ============================================================================
+  // LANGUAGE SWITCHER CONTAINER - Container for language switcher component
+  // Used by: View wrapping LanguageSwitcher component
+  // ============================================================================
+  languageSwitcherContainer: {
+    marginBottom: 20, // 20px space below language switcher
   },
 
   // ============================================================================

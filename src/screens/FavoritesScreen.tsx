@@ -17,6 +17,7 @@ import { MenuItem } from "../types";
 import { formatCurrency, parseErrorMessage } from "../utils/validation";
 import apiClient from "../utils/apiClient";
 import ErrorMessage from "../components/common/ErrorMessage";
+import { useTranslation } from "../hooks/useTranslation";
 
 interface Favorite {
   id: number;
@@ -29,6 +30,7 @@ const FavoritesScreen = () => {
   const { user, token } = useAuth();
   const { addToCart } = useCart();
   const isFocused = useIsFocused();
+  const { t } = useTranslation();
 
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,10 +71,10 @@ const FavoritesScreen = () => {
       setFavorites((prev) =>
         prev.filter((fav) => fav.menuItem.id !== menuItemId)
       );
-      Alert.alert("Success", "Removed from favorites");
+      Alert.alert(t("common.success"), t("menu.removeFromFavorites"));
     } catch (err: any) {
       console.error("Error removing favorite:", err);
-      Alert.alert("Error", "Failed to remove from favorites");
+      Alert.alert(t("common.error"), t("errors.somethingWentWrong"));
     }
   };
 
@@ -82,7 +84,7 @@ const FavoritesScreen = () => {
       name: item.name,
       price: item.price,
     });
-    Alert.alert("Added to Cart", `${item.name} has been added to your cart`);
+    Alert.alert(t("cart.itemAdded"), `${item.name} ${t("cart.itemAdded")}`);
   };
 
   const handleRefresh = () => {
@@ -92,7 +94,7 @@ const FavoritesScreen = () => {
   if (loading && !refreshing) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <Text style={styles.loadingText}>Loading favorites...</Text>
+        <Text style={styles.loadingText}>{t("common.loading")}</Text>
       </View>
     );
   }
@@ -102,7 +104,7 @@ const FavoritesScreen = () => {
       style={[styles.container, { backgroundColor: colors.background }]}
       edges={["top"]}
     >
-      <Text style={styles.title}>My Favorites</Text>
+      <Text style={styles.title}>{t("menu.favorites")}</Text>
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -118,13 +120,13 @@ const FavoritesScreen = () => {
       >
         {error ? (
           <View style={styles.errorContainer}>
-            <Text style={styles.errorTitle}>Unable to load favorites</Text>
+            <Text style={styles.errorTitle}>{t("errors.somethingWentWrong")}</Text>
             <Text style={styles.errorText}>{error}</Text>
             <TouchableOpacity
               style={styles.retryButton}
               onPress={() => fetchFavorites()}
             >
-              <Text style={styles.retryButtonText}>Try Again</Text>
+              <Text style={styles.retryButtonText}>{t("errors.tryAgain")}</Text>
             </TouchableOpacity>
           </View>
         ) : favorites.length > 0 ? (
@@ -190,7 +192,7 @@ const FavoritesScreen = () => {
                   style={styles.addButton}
                   onPress={() => handleAddToCart(favorite.menuItem)}
                 >
-                  <Text style={styles.addButtonText}>Add to Cart</Text>
+                  <Text style={styles.addButtonText}>{t("menu.addToCart")}</Text>
                 </TouchableOpacity>
               </Card.Content>
             </Card>
@@ -198,9 +200,9 @@ const FavoritesScreen = () => {
         ) : (
           <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>♥</Text>
-            <Text style={styles.emptyText}>No favorites yet</Text>
+            <Text style={styles.emptyText}>{t("menu.favorites")}</Text>
             <Text style={styles.emptySubText}>
-              Tap the heart icon on menu items to save your favorites!
+              {t("menu.addToFavorites")}
             </Text>
           </View>
         )}
