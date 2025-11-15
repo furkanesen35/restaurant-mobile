@@ -17,12 +17,14 @@ import { useFavorites } from "../hooks/useFavorites";
 import ENV from "../config/env";
 import { MenuItem } from "../types";
 import { useTranslation } from "../hooks/useTranslation";
+import { useLanguage } from "../contexts/LanguageContext";
 
 const MenuScreen = () => {
   const { colors } = useTheme();
   const { addToCart } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { t } = useTranslation();
+  const { language } = useLanguage();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -68,8 +70,9 @@ const MenuScreen = () => {
         setLoading(true);
         setError(null);
 
-        // Load all menu items once - no search parameter sent to API
-        const url = `${ENV.API_URL}/menu`;
+        // Load all menu items with language parameter
+        const lang = language === 'English' ? 'en' : 'de';
+        const url = `${ENV.API_URL}/menu?lang=${lang}`;
 
         const response = await fetch(url);
         if (!response.ok) {
@@ -93,7 +96,7 @@ const MenuScreen = () => {
       }
     };
     fetchMenu();
-  }, [t]); // Only fetch once when component mounts
+  }, [t, language]); // Re-fetch when language changes
 
   // Auto-expand categories when searching
   useEffect(() => {

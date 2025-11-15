@@ -20,12 +20,15 @@ import CheckoutScreen from "../screens/CheckoutScreen";
 import Icon from "react-native-paper/src/components/Icon";
 import { useTranslation } from "../hooks/useTranslation";
 import logger from '../utils/logger';
+import { useCart } from "../contexts/CartContext";
+import { View, Text, StyleSheet } from "react-native";
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function MainTabs() {
   const { user } = useAuth();
   const { t } = useTranslation();
+  const { cart } = useCart();
 
   const getTabIcon = (routeName: string, focused: boolean, color: string, size: number) => {
     let iconName = "home";
@@ -52,6 +55,18 @@ function MainTabs() {
       case "Admin":
         iconName = "shield-crown";
         break;
+    }
+
+    // Add badge for cart
+    if (routeName === "Cart" && cart.length > 0) {
+      return (
+        <View>
+          <Icon source={iconName} size={size} color={color} />
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{cart.length}</Text>
+          </View>
+        </View>
+      );
     }
 
     return <Icon source={iconName} size={size} color={color} />;
@@ -186,6 +201,26 @@ const RootNavigator = () => {
     </Stack.Navigator>
   );
 };
+
+const styles = StyleSheet.create({
+  badge: {
+    position: 'absolute',
+    right: -8,
+    top: -4,
+    backgroundColor: '#d4af37',
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    color: '#1a120b',
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+});
 
 export default RootNavigator;
 

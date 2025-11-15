@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ImageBackground } from "react-native";
 import { Card, Chip } from "react-native-paper";
 import { MenuItem } from "../../types";
 import { formatCurrency } from "../../utils/validation";
@@ -15,41 +15,55 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
   onPress,
   onAddToCart,
 }) => {
+  const cardContent = (
+    <Card.Content style={styles.content}>
+      <View style={styles.header}>
+        <Text style={styles.name} numberOfLines={2}>
+          {item.name}
+        </Text>
+        <Text style={styles.price}>{formatCurrency(item.price)}</Text>
+      </View>
+
+      {item.description && (
+        <Text style={styles.description} numberOfLines={2}>
+          {item.description}
+        </Text>
+      )}
+
+      <View style={styles.footer}>
+        <Chip
+          style={styles.categoryChip}
+          textStyle={styles.categoryText}
+          mode="outlined"
+        >
+          {item.category}
+        </Chip>
+
+        {onAddToCart && (
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => onAddToCart(item)}
+          >
+            <Text style={styles.addButtonText}>+</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </Card.Content>
+  );
+
   return (
     <Card style={styles.card} onPress={() => onPress(item)}>
-      <Card.Content style={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.name} numberOfLines={2}>
-            {item.name}
-          </Text>
-          <Text style={styles.price}>{formatCurrency(item.price)}</Text>
-        </View>
-
-        {item.description && (
-          <Text style={styles.description} numberOfLines={2}>
-            {item.description}
-          </Text>
-        )}
-
-        <View style={styles.footer}>
-          <Chip
-            style={styles.categoryChip}
-            textStyle={styles.categoryText}
-            mode="outlined"
-          >
-            {item.category}
-          </Chip>
-
-          {onAddToCart && (
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={() => onAddToCart(item)}
-            >
-              <Text style={styles.addButtonText}>+</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </Card.Content>
+      {item.imageUrl ? (
+        <ImageBackground
+          source={{ uri: item.imageUrl }}
+          style={styles.imageBackground}
+          imageStyle={styles.image}
+        >
+          <View style={styles.overlay}>{cardContent}</View>
+        </ImageBackground>
+      ) : (
+        cardContent
+      )}
     </Card>
   );
 };
@@ -60,6 +74,18 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 12,
     elevation: 2,
+    overflow: 'hidden',
+  },
+  imageBackground: {
+    width: '100%',
+    minHeight: 180,
+  },
+  image: {
+    borderRadius: 12,
+  },
+  overlay: {
+    backgroundColor: 'rgba(29, 21, 17, 0.75)',
+    flex: 1,
   },
   content: {
     padding: 16,
