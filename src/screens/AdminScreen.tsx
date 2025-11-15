@@ -49,6 +49,10 @@ const AdminScreen = () => {
   const [itemForm, setItemForm] = useState({
     name: "",
     description: "",
+    nameDe: "",
+    nameEn: "",
+    descriptionDe: "",
+    descriptionEn: "",
     price: "",
     categoryId: "",
     imageUrl: "",
@@ -776,6 +780,10 @@ const AdminScreen = () => {
                           setItemForm({
                             name: item.name,
                             description: item.description || "",
+                            nameDe: item.nameDe || item.name,
+                            nameEn: item.nameEn || "",
+                            descriptionDe: item.descriptionDe || item.description || "",
+                            descriptionEn: item.descriptionEn || "",
                             price: item.price.toString(),
                             categoryId: (
                               item.categoryId || item.category
@@ -810,6 +818,10 @@ const AdminScreen = () => {
                 setItemForm({
                   name: "",
                   description: "",
+                  nameDe: "",
+                  nameEn: "",
+                  descriptionDe: "",
+                  descriptionEn: "",
                   price: "",
                   categoryId: categories[0]?.id?.toString() || "",
                   imageUrl: "",
@@ -867,10 +879,10 @@ const AdminScreen = () => {
                   {editingItem ? t("admin.modals.editItem") : t("admin.modals.newItem")}
                 </Text>
                 
-                <Text style={styles.sectionLabel}>German (Deutsch)</Text>
+                <Text style={styles.sectionLabel}>German (Deutsch) - Required</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Name (DE)"
+                  placeholder="Name (DE) *"
                   placeholderTextColor="#999"
                   value={itemForm.nameDe || itemForm.name}
                   onChangeText={(text) =>
@@ -879,7 +891,7 @@ const AdminScreen = () => {
                 />
                 <TextInput
                   style={styles.input}
-                  placeholder="Description (DE)"
+                  placeholder="Description (DE) *"
                   placeholderTextColor="#999"
                   value={itemForm.descriptionDe || itemForm.description}
                   onChangeText={(text) =>
@@ -888,10 +900,10 @@ const AdminScreen = () => {
                   multiline
                 />
 
-                <Text style={styles.sectionLabel}>English</Text>
+                <Text style={styles.sectionLabel}>English - Optional</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Name (EN)"
+                  placeholder="Name (EN) - Optional"
                   placeholderTextColor="#999"
                   value={itemForm.nameEn}
                   onChangeText={(text) =>
@@ -900,7 +912,7 @@ const AdminScreen = () => {
                 />
                 <TextInput
                   style={styles.input}
-                  placeholder="Description (EN)"
+                  placeholder="Description (EN) - Optional"
                   placeholderTextColor="#999"
                   value={itemForm.descriptionEn}
                   onChangeText={(text) =>
