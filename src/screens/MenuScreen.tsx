@@ -24,7 +24,7 @@ const MenuScreen = () => {
   const { addToCart } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { t } = useTranslation();
-  const { language } = useLanguage();
+  const { currentLanguage } = useLanguage();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -71,7 +71,7 @@ const MenuScreen = () => {
         setError(null);
 
         // Load all menu items with language parameter
-        const lang = language === 'English' ? 'en' : 'de';
+        const lang = currentLanguage === 'en' ? 'en' : 'de';
         const url = `${ENV.API_URL}/menu?lang=${lang}`;
 
         const response = await fetch(url);
@@ -96,7 +96,7 @@ const MenuScreen = () => {
       }
     };
     fetchMenu();
-  }, [t, language]); // Re-fetch when language changes
+  }, [t, currentLanguage]); // Re-fetch when language changes
 
   // Auto-expand categories when searching
   useEffect(() => {
