@@ -125,7 +125,7 @@ const AdminScreen = () => {
 
   const fetchSettings = useCallback(async () => {
     try {
-      const response = await fetch(`${ENV.API_URL}/api/settings/minOrderValue`);
+      const response = await fetch(`${ENV.API_URL}/settings/minOrderValue`);
       if (response.ok) {
         const data = await response.json();
         setMinOrderValue(data.value || "0");
@@ -139,7 +139,7 @@ const AdminScreen = () => {
     if (!token) return;
     setSavingSettings(true);
     try {
-      const response = await fetch(`${ENV.API_URL}/api/settings/minOrderValue`, {
+      const response = await fetch(`${ENV.API_URL}/settings/minOrderValue`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
