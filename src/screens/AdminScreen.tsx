@@ -339,6 +339,10 @@ const AdminScreen = () => {
       setItemForm({
         name: "",
         description: "",
+        nameDe: "",
+        nameEn: "",
+        descriptionDe: "",
+        descriptionEn: "",
         price: "",
         categoryId: "",
         imageUrl: "",
