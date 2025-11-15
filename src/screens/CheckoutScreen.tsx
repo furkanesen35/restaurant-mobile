@@ -215,12 +215,27 @@ const CheckoutScreen = () => {
 
       // Step 2: Confirm payment with Stripe
       let paymentResult;
+      let paymentMethodDetails = null;
 
       if (selectedMethodId === -1) {
         // Using new card
         paymentResult = await confirmPayment(clientSecret, {
           paymentMethodType: "Card",
         });
+
+        // If payment successful and user wants to save card
+        if (!paymentResult.error && savePaymentToProfile && paymentResult.paymentIntent) {
+          // Extract card details from payment intent
+          const paymentIntent = paymentResult.paymentIntent;
+          if (paymentIntent.paymentMethod) {
+            paymentMethodDetails = {
+              last4: paymentIntent.paymentMethod.Card?.last4 || "****",
+              brand: paymentIntent.paymentMethod.Card?.brand || "Card",
+              expMonth: paymentIntent.paymentMethod.Card?.expMonth || 0,
+              expYear: paymentIntent.paymentMethod.Card?.expYear || 0,
+            };
+          }
+        }
       } else {
         // Using saved payment method
         const selectedMethod = savedMethods.find(
@@ -237,6 +252,36 @@ const CheckoutScreen = () => {
 
       if (paymentResult.error) {
         throw new Error(paymentResult.error.message);
+      }
+
+      // Step 2.5: Save payment method if requested
+      if (paymentMethodDetails && savePaymentToProfile) {
+        try {
+          const expiry = `${paymentMethodDetails.expMonth}/${paymentMethodDetails.expYear}`;
+          const saveCardRes = await fetch(`${ENV.API_URL}/api/payment`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              type: "Card",
+              cardNumber: paymentMethodDetails.last4,
+              cardHolder: "Card Holder", // You might want to add a field for this
+              expiry: expiry,
+              brand: paymentMethodDetails.brand,
+              isDefault: false,
+              saveToProfile: true,
+            }),
+          });
+
+          if (saveCardRes.ok) {
+            logger.info("Payment method saved to profile");
+          }
+        } catch (err) {
+          logger.error("Failed to save payment method:", err);
+          // Don't fail the order if card save fails
+        }
       }
 
       // Step 3: Create order after successful payment
