@@ -5,7 +5,7 @@ import logger from "./logger";
 
 // Stub functions until expo-notifications is installed
 export async function registerForPushNotifications() {
-  logger.log("Push notifications not configured - install expo-notifications package");
+  logger.warn("Push notifications not configured - install expo-notifications package");
   return null;
 }
 
@@ -13,7 +13,7 @@ export function setupNotificationListeners(
   _onNotification?: (notification: any) => void,
   _onResponse?: (response: any) => void
 ) {
-  logger.log("Push notifications not configured - install expo-notifications package");
+  logger.warn("Push notifications not configured - install expo-notifications package");
   return () => {};
 }
 
@@ -22,7 +22,7 @@ export async function scheduleLocalNotification(
   _body: string,
   _data?: any
 ) {
-  logger.log("Push notifications not configured - install expo-notifications package");
+  logger.warn("Push notifications not configured - install expo-notifications package");
 }
 
 

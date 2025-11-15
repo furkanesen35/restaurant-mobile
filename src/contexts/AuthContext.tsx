@@ -61,14 +61,13 @@ async function registerForPushNotifications() {
     }
 
     if (finalStatus !== "granted") {
-      logger.log("Push notification permission not granted");
+      logger.warn("Push notification permission not granted");
       return null;
     }
 
     const token = (await Notifications.getExpoPushTokenAsync({
       projectId: "34d8bfb4-2a86-49ed-a4d6-b29eee48d18d",
     })).data;
-    logger.log("Expo Push Token:", token);
     return token;
   } catch (error) {
     logger.error("Error getting push token:", error);
@@ -111,20 +110,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           storedToken = localStorage.getItem("token");
           storedUser = localStorage.getItem("user");
         }
-        logger.debug("[AuthContext] Loaded session:", {
-          storedToken,
-          storedUser,
-        });
         if (storedToken) {
           setToken(storedToken);
-          logger.debug("[AuthContext] Token set:", storedToken);
           // Optionally validate token here
         }
         if (storedUser) {
           try {
             const parsedUser = JSON.parse(storedUser);
             setUser(parsedUser);
-            logger.debug("[AuthContext] User set:", parsedUser);
           } catch (parseError) {
             logger.warn("Failed to parse stored user data:", parseError);
             await AsyncStorage.removeItem("user");
@@ -134,7 +127,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         logger.warn("Failed to load session:", error);
       } finally {
         setIsLoading(false);
-        logger.debug("[AuthContext] isLoading set to false");
       }
     };
     loadSession();
@@ -146,7 +138,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const registerPushToken = useCallback(async () => {
     // Only register push tokens if user has consented to marketing or analytics
     if (!hasConsent("marketing") && !hasConsent("analytics")) {
-      logger.log("Push notifications disabled - no consent for marketing/analytics");
+      logger.info("Push notifications disabled - consent not granted");
       return;
     }
 
@@ -156,7 +148,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await apiClient.post("/notifications/register", {
           token: pushToken,
         });
-        logger.log("Push token registered with backend");
+        logger.info("Push token registered with backend");
       }
     } catch (error) {
       logger.error("Failed to register push token:", error);
@@ -180,11 +172,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       setToken(token);
       setUser(user);
-      logger.debug("[AuthContext] storeAuthData called:", {
-        token,
-        user,
-        refreshToken,
-      });
 
       // Register for push notifications after login
       registerPushToken();
@@ -195,13 +182,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (credentials: LoginCredentials) => {
     setIsLoading(true);
     setError(null);
-    logger.debug("[AuthContext] login called with:", credentials);
     try {
       const response = await apiClient.post<AuthResponse>(
         "/auth/login",
         credentials
       );
-      logger.debug("[AuthContext] login response:", response.data);
       if (response.data) {
         await storeAuthData(response.data);
       } else {
@@ -216,20 +201,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
-      logger.debug("[AuthContext] login finished, isLoading set to false");
     }
   };
 
   const register = async (credentials: RegisterCredentials) => {
     setIsLoading(true);
     setError(null);
-    logger.debug("[AuthContext] register called with:", credentials);
     try {
       const response = await apiClient.post<AuthResponse>(
         "/auth/register",
         credentials
       );
-      logger.debug("[AuthContext] register response:", response.data);
       if (response.data) {
         await storeAuthData(response.data);
       } else {
@@ -244,7 +226,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
-      logger.debug("[AuthContext] register finished, isLoading set to false");
     }
   };
 
@@ -255,13 +236,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }) => {
     setIsLoading(true);
     setError(null);
-    logger.debug("[AuthContext] Google sign-in called with:", googleUser.email);
     try {
       const response = await apiClient.post<AuthResponse>(
         "/auth/google",
         googleUser
       );
-      logger.debug("[AuthContext] Google sign-in response:", response.data);
       if (response.data) {
         await storeAuthData(response.data);
       } else {
@@ -276,16 +255,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
-      logger.debug(
-        "[AuthContext] Google sign-in finished, isLoading set to false"
-      );
     }
   };
 
   const logout = useCallback(async () => {
     try {
-      logger.debug("[AuthContext] logout initiated");
-
       // Clear storage first to prevent any async issues
       await AsyncStorage.multiRemove(["token", "user", "refreshToken"]);
 
@@ -298,8 +272,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setToken(null);
       setUser(null);
       setError(null);
-
-      logger.debug("[AuthContext] logout successful");
     } catch (error) {
       logger.warn("Error during logout:", error);
     }
@@ -322,7 +294,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error) {
       // If refresh fails, logout user (but avoid infinite loops)
-      logger.debug("[AuthContext] Refresh failed, logging out");
+      logger.warn("[AuthContext] Refresh failed, clearing session");
       try {
         setToken(null);
         setUser(null);

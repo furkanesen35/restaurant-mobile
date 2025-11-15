@@ -73,7 +73,7 @@ const AdminScreen = () => {
     if (!token) return;
     try {
       setLoading(true);
-      logger.log("Admin fetching orders with token:", token);
+      logger.info("Admin fetching orders");
       const response = await fetch(`${ENV.API_URL}/order/all`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -87,7 +87,7 @@ const AdminScreen = () => {
         );
       }
       const data = await response.json();
-      logger.log("Admin orders fetched:", data.length, "orders");
+      logger.info(`Admin orders fetched: ${data.length} orders`);
       setOrders(data);
     } catch (err: any) {
       logger.error("Admin fetch error:", err);
@@ -101,8 +101,8 @@ const AdminScreen = () => {
     try {
       const response = await fetch(`${ENV.API_URL}/menu/categories`);
       const data = await response.json();
-      logger.log("Categories fetched:", data);
       setCategories(data || []);
+      logger.info(`Categories fetched: ${(data || []).length}`);
     } catch (err: any) {
       logger.error("Failed to fetch categories:", err);
       Alert.alert("Error", "Failed to fetch categories");
@@ -114,12 +114,11 @@ const AdminScreen = () => {
     try {
       const response = await fetch(`${ENV.API_URL}/menu`);
       const data = await response.json();
-      logger.log("Menu items fetched:", data);
       // The API returns { categories: [...], items: [...] }
       // We need to extract the items array
       const itemsArray = data.items || data || [];
-      logger.log("Extracted items array:", itemsArray);
       setMenuItems(itemsArray);
+      logger.info(`Menu items fetched: ${itemsArray.length}`);
     } catch (err: any) {
       logger.error("Failed to fetch menu items:", err);
       Alert.alert("Error", "Failed to fetch menu items");
@@ -675,7 +674,6 @@ const AdminScreen = () => {
                     <TouchableOpacity
                       activeOpacity={0.7}
                       onPress={() => {
-                        logger.log("Category clicked:", cat.id, cat.name);
                         setSelectedCategoryId(
                           selectedCategoryId === cat.id ? null : cat.id
                         );

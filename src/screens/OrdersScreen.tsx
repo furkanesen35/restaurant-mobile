@@ -58,7 +58,6 @@ const OrdersScreen = () => {
 
   const cancelOrder = async (orderId: string | number) => {
     try {
-      logger.log("Cancelling order:", orderId);
       const response = await apiClient.patch<{
         loyaltyPointsBalance?: number;
         loyaltyPointsDeducted?: number;

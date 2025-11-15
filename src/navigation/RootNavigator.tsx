@@ -170,13 +170,6 @@ function MainStack() {
 const RootNavigator = () => {
   const { token, isLoading } = useAuth();
 
-  logger.log(
-    "RootNavigator render - token:",
-    !!token,
-    "isLoading:",
-    isLoading
-  );
-
   if (isLoading) return null; // Optionally show splash/loading
 
   // Use different keys to force complete remount on auth state change

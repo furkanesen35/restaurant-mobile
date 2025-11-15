@@ -1,51 +1,69 @@
 /**
  * Logger utility for the application
- * In production (__DEV__ = false), logs are suppressed to improve performance
- * and prevent sensitive data exposure
+ * Log output is controlled via EXPO_PUBLIC_LOG_LEVEL (debug|info|warn|error|silent)
+ * and falls back to `debug` in development / `warn` in production.
  */
 
-const isDev = __DEV__;
+type LogLevel = "silent" | "error" | "warn" | "info" | "debug";
+
+const LEVELS: LogLevel[] = ["silent", "error", "warn", "info", "debug"];
+
+const parseLevel = (value?: string | null): LogLevel | null => {
+  if (!value) return null;
+  const normalized = value.toLowerCase() as LogLevel;
+  return LEVELS.includes(normalized) ? normalized : null;
+};
+
+const resolvedLevel =
+  parseLevel(process.env.EXPO_PUBLIC_LOG_LEVEL) ?? (__DEV__ ? "debug" : "warn");
+
+const shouldLog = (level: LogLevel) =>
+  LEVELS.indexOf(level) <= LEVELS.indexOf(resolvedLevel);
 
 export const logger = {
   /**
-   * Log general information (suppressed in production)
+   * Log general information (defaults to warn+ in production)
    */
   log: (...args: any[]) => {
-    if (isDev) {
+    if (shouldLog("info")) {
       console.log(...args);
     }
   },
 
   /**
-   * Log errors (always logged, even in production)
+   * Log errors (suppressed only when LOG_LEVEL=silent)
    */
   error: (...args: any[]) => {
-    console.error(...args);
+    if (shouldLog("error")) {
+      console.error(...args);
+    }
   },
 
   /**
-   * Log warnings (suppressed in production)
+   * Log warnings (hidden unless LOG_LEVEL allows warn+)
    */
   warn: (...args: any[]) => {
-    if (isDev) {
+    if (shouldLog("warn")) {
       console.warn(...args);
     }
   },
 
   /**
-   * Log debug information (suppressed in production)
+   * Log debug information
    */
   debug: (...args: any[]) => {
-    if (isDev) {
-      console.log('[DEBUG]', ...args);
+    if (shouldLog("debug")) {
+      console.debug('[DEBUG]', ...args);
     }
   },
 
   /**
-   * Log information (always logged)
+   * Log information with explicit prefix
    */
   info: (...args: any[]) => {
-    console.log('[INFO]', ...args);
+    if (shouldLog("info")) {
+      console.info('[INFO]', ...args);
+    }
   },
 };
 

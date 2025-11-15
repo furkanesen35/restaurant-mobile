@@ -50,12 +50,8 @@ const AddressesScreen = () => {
 
   const handleSave = async () => {
     try {
-      logger.log("Saving address:", form);
       const method = editingId ? "PUT" : "POST";
       const url = editingId ? `${ENV.API_URL + "/api/address"}/${editingId}` : ENV.API_URL + "/api/address";
-      logger.log("Request URL:", url);
-      logger.log("Request method:", method);
-      logger.log("Request body:", JSON.stringify(form, null, 2));
 
       const res = await fetch(url, {
         method,
@@ -66,9 +62,7 @@ const AddressesScreen = () => {
         body: JSON.stringify(form),
       });
 
-      logger.log("Response status:", res.status);
       const responseData = await res.text();
-      logger.log("Response data:", responseData);
 
       if (!res.ok)
         throw new Error(

@@ -33,7 +33,7 @@ const CartScreen = () => {
           setMinOrderValue(parseFloat(response.data.value));
         })
         .catch((error: any) => {
-          logger.log("Could not fetch minimum order value:", error);
+          logger.warn("Could not fetch minimum order value:", error);
         });
     }
   }, [isFocused]);
