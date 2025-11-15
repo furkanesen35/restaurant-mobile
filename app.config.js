@@ -33,6 +33,9 @@ export default {
     },
     extra: {
       googleClientId: process.env.GOOGLE_CLIENT_ID,
+      eas: {
+        projectId: "34d8bfb4-2a86-49ed-a4d6-b29eee48d18d"
+      }
     },
   },
 };

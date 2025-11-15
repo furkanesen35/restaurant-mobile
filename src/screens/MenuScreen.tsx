@@ -57,7 +57,7 @@ const MenuScreen = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
-    }, 300); // Wait 300ms after user stops typing
+    }, 1500); // Wait 1500ms after user stops typing
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
@@ -68,12 +68,8 @@ const MenuScreen = () => {
         setLoading(true);
         setError(null);
 
-        // Only pass search query to API - do filtering client-side for better UX
-        const params = new URLSearchParams();
-        if (debouncedSearchQuery) params.append("search", debouncedSearchQuery);
-
-        const queryString = params.toString();
-        const url = `${ENV.API_URL}/menu${queryString ? `?${queryString}` : ""}`;
+        // Load all menu items once - no search parameter sent to API
+        const url = `${ENV.API_URL}/menu`;
 
         const response = await fetch(url);
         if (!response.ok) {
@@ -97,7 +93,7 @@ const MenuScreen = () => {
       }
     };
     fetchMenu();
-  }, [debouncedSearchQuery, t]);
+  }, [t]); // Only fetch once when component mounts
 
   // Auto-expand categories when searching
   useEffect(() => {
@@ -119,6 +115,15 @@ const MenuScreen = () => {
   // Client-side filtering for better UX (no page reload)
   const getFilteredItems = () => {
     let filtered = menuItems;
+
+    // Apply search filter (client-side)
+    if (debouncedSearchQuery.trim()) {
+      const searchLower = debouncedSearchQuery.toLowerCase();
+      filtered = filtered.filter((item) => 
+        item.name.toLowerCase().includes(searchLower) ||
+        (item.description && item.description.toLowerCase().includes(searchLower))
+      );
+    }
 
     // Apply category filter
     if (selectedCategory !== "all") {

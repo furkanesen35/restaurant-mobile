@@ -1,7 +1,9 @@
 {
   "build": {
     "production": {
-      "android": {},
+      "android": {
+        "buildType": "apk"
+      },
       "ios": {}
     }
   }
