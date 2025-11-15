@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ImageBackground } from "react-native";
-import { Card, Chip } from "react-native-paper";
+import { Chip } from "react-native-paper";
 import { MenuItem } from "../../types";
 import { formatCurrency } from "../../utils/validation";
 
@@ -16,7 +16,7 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
   onAddToCart,
 }) => {
   const cardContent = (
-    <Card.Content style={styles.content}>
+    <View style={styles.content}>
       <View style={styles.header}>
         <Text style={styles.name} numberOfLines={2}>
           {item.name}
@@ -48,23 +48,25 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
           </TouchableOpacity>
         )}
       </View>
-    </Card.Content>
+    </View>
   );
 
   return (
-    <Card style={styles.card} onPress={() => onPress(item)}>
+    <TouchableOpacity onPress={() => onPress(item)} style={styles.card}>
       {item.imageUrl ? (
         <ImageBackground
           source={{ uri: item.imageUrl }}
           style={styles.imageBackground}
           imageStyle={styles.image}
+          resizeMode="cover"
         >
-          <View style={styles.overlay}>{cardContent}</View>
+          <View style={styles.overlay} />
+          {cardContent}
         </ImageBackground>
       ) : (
-        cardContent
+        <View style={styles.fallbackBackground}>{cardContent}</View>
       )}
-    </Card>
+    </TouchableOpacity>
   );
 };
 
@@ -78,14 +80,18 @@ const styles = StyleSheet.create({
   },
   imageBackground: {
     width: '100%',
-    minHeight: 180,
+    height: 200,
+    justifyContent: 'flex-end',
   },
   image: {
     borderRadius: 12,
   },
   overlay: {
-    backgroundColor: 'rgba(29, 21, 17, 0.75)',
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(29, 21, 17, 0.35)',
+  },
+  fallbackBackground: {
+    backgroundColor: '#2d2117',
   },
   content: {
     padding: 16,

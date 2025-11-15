@@ -9,6 +9,7 @@ import {
   Platform,
   UIManager,
   TextInput,
+  ImageBackground,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Card, useTheme, Chip } from "react-native-paper";
@@ -230,6 +231,68 @@ const MenuScreen = () => {
       </View>
     );
   };
+
+  const renderMenuItemCard = (item: MenuItem, categoryLabel?: string) => (
+    <Card key={item.id} style={styles.menuCard}>
+      {item.imageUrl && (
+        <ImageBackground
+          source={{ uri: item.imageUrl }}
+          style={styles.menuCardImage}
+          imageStyle={styles.menuCardImageRadius}
+          resizeMode="cover"
+        >
+          <View style={styles.menuCardImageOverlay} />
+          {categoryLabel ? (
+            <View style={styles.menuCardImageChip}>
+              <Text style={styles.menuCardImageChipText}>{categoryLabel}</Text>
+            </View>
+          ) : null}
+        </ImageBackground>
+      )}
+      <Card.Title
+        title={
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <Text
+              style={{ fontSize: 16, fontWeight: "600", color: colors.onBackground }}
+            >
+              {item.name}
+            </Text>
+            {item.loyaltyPointsMultiplier && item.loyaltyPointsMultiplier > 1.0 && (
+              <View style={styles.bonusPointsBadge}>
+                <Text style={styles.bonusPointsText}>
+                  🌟 {item.loyaltyPointsMultiplier}x Points
+                </Text>
+              </View>
+            )}
+          </View>
+        }
+        subtitle={`€${item.price.toFixed(2)}`}
+        right={() => (
+          <TouchableOpacity onPress={() => toggleFavorite(item.id)} style={{ marginRight: 8 }}>
+            <Text style={{ fontSize: 24 }}>{isFavorite(item.id) ? "❤️" : "🤍"}</Text>
+          </TouchableOpacity>
+        )}
+      />
+      <Card.Content>
+        <Text style={{ color: colors.onBackground }}>{item.description}</Text>
+        <DietaryBadges item={item} />
+        <TouchableOpacity
+          style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
+          onPress={() =>
+            addToCart({
+              menuItemId: item.id,
+              name: item.name,
+              price: item.price,
+            })
+          }
+        >
+          <Text style={[styles.addToCartButtonText, { color: colors.onPrimary }]}>
+            {t("menu.addToCart")}
+          </Text>
+        </TouchableOpacity>
+      </Card.Content>
+    </Card>
+  );
 
   if (loading) {
     return (
@@ -457,129 +520,10 @@ const MenuScreen = () => {
                 )}
 
                 {selectedCategory !== "all"
-                  ? // When specific category is selected, show items directly
-                    items.map((item) => (
-                      <Card key={item.id} style={styles.menuCard}>
-                        <Card.Title
-                          title={
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                              <Text style={{ fontSize: 16, fontWeight: '600', color: colors.onBackground }}>{item.name}</Text>
-                              {item.loyaltyPointsMultiplier && item.loyaltyPointsMultiplier > 1.0 && (
-                                <View style={styles.bonusPointsBadge}>
-                                  <Text style={styles.bonusPointsText}>
-                                    🌟 {item.loyaltyPointsMultiplier}x Points
-                                  </Text>
-                                </View>
-                              )}
-                            </View>
-                          }
-                          subtitle={`€${item.price.toFixed(2)}`}
-                          right={() => (
-                            <TouchableOpacity
-                              onPress={() => toggleFavorite(item.id)}
-                              style={{ marginRight: 8 }}
-                            >
-                              <Text style={{ fontSize: 24 }}>
-                                {isFavorite(item.id) ? "❤️" : "🤍"}
-                              </Text>
-                            </TouchableOpacity>
-                          )}
-                        />
-                        <Card.Content>
-                          <Text style={{ color: colors.onBackground }}>
-                            {item.description}
-                          </Text>
-                          <DietaryBadges item={item} />
-                          <TouchableOpacity
-                            style={{
-                              marginTop: 8,
-                              backgroundColor: colors.primary,
-                              borderRadius: 8,
-                              padding: 8,
-                              alignSelf: "flex-start",
-                            }}
-                            onPress={() =>
-                              addToCart({
-                                menuItemId: item.id,
-                                name: item.name,
-                                price: item.price,
-                              })
-                            }
-                          >
-                            <Text
-                              style={{
-                                color: colors.onPrimary,
-                                fontWeight: "bold",
-                              }}
-                            >
-                              {t("menu.addToCart")}
-                            </Text>
-                          </TouchableOpacity>
-                        </Card.Content>
-                      </Card>
-                    ))
+                  ? items.map((item) => renderMenuItemCard(item, category?.name))
                   : expandedCategories.includes(category?.id ?? "") && (
                       <View>
-                        {items.map((item) => (
-                          <Card key={item.id} style={styles.menuCard}>
-                            <Card.Title
-                              title={
-                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                                  <Text style={{ fontSize: 16, fontWeight: '600', color: colors.onBackground }}>{item.name}</Text>
-                                  {item.loyaltyPointsMultiplier && item.loyaltyPointsMultiplier > 1.0 && (
-                                    <View style={styles.bonusPointsBadge}>
-                                      <Text style={styles.bonusPointsText}>
-                                        🌟 {item.loyaltyPointsMultiplier}x Points
-                                      </Text>
-                                    </View>
-                                  )}
-                                </View>
-                              }
-                              subtitle={`€${item.price.toFixed(2)}`}
-                              right={() => (
-                                <TouchableOpacity
-                                  onPress={() => toggleFavorite(item.id)}
-                                  style={{ marginRight: 8 }}
-                                >
-                                  <Text style={{ fontSize: 24 }}>
-                                    {isFavorite(item.id) ? "❤️" : "🤍"}
-                                  </Text>
-                                </TouchableOpacity>
-                              )}
-                            />
-                            <Card.Content>
-                              <Text style={{ color: colors.onBackground }}>
-                                {item.description}
-                              </Text>
-                              <DietaryBadges item={item} />
-                              <TouchableOpacity
-                                style={{
-                                  marginTop: 8,
-                                  backgroundColor: colors.primary,
-                                  borderRadius: 8,
-                                  padding: 8,
-                                  alignSelf: "flex-start",
-                                }}
-                                onPress={() =>
-                                  addToCart({
-                                    menuItemId: item.id,
-                                    name: item.name,
-                                    price: item.price,
-                                  })
-                                }
-                              >
-                                <Text
-                                  style={{
-                                    color: colors.onPrimary,
-                                    fontWeight: "bold",
-                                  }}
-                                >
-                                  {t("menu.addToCart")}
-                                </Text>
-                              </TouchableOpacity>
-                            </Card.Content>
-                          </Card>
-                        ))}
+                        {items.map((item) => renderMenuItemCard(item, category?.name))}
                       </View>
                     )}
               </View>
@@ -793,6 +737,47 @@ const styles = StyleSheet.create({
     shadowRadius: 6, // 6px shadow blur
     elevation: 3, // Android shadow depth (3 units)
     minHeight: 84, // Minimum card height 84px
+  },
+  menuCardImage: {
+    width: "100%",
+    height: 180,
+    justifyContent: "flex-end",
+    overflow: "hidden",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  menuCardImageRadius: {
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  menuCardImageOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.25)",
+  },
+  menuCardImageChip: {
+    position: "absolute",
+    top: 12,
+    left: 12,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  menuCardImageChipText: {
+    color: "#fffbe8",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  addToCartButton: {
+    marginTop: 12,
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    alignSelf: "flex-start",
+  },
+  addToCartButtonText: {
+    fontWeight: "bold",
+    letterSpacing: 0.5,
   },
 
   // ============================================================================
