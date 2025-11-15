@@ -866,25 +866,50 @@ const AdminScreen = () => {
                 <Text style={styles.modalTitle}>
                   {editingItem ? t("admin.modals.editItem") : t("admin.modals.newItem")}
                 </Text>
+                
+                <Text style={styles.sectionLabel}>German (Deutsch)</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder={t("admin.modals.itemNamePlaceholder")}
+                  placeholder="Name (DE)"
                   placeholderTextColor="#999"
-                  value={itemForm.name}
+                  value={itemForm.nameDe || itemForm.name}
                   onChangeText={(text) =>
-                    setItemForm({ ...itemForm, name: text })
+                    setItemForm({ ...itemForm, nameDe: text, name: text })
                   }
                 />
                 <TextInput
                   style={styles.input}
-                  placeholder={t("admin.modals.descriptionPlaceholder")}
+                  placeholder="Description (DE)"
                   placeholderTextColor="#999"
-                  value={itemForm.description}
+                  value={itemForm.descriptionDe || itemForm.description}
                   onChangeText={(text) =>
-                    setItemForm({ ...itemForm, description: text })
+                    setItemForm({ ...itemForm, descriptionDe: text, description: text })
                   }
                   multiline
                 />
+
+                <Text style={styles.sectionLabel}>English</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Name (EN)"
+                  placeholderTextColor="#999"
+                  value={itemForm.nameEn}
+                  onChangeText={(text) =>
+                    setItemForm({ ...itemForm, nameEn: text })
+                  }
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Description (EN)"
+                  placeholderTextColor="#999"
+                  value={itemForm.descriptionEn}
+                  onChangeText={(text) =>
+                    setItemForm({ ...itemForm, descriptionEn: text })
+                  }
+                  multiline
+                />
+
+                <Text style={styles.sectionLabel}>Common Fields</Text>
                 <TextInput
                   style={styles.input}
                   placeholder={t("admin.modals.pricePlaceholder")}
@@ -1178,6 +1203,13 @@ const styles = StyleSheet.create({
     color: "#fffbe8",
     marginBottom: 8,
     marginTop: 8,
+  },
+  sectionLabel: {
+    fontSize: 18,
+    color: "#e0b97f",
+    fontWeight: "bold",
+    marginTop: 16,
+    marginBottom: 8,
   },
   categoryPicker: {
     marginBottom: 16,
