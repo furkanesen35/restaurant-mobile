@@ -415,7 +415,7 @@ const CheckoutScreen = () => {
                     x {item.quantity}
                   </Text>
                 </View>
-                <Text style={{ color: colors.onBackground, fontWeight: "600" }}>
+                <Text style={[styles.orderItemPrice, { color: colors.onBackground }]}>
                   €{(item.price * item.quantity).toFixed(2)}
                 </Text>
               </View>
@@ -743,22 +743,20 @@ const styles = StyleSheet.create({
   },
   orderItem: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 8,
+    alignItems: "flex-start",
+    paddingVertical: 12,
+    gap: 12,
   },
   orderItemImage: {
-    width: 56,
-    height: 56,
-    borderRadius: 12,
-    marginRight: 12,
+    width: 96,
+    height: 96,
+    borderRadius: 18,
     backgroundColor: "#3a2b1f",
   },
   orderItemImagePlaceholder: {
-    width: 56,
-    height: 56,
-    borderRadius: 12,
-    marginRight: 12,
+    width: 96,
+    height: 96,
+    borderRadius: 18,
     backgroundColor: "#3a2b1f",
     alignItems: "center",
     justifyContent: "center",
@@ -766,6 +764,12 @@ const styles = StyleSheet.create({
   orderItemInfo: {
     flex: 1,
     marginRight: 12,
+    gap: 4,
+  },
+  orderItemPrice: {
+    fontWeight: "700",
+    fontSize: 16,
+    marginLeft: "auto",
   },
   totalRow: {
     flexDirection: "row",

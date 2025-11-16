@@ -168,7 +168,7 @@ const AdminScreen = () => {
     if (!token) return;
     setResettingPoints(true);
     try {
-      const response = await fetch(`${ENV.API_URL}/loyalty/reset`, {
+  const response = await fetch(`${ENV.API_URL}/api/loyalty/reset`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -942,77 +942,112 @@ const AdminScreen = () => {
                 </Text>
                 
                 <Text style={styles.sectionLabel}>German (Deutsch) - Required</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Name (DE) *"
-                  placeholderTextColor="#999"
-                  value={itemForm.nameDe || itemForm.name}
-                  onChangeText={(text) =>
-                    setItemForm({ ...itemForm, nameDe: text, name: text })
-                  }
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Description (DE) *"
-                  placeholderTextColor="#999"
-                  value={itemForm.descriptionDe || itemForm.description}
-                  onChangeText={(text) =>
-                    setItemForm({ ...itemForm, descriptionDe: text, description: text })
-                  }
-                  multiline
-                />
+                <View style={styles.formField}>
+                  <Text style={styles.formFieldLabel}>
+                    {t("admin.modals.labels.nameDe")}
+                  </Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Name (DE) *"
+                    placeholderTextColor="#999"
+                    value={itemForm.nameDe || itemForm.name}
+                    onChangeText={(text) =>
+                      setItemForm({ ...itemForm, nameDe: text, name: text })
+                    }
+                  />
+                </View>
+                <View style={styles.formField}>
+                  <Text style={styles.formFieldLabel}>
+                    {t("admin.modals.labels.descriptionDe")}
+                  </Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Description (DE) *"
+                    placeholderTextColor="#999"
+                    value={itemForm.descriptionDe || itemForm.description}
+                    onChangeText={(text) =>
+                      setItemForm({ ...itemForm, descriptionDe: text, description: text })
+                    }
+                    multiline
+                  />
+                </View>
 
                 <Text style={styles.sectionLabel}>English - Optional</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Name (EN) - Optional"
-                  placeholderTextColor="#999"
-                  value={itemForm.nameEn}
-                  onChangeText={(text) =>
-                    setItemForm({ ...itemForm, nameEn: text })
-                  }
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Description (EN) - Optional"
-                  placeholderTextColor="#999"
-                  value={itemForm.descriptionEn}
-                  onChangeText={(text) =>
-                    setItemForm({ ...itemForm, descriptionEn: text })
-                  }
-                  multiline
-                />
+                <View style={styles.formField}>
+                  <Text style={styles.formFieldLabel}>
+                    {t("admin.modals.labels.nameEn")}
+                  </Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Name (EN) - Optional"
+                    placeholderTextColor="#999"
+                    value={itemForm.nameEn}
+                    onChangeText={(text) =>
+                      setItemForm({ ...itemForm, nameEn: text })
+                    }
+                  />
+                </View>
+                <View style={styles.formField}>
+                  <Text style={styles.formFieldLabel}>
+                    {t("admin.modals.labels.descriptionEn")}
+                  </Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Description (EN) - Optional"
+                    placeholderTextColor="#999"
+                    value={itemForm.descriptionEn}
+                    onChangeText={(text) =>
+                      setItemForm({ ...itemForm, descriptionEn: text })
+                    }
+                    multiline
+                  />
+                </View>
 
                 <Text style={styles.sectionLabel}>Common Fields</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder={t("admin.modals.pricePlaceholder")}
-                  placeholderTextColor="#999"
-                  keyboardType="numeric"
-                  value={itemForm.price}
-                  onChangeText={(text) =>
-                    setItemForm({ ...itemForm, price: text })
-                  }
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder={t("admin.modals.loyaltyMultiplierPlaceholder")}
-                  placeholderTextColor="#999"
-                  keyboardType="numeric"
-                  value={itemForm.loyaltyPointsMultiplier}
-                  onChangeText={(text) =>
-                    setItemForm({ ...itemForm, loyaltyPointsMultiplier: text })
-                  }
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder={t("admin.modals.imageUrlPlaceholder")}
-                  placeholderTextColor="#999"
-                  value={itemForm.imageUrl}
-                  onChangeText={(text) =>
-                    setItemForm({ ...itemForm, imageUrl: text })
-                  }
-                />
+                <View style={styles.formField}>
+                  <Text style={styles.formFieldLabel}>
+                    {t("admin.modals.labels.price")}
+                  </Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder={t("admin.modals.pricePlaceholder")}
+                    placeholderTextColor="#999"
+                    keyboardType="numeric"
+                    value={itemForm.price}
+                    onChangeText={(text) =>
+                      setItemForm({ ...itemForm, price: text })
+                    }
+                  />
+                </View>
+                <View style={styles.formField}>
+                  <Text style={styles.formFieldLabel}>
+                    {t("admin.modals.labels.loyaltyMultiplier")}
+                  </Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder={t("admin.modals.loyaltyMultiplierPlaceholder")}
+                    placeholderTextColor="#999"
+                    keyboardType="numeric"
+                    value={itemForm.loyaltyPointsMultiplier}
+                    onChangeText={(text) =>
+                      setItemForm({ ...itemForm, loyaltyPointsMultiplier: text })
+                    }
+                  />
+                </View>
+                <View style={styles.formField}>
+                  <Text style={styles.formFieldLabel}>
+                    {t("admin.modals.labels.imageUrl")}
+                  </Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder={t("admin.modals.imageUrlPlaceholder")}
+                    placeholderTextColor="#999"
+                    value={itemForm.imageUrl}
+                    onChangeText={(text) =>
+                      setItemForm({ ...itemForm, imageUrl: text })
+                    }
+                  />
+                </View>
                 {itemForm.imageUrl ? (
                   <Image
                     source={{ uri: itemForm.imageUrl }}
@@ -1371,6 +1406,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-around",
     marginTop: 16,
+  },
+  formField: {
+    marginBottom: 12,
+    gap: 6,
+  },
+  formFieldLabel: {
+    color: "#fffbe8",
+    fontWeight: "600",
+    fontSize: 14,
   },
   settingDescription: {
     color: "#b8a68a",

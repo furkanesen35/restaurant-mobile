@@ -383,18 +383,26 @@ const MenuScreen = () => {
           onSubmitEditing={triggerImmediateSearch}
         />
         <View style={styles.searchActions}>
-          {isSearchPending && (
-            <View style={styles.searchPending}>
-              <ActivityIndicator size="small" color="#e0b97f" />
-              <Text style={styles.searchPendingText}>{t("menu.searching")}</Text>
-            </View>
-          )}
           <TouchableOpacity
-            style={styles.searchButton}
+            style={[
+              styles.searchButton,
+              isSearchPending && styles.searchButtonPending,
+              (!searchInput.trim() && !committedSearchQuery) && styles.searchButtonDisabled,
+              isSearchPending && styles.searchButtonDisabled,
+            ]}
             onPress={triggerImmediateSearch}
-            disabled={!searchInput.trim() && !committedSearchQuery}
+            disabled={
+              isSearchPending || (!searchInput.trim() && !committedSearchQuery)
+            }
           >
-            <Text style={styles.searchButtonText}>{t("common.search")}</Text>
+            {isSearchPending ? (
+              <>
+                <ActivityIndicator size="small" color="#1a120b" />
+                <Text style={styles.searchButtonText}>{t("menu.searching")}</Text>
+              </>
+            ) : (
+              <Text style={styles.searchButtonText}>{t("common.search")}</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -639,50 +647,36 @@ const styles = StyleSheet.create({
   },
 
   // ============================================================================
-  // SEARCH ACTIONS - Row containing pending indicator + manual trigger button
+  // SEARCH ACTIONS - Row containing manual trigger button
   // ============================================================================
   searchActions: {
-    flexDirection: "row", // Pending indicator + button sit horizontally
-    alignItems: "center", // Vertically center contents
-    gap: 12, // Space between pending indicator and button
-    marginTop: 10, // Breathing room below the input
-  },
-
-  // ============================================================================
-  // SEARCH PENDING - Badge showing that debounce is waiting
-  // ============================================================================
-  searchPending: {
-    flexDirection: "row", // Spinner + text in a row
-    alignItems: "center", // Vertically center spinner/text
-    backgroundColor: "#2d2117", // Match search input background
-    borderRadius: 12, // Rounded pill look
-    paddingHorizontal: 14, // Horizontal padding
-    paddingVertical: 10, // Vertical padding
-    borderWidth: 1, // Subtle border to stand out
-    borderColor: "#e0b97f40", // Semi-transparent gold border
-    flex: 1, // Take remaining width so button stays compact
-  },
-
-  // ============================================================================
-  // SEARCH PENDING TEXT - Copy next to spinner
-  // ============================================================================
-  searchPendingText: {
-    marginLeft: 8, // Space between spinner and text
-    color: "#e0b97f", // Gold accent color
-    fontSize: 14, // Compact text size
-    fontWeight: "600", // Slight emphasis
+    flexDirection: "row", // Keep layout consistent for future additions
+    alignItems: "center",
+    justifyContent: "flex-end",
+    marginTop: 10,
   },
 
   // ============================================================================
   // SEARCH BUTTON - Manual trigger button
   // ============================================================================
   searchButton: {
-    paddingHorizontal: 18, // Inner horizontal spacing
-    paddingVertical: 12, // Inner vertical spacing
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
     borderRadius: 12, // Rounded button corners
     backgroundColor: "#e0b97f", // Gold background to stand out
     minWidth: 110, // Ensure button doesn't shrink too small
-    alignItems: "center", // Center the button text
+  },
+
+  searchButtonPending: {
+    opacity: 0.9,
+  },
+
+  searchButtonDisabled: {
+    opacity: 0.5,
   },
 
   // ============================================================================

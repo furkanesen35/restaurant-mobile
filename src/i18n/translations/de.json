@@ -270,7 +270,16 @@
       "pricePlaceholder": "Preis",
       "loyaltyMultiplierPlaceholder": "Treuepunkte-Multiplikator (z.B. 1,5 = 150% Punkte)",
       "imageUrlPlaceholder": "Bild-URL (optional)",
-      "imagePreviewPlaceholder": "Bildvorschau erscheint hier"
+      "imagePreviewPlaceholder": "Bildvorschau erscheint hier",
+      "labels": {
+        "nameDe": "Name (DE)",
+        "descriptionDe": "Beschreibung (DE)",
+        "nameEn": "Name (EN)",
+        "descriptionEn": "Beschreibung (EN)",
+        "price": "Preis (€)",
+        "loyaltyMultiplier": "Treuepunkte-Multiplikator",
+        "imageUrl": "Bild-URL"
+      }
     },
     "settings": {
       "minOrderTitle": "Mindestbestellwert",
