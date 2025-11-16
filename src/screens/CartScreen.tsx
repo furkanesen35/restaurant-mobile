@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-  Image,
+  ImageBackground,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useCart } from "../contexts/CartContext";
@@ -74,25 +74,27 @@ const CartScreen = () => {
           keyExtractor={(item) => item.menuItemId}
           renderItem={({ item }) => (
             <Card style={styles.card}>
-              <Card.Content>
-                <View style={styles.cartItemRow}>
-                  {item.imageUrl ? (
-                    <Image
-                      source={{ uri: item.imageUrl }}
-                      style={styles.cartImage}
-                    />
-                  ) : (
-                    <View style={styles.cartImagePlaceholder}>
-                      <Text style={{ fontSize: 28 }}>🍽️</Text>
-                    </View>
-                  )}
-                  <View style={styles.cartDetails}>
-                    <Text style={styles.cartItemName}>{item.name}</Text>
-                    <Text style={styles.cartItemPrice}>
-                      €{item.price.toFixed(2)}
-                    </Text>
+              {item.imageUrl ? (
+                <ImageBackground
+                  source={{ uri: item.imageUrl }}
+                  style={styles.cartImageHero}
+                  imageStyle={styles.cartImageHeroRadius}
+                  resizeMode="cover"
+                >
+                  <View style={styles.cartImageOverlay} />
+                  <View style={styles.cartImageTextBar}>
+                    <Text style={styles.cartImageTitle}>{item.name}</Text>
+                    <Text style={styles.cartImagePrice}>€{item.price.toFixed(2)}</Text>
                   </View>
+                </ImageBackground>
+              ) : (
+                <View style={[styles.cartImageHero, styles.cartImageFallback]}>
+                  <Text style={styles.cartFallbackIcon}>🍽️</Text>
+                  <Text style={styles.cartFallbackName}>{item.name}</Text>
+                  <Text style={styles.cartFallbackPrice}>€{item.price.toFixed(2)}</Text>
                 </View>
+              )}
+              <Card.Content>
                 <View style={styles.cartActionsRow}>
                   <View style={styles.quantityGroup}>
                     <TouchableOpacity
@@ -164,38 +166,61 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     color: "#fffbe8",
   },
-  card: { marginBottom: 12, backgroundColor: "#2d2117" },
-  cartItemRow: {
-    flexDirection: "row",
-    gap: 16,
+  card: {
     marginBottom: 16,
+    backgroundColor: "#2d2117",
+    borderRadius: 24,
+    overflow: "hidden",
   },
-  cartImage: {
-    width: 96,
-    height: 96,
-    borderRadius: 18,
+  cartImageHero: {
+    width: "100%",
+    height: 190,
+    backgroundColor: "#3a2b1f",
+    justifyContent: "flex-end",
   },
-  cartImagePlaceholder: {
-    width: 96,
-    height: 96,
-    borderRadius: 18,
+  cartImageHeroRadius: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+  },
+  cartImageOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.25)",
+  },
+  cartImageTextBar: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  cartImageTitle: {
+    color: "#fffbe8",
+    fontSize: 20,
+    fontWeight: "700",
+    flex: 1,
+    marginRight: 12,
+  },
+  cartImagePrice: {
+    color: "#fffbe8",
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  cartImageFallback: {
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#3a2b1f",
+    gap: 4,
   },
-  cartDetails: {
-    flex: 1,
-    justifyContent: "center",
+  cartFallbackIcon: {
+    fontSize: 42,
   },
-  cartItemName: {
-    fontSize: 18,
+  cartFallbackName: {
     color: "#fffbe8",
+    fontSize: 20,
     fontWeight: "700",
-    marginBottom: 6,
   },
-  cartItemPrice: {
-    fontSize: 16,
+  cartFallbackPrice: {
     color: "#e0b97f",
+    fontSize: 18,
     fontWeight: "600",
   },
   cartActionsRow: {

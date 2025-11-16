@@ -27,6 +27,7 @@ function MainTabs() {
   const { user } = useAuth();
   const { t } = useTranslation();
   const { cart } = useCart();
+  const totalCartQuantity = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   const getTabIcon = (routeName: string, focused: boolean, color: string, size: number) => {
     let iconName = "home";
@@ -53,12 +54,12 @@ function MainTabs() {
     }
 
     // Add badge for cart
-    if (routeName === "Cart" && cart.length > 0) {
+    if (routeName === "Cart" && totalCartQuantity > 0) {
       return (
         <View>
           <Icon source={iconName} size={size} color={color} />
           <View style={styles.badge}>
-            <Text style={styles.badgeText}>{cart.length}</Text>
+            <Text style={styles.badgeText}>{totalCartQuantity}</Text>
           </View>
         </View>
       );
