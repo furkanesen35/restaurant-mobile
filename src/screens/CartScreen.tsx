@@ -74,46 +74,50 @@ const CartScreen = () => {
           keyExtractor={(item) => item.menuItemId}
           renderItem={({ item }) => (
             <Card style={styles.card}>
-              <Card.Title
-                title={item.name}
-                subtitle={`€${item.price.toFixed(2)}`}
-                left={() =>
-                  item.imageUrl ? (
+              <Card.Content>
+                <View style={styles.cartItemRow}>
+                  {item.imageUrl ? (
                     <Image
                       source={{ uri: item.imageUrl }}
                       style={styles.cartImage}
                     />
                   ) : (
                     <View style={styles.cartImagePlaceholder}>
-                      <Text style={{ fontSize: 20 }}>🍽️</Text>
+                      <Text style={{ fontSize: 28 }}>🍽️</Text>
                     </View>
-                  )
-                }
-              />
-              <Card.Content>
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <TouchableOpacity
-                    onPress={() =>
-                      updateQuantity(item.menuItemId, item.quantity - 1)
-                    }
-                    style={styles.qtyBtn}
-                  >
-                    <Text style={styles.qtyBtnText}>-</Text>
-                  </TouchableOpacity>
-                  <Text style={styles.qtyText}>{item.quantity}</Text>
-                  <TouchableOpacity
-                    onPress={() =>
-                      updateQuantity(item.menuItemId, item.quantity + 1)
-                    }
-                    style={styles.qtyBtn}
-                  >
-                    <Text style={styles.qtyBtnText}>+</Text>
-                  </TouchableOpacity>
+                  )}
+                  <View style={styles.cartDetails}>
+                    <Text style={styles.cartItemName}>{item.name}</Text>
+                    <Text style={styles.cartItemPrice}>
+                      €{item.price.toFixed(2)}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.cartActionsRow}>
+                  <View style={styles.quantityGroup}>
+                    <TouchableOpacity
+                      onPress={() =>
+                        updateQuantity(item.menuItemId, item.quantity - 1)
+                      }
+                      style={styles.qtyBtn}
+                    >
+                      <Text style={styles.qtyBtnText}>-</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.qtyText}>{item.quantity}</Text>
+                    <TouchableOpacity
+                      onPress={() =>
+                        updateQuantity(item.menuItemId, item.quantity + 1)
+                      }
+                      style={styles.qtyBtn}
+                    >
+                      <Text style={styles.qtyBtnText}>+</Text>
+                    </TouchableOpacity>
+                  </View>
                   <TouchableOpacity
                     onPress={() => removeFromCart(item.menuItemId)}
                     style={styles.removeBtn}
                   >
-                    <Text style={{ color: "red", fontWeight: "bold" }}>
+                    <Text style={styles.removeBtnText}>
                       {t("cart.removeItem")}
                     </Text>
                   </TouchableOpacity>
@@ -161,20 +165,48 @@ const styles = StyleSheet.create({
     color: "#fffbe8",
   },
   card: { marginBottom: 12, backgroundColor: "#2d2117" },
+  cartItemRow: {
+    flexDirection: "row",
+    gap: 16,
+    marginBottom: 16,
+  },
   cartImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    marginRight: 12,
+    width: 96,
+    height: 96,
+    borderRadius: 18,
   },
   cartImagePlaceholder: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    marginRight: 12,
+    width: 96,
+    height: 96,
+    borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#3a2b1f",
+  },
+  cartDetails: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  cartItemName: {
+    fontSize: 18,
+    color: "#fffbe8",
+    fontWeight: "700",
+    marginBottom: 6,
+  },
+  cartItemPrice: {
+    fontSize: 16,
+    color: "#e0b97f",
+    fontWeight: "600",
+  },
+  cartActionsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 12,
+  },
+  quantityGroup: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   qtyBtn: {
     backgroundColor: "#fffbe8",
@@ -189,7 +221,14 @@ const styles = StyleSheet.create({
     minWidth: 24,
     textAlign: "center",
   },
-  removeBtn: { marginLeft: 16 },
+  removeBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  removeBtnText: {
+    color: "#ef5350",
+    fontWeight: "700",
+  },
   minOrderWarning: {
     backgroundColor: "#8b4513",
     padding: 12,

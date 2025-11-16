@@ -11,9 +11,12 @@ import {
   TextInput,
   ImageBackground,
   ActivityIndicator,
+  Modal,
+  Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Card, useTheme, Chip } from "react-native-paper";
+import { Card, useTheme } from "react-native-paper";
+import { Ionicons } from "@expo/vector-icons";
 import { useCart } from "../contexts/CartContext";
 import { useFavorites } from "../hooks/useFavorites";
 import ENV from "../config/env";
@@ -43,12 +46,21 @@ const MenuScreen = () => {
   const [searchInput, setSearchInput] = useState<string>("");
   const [committedSearchQuery, setCommittedSearchQuery] = useState<string>("");
   const [isSearchPending, setIsSearchPending] = useState<boolean>(false);
-  const [dietaryFilters, setDietaryFilters] = useState({
+  type DietaryFilterKey =
+    | "isVegetarian"
+    | "isVegan"
+    | "isGlutenFree"
+    | "isSpicy";
+
+  const [dietaryFilters, setDietaryFilters] = useState<
+    Record<DietaryFilterKey, boolean>
+  >({
     isVegetarian: false,
     isVegan: false,
     isGlutenFree: false,
     isSpicy: false,
   });
+  const [isFilterModalVisible, setFilterModalVisible] = useState(false);
 
   useEffect(() => {
     if (
@@ -191,6 +203,34 @@ const MenuScreen = () => {
   };
 
   const filteredItems = getFilteredItems();
+  const activeFilterCount = Object.values(dietaryFilters).filter(Boolean).length;
+  const hasActiveFilters = activeFilterCount > 0;
+
+  const toggleDietaryFilter = (key: DietaryFilterKey) => {
+    setDietaryFilters((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
+  const clearDietaryFilters = () =>
+    setDietaryFilters({
+      isVegetarian: false,
+      isVegan: false,
+      isGlutenFree: false,
+      isSpicy: false,
+    });
+
+  const filterOptions: Array<{
+    key: DietaryFilterKey;
+    label: string;
+    icon: keyof typeof Ionicons.glyphMap;
+  }> = [
+    { key: "isVegetarian", label: t("menu.vegetarian"), icon: "leaf-outline" },
+    { key: "isVegan", label: t("menu.vegan"), icon: "nutrition" },
+    { key: "isGlutenFree", label: t("menu.glutenFree"), icon: "restaurant-outline" },
+    { key: "isSpicy", label: t("menu.spicy"), icon: "flame-outline" },
+  ];
 
   // If 'all' is selected, group items by category
   const itemsToShow =
@@ -366,23 +406,24 @@ const MenuScreen = () => {
   const hasMenu = menuCategories.length > 1 && menuItems.length > 0;
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      edges={["top"]}
-    >
+    <>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colors.background }]}
+        edges={["top"]}
+      >
       <Text style={styles.title}>{t("menu.title")}</Text>
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder={t("menu.search")}
-          placeholderTextColor="#e0b97f80"
-          value={searchInput}
-          onChangeText={setSearchInput}
-          onSubmitEditing={triggerImmediateSearch}
-        />
-        <View style={styles.searchActions}>
+        <View style={styles.searchRow}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder={t("menu.search")}
+            placeholderTextColor="#e0b97f80"
+            value={searchInput}
+            onChangeText={setSearchInput}
+            onSubmitEditing={triggerImmediateSearch}
+          />
           <TouchableOpacity
             style={[
               styles.searchButton,
@@ -407,97 +448,7 @@ const MenuScreen = () => {
         </View>
       </View>
 
-      {/* Dietary Filters */}
-      <View style={styles.filtersContainer}>
-        <Chip
-          selected={dietaryFilters.isVegetarian}
-          onPress={() =>
-            setDietaryFilters((prev) => ({
-              ...prev,
-              isVegetarian: !prev.isVegetarian,
-            }))
-          }
-          style={[
-            styles.filterChip,
-            dietaryFilters.isVegetarian && styles.filterChipSelected,
-          ]}
-          textStyle={styles.filterChipText}
-          icon="leaf"
-        >
-          {t("menu.vegetarian")}
-        </Chip>
-        <Chip
-          selected={dietaryFilters.isVegan}
-          onPress={() =>
-            setDietaryFilters((prev) => ({
-              ...prev,
-              isVegan: !prev.isVegan,
-            }))
-          }
-          style={[
-            styles.filterChip,
-            dietaryFilters.isVegan && styles.filterChipSelected,
-          ]}
-          textStyle={styles.filterChipText}
-          icon="sprout"
-        >
-          {t("menu.vegan")}
-        </Chip>
-        <Chip
-          selected={dietaryFilters.isGlutenFree}
-          onPress={() =>
-            setDietaryFilters((prev) => ({
-              ...prev,
-              isGlutenFree: !prev.isGlutenFree,
-            }))
-          }
-          style={[
-            styles.filterChip,
-            dietaryFilters.isGlutenFree && styles.filterChipSelected,
-          ]}
-          textStyle={styles.filterChipText}
-          icon="barley-off"
-        >
-          {t("menu.glutenFree")}
-        </Chip>
-        <Chip
-          selected={dietaryFilters.isSpicy}
-          onPress={() =>
-            setDietaryFilters((prev) => ({
-              ...prev,
-              isSpicy: !prev.isSpicy,
-            }))
-          }
-          style={[
-            styles.filterChip,
-            dietaryFilters.isSpicy && styles.filterChipSelected,
-          ]}
-          textStyle={styles.filterChipText}
-          icon="chili-hot"
-        >
-          {t("menu.spicy")}
-        </Chip>
-        {(dietaryFilters.isVegetarian ||
-          dietaryFilters.isVegan ||
-          dietaryFilters.isGlutenFree ||
-          dietaryFilters.isSpicy) && (
-          <Chip
-            onPress={() =>
-              setDietaryFilters({
-                isVegetarian: false,
-                isVegan: false,
-                isGlutenFree: false,
-                isSpicy: false,
-              })
-            }
-            style={styles.clearFilterChip}
-            textStyle={styles.filterChipText}
-            icon="close"
-          >
-            {t("common.clear")}
-          </Chip>
-        )}
-      </View>
+      {/* Filter Button Placeholder (chips moved into modal) */}
 
       {!hasMenu ? (
         <View
@@ -513,37 +464,58 @@ const MenuScreen = () => {
       ) : (
         <>
           <View style={styles.categoryBarContainer}>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.categoryBarContent}
-            >
-              {menuCategories.map((category) => (
-                <TouchableOpacity
-                  key={category.id}
-                  style={[
-                    styles.categoryButton,
-                    selectedCategory === category.id && {
-                      backgroundColor: colors.primary,
-                    },
-                  ]}
-                  onPress={() => setSelectedCategory(category.id)}
-                >
-                  <Text
+            <View style={styles.categoryHeader}>
+              <TouchableOpacity
+                style={[
+                  styles.filterIconButton,
+                  hasActiveFilters && styles.filterIconButtonActive,
+                ]}
+                onPress={() => setFilterModalVisible(true)}
+              >
+                <Ionicons
+                  name="options-outline"
+                  size={20}
+                  color={hasActiveFilters ? "#1a120b" : "#fffbe8"}
+                />
+                {hasActiveFilters && (
+                  <View style={styles.filterBadge}>
+                    <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.categoryScroll}
+                contentContainerStyle={styles.categoryBarContent}
+              >
+                {menuCategories.map((category) => (
+                  <TouchableOpacity
+                    key={category.id}
                     style={[
-                      styles.categoryButtonText,
+                      styles.categoryButton,
                       selectedCategory === category.id && {
-                        color: colors.onPrimary,
-                        fontWeight: "700",
-                        opacity: 1,
+                        backgroundColor: colors.primary,
                       },
                     ]}
+                    onPress={() => setSelectedCategory(category.id)}
                   >
-                    {category.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+                    <Text
+                      style={[
+                        styles.categoryButtonText,
+                        selectedCategory === category.id && {
+                          color: colors.onPrimary,
+                          fontWeight: "700",
+                          opacity: 1,
+                        },
+                      ]}
+                    >
+                      {category.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
           </View>
 
           <ScrollView
@@ -595,7 +567,64 @@ const MenuScreen = () => {
           </ScrollView>
         </>
       )}
-    </SafeAreaView>
+      </SafeAreaView>
+      <Modal
+        visible={isFilterModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setFilterModalVisible(false)}
+      >
+        <View style={styles.modalWrapper}>
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => setFilterModalVisible(false)}
+          />
+          <View style={styles.filterModal}>
+            <Text style={styles.filterModalTitle}>{t("menu.filters")}</Text>
+            <View style={styles.filterOptionsContainer}>
+              {filterOptions.map((option) => (
+                <TouchableOpacity
+                  key={option.key}
+                  style={[
+                    styles.filterOption,
+                    dietaryFilters[option.key] && styles.filterOptionActive,
+                  ]}
+                  onPress={() => toggleDietaryFilter(option.key)}
+                >
+                  <Ionicons
+                    name={option.icon}
+                    size={20}
+                    color={dietaryFilters[option.key] ? "#1a120b" : "#fffbe8"}
+                  />
+                  <Text
+                    style={[
+                      styles.filterOptionText,
+                      dietaryFilters[option.key] && styles.filterOptionTextActive,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <View style={styles.filterModalActions}>
+              <TouchableOpacity
+                style={styles.filterModalActionSecondary}
+                onPress={clearDietaryFilters}
+              >
+                <Text style={styles.filterModalActionText}>{t("common.clear")}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.filterModalActionPrimary}
+                onPress={() => setFilterModalVisible(false)}
+              >
+                <Text style={styles.filterModalActionTextDark}>{t("common.apply")}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 };
 
@@ -628,47 +657,45 @@ const styles = StyleSheet.create({
   // SEARCH BAR - Container wrapping the search input field
   // ============================================================================
   searchContainer: {
-    paddingHorizontal: 16, // 16px padding on left and right sides
-    marginBottom: 12, // Space between search bar and dietary filters below
+    paddingHorizontal: 16,
+    marginBottom: 12,
+  },
+
+  searchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
   },
 
   // ============================================================================
   // SEARCH INPUT - The actual text input field where users type
   // ============================================================================
   searchInput: {
-    backgroundColor: "#2d2117", // Slightly lighter brown than main background
-    borderRadius: 12, // Rounded corners (12px radius)
-    paddingHorizontal: 16, // Inner spacing left/right for text inside input
-    paddingVertical: 12, // Inner spacing top/bottom for text inside input
-    fontSize: 16, // Size of text when user types
-    color: "#fffbe8", // Color of text user types (light cream)
-    borderWidth: 1, // 1px border around the input
-    borderColor: "#e0b97f40", // Gold/tan border color with 40 transparency (hex alpha)
-  },
-
-  // ============================================================================
-  // SEARCH ACTIONS - Row containing manual trigger button
-  // ============================================================================
-  searchActions: {
-    flexDirection: "row", // Keep layout consistent for future additions
-    alignItems: "center",
-    justifyContent: "flex-end",
-    marginTop: 10,
+    flex: 1,
+    backgroundColor: "#2d2117",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: "#fffbe8",
+    borderWidth: 1,
+    borderColor: "#e0b97f40",
   },
 
   // ============================================================================
   // SEARCH BUTTON - Manual trigger button
   // ============================================================================
   searchButton: {
+    flexShrink: 0,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
-    paddingHorizontal: 18,
+    paddingHorizontal: 14,
     paddingVertical: 12,
     borderRadius: 12, // Rounded button corners
     backgroundColor: "#e0b97f", // Gold background to stand out
-    minWidth: 110, // Ensure button doesn't shrink too small
+    minWidth: 96,
   },
 
   searchButtonPending: {
@@ -689,60 +716,46 @@ const styles = StyleSheet.create({
     textTransform: "uppercase", // Make it feel like an action button
   },
 
-  // ============================================================================
-  // DIETARY FILTERS - Wrapping container for filter chips
-  // Used by: View wrapping all dietary filter chips (Vegetarian, Vegan, etc.)
-  // ============================================================================
-  filtersContainer: {
-    flexDirection: "row", // Arranges chips in a row
-    flexWrap: "wrap", // Allows chips to wrap to next line if needed
-    paddingHorizontal: 16, // Padding on left/right sides
-    marginBottom: 12, // Space between filters and category buttons below
-    gap: 8, // 8px space between each chip
+  categoryHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
   },
 
-  // ============================================================================
-  // FILTER CHIPS CONTENT - Inner wrapper for filter chips (DEPRECATED - no longer used)
-  // ============================================================================
-  filtersContent: {
-    paddingHorizontal: 16, // Padding on left/right sides of chips row
-    gap: 8, // 8px space between each chip (modern React Native feature)
+  filterIconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: "#fffbe8",
+    backgroundColor: "#2d2117",
+    justifyContent: "center",
+    alignItems: "center",
+    position: "relative",
   },
 
-  // ============================================================================
-  // FILTER CHIP - Individual filter button (Vegetarian, Vegan, etc.) - UNSELECTED
-  // ============================================================================
-  filterChip: {
-    backgroundColor: "#2d2117", // Dark brown background when not selected
-    marginRight: 8, // Space to the right of each chip
-    borderColor: "#e0b97f40", // Semi-transparent gold border
-    borderWidth: 1, // 1px border thickness
+  filterIconButtonActive: {
+    backgroundColor: "#e0b97f",
+    borderColor: "#e0b97f",
   },
 
-  // ============================================================================
-  // FILTER CHIP SELECTED - Individual filter button when ACTIVE/SELECTED
-  // ============================================================================
-  filterChipSelected: {
-    backgroundColor: "#e0b97f", // Gold/tan background when selected
-    borderColor: "#e0b97f", // Solid gold border when selected
+  filterBadge: {
+    position: "absolute",
+    top: 2,
+    right: 2,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: "#1a120b",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 4,
   },
 
-  // ============================================================================
-  // FILTER CHIP TEXT - Text inside filter chips (all states)
-  // ============================================================================
-  filterChipText: {
-    color: "#fffbe8", // Light cream text color
-    fontSize: 13, // Small text for compact chips
-  },
-
-  // ============================================================================
-  // CLEAR FILTER CHIP - The "Clear" button that appears when filters active
-  // ============================================================================
-  clearFilterChip: {
-    backgroundColor: "#d32f2f20", // Red background with 20 transparency
-    borderColor: "#d32f2f", // Solid red border
-    borderWidth: 1, // 1px border
-    marginRight: 8, // Space to the right
+  filterBadgeText: {
+    color: "#fffbe8",
+    fontSize: 11,
+    fontWeight: "700",
   },
 
   // ============================================================================
@@ -774,6 +787,10 @@ const styles = StyleSheet.create({
     paddingRight: 8, // Extra padding on right side
   },
 
+  categoryScroll: {
+    flex: 1,
+  },
+
   // ============================================================================
   // CATEGORY BUTTON - Individual category pill button (All, Pizzas, Pasta, etc.)
   // ============================================================================
@@ -799,6 +816,104 @@ const styles = StyleSheet.create({
     fontWeight: "500", // Medium font weight (between normal and bold)
     opacity: 0.8, // 80% opacity for unselected state
     lineHeight: 20, // Height of each line of text
+  },
+
+  modalWrapper: {
+    flex: 1,
+    justifyContent: "center",
+    padding: 24,
+  },
+
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.6)",
+  },
+
+  filterModal: {
+    backgroundColor: "#2d2117",
+    borderRadius: 24,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: "#e0b97f40",
+  },
+
+  filterModalTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#fffbe8",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+
+  filterOptionsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+    justifyContent: "space-between",
+  },
+
+  filterOption: {
+    width: "48%",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    backgroundColor: "#3a2b1f",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#e0b97f20",
+  },
+
+  filterOptionActive: {
+    backgroundColor: "#e0b97f",
+    borderColor: "#e0b97f",
+  },
+
+  filterOptionText: {
+    marginLeft: 10,
+    color: "#fffbe8",
+    fontWeight: "600",
+  },
+
+  filterOptionTextActive: {
+    color: "#1a120b",
+  },
+
+  filterModalActions: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 20,
+  },
+
+  filterModalActionSecondary: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#fffbe8",
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  filterModalActionPrimary: {
+    flex: 1,
+    backgroundColor: "#e0b97f",
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  filterModalActionText: {
+    color: "#fffbe8",
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+
+  filterModalActionTextDark: {
+    color: "#1a120b",
+    fontWeight: "700",
+    letterSpacing: 0.5,
   },
 
   // ============================================================================
