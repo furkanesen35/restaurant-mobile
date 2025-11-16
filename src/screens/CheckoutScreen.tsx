@@ -11,6 +11,7 @@ import {
   Platform,
   TextInput,
   Switch,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../contexts/AuthContext";
@@ -396,10 +397,25 @@ const CheckoutScreen = () => {
             </Text>
             {cart.map((item) => (
               <View key={item.menuItemId} style={styles.orderItem}>
-                <Text style={{ color: colors.onBackground }}>
-                  {item.name} x {item.quantity}
-                </Text>
-                <Text style={{ color: colors.onBackground }}>
+                {item.imageUrl ? (
+                  <Image
+                    source={{ uri: item.imageUrl }}
+                    style={styles.orderItemImage}
+                  />
+                ) : (
+                  <View style={styles.orderItemImagePlaceholder}>
+                    <Text style={{ color: colors.primary }}>🍽️</Text>
+                  </View>
+                )}
+                <View style={styles.orderItemInfo}>
+                  <Text style={{ color: colors.onBackground, fontWeight: "600" }}>
+                    {item.name}
+                  </Text>
+                  <Text style={{ color: colors.onBackground }}>
+                    x {item.quantity}
+                  </Text>
+                </View>
+                <Text style={{ color: colors.onBackground, fontWeight: "600" }}>
                   €{(item.price * item.quantity).toFixed(2)}
                 </Text>
               </View>
@@ -727,8 +743,29 @@ const styles = StyleSheet.create({
   },
   orderItem: {
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: 8,
+  },
+  orderItemImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    marginRight: 12,
+    backgroundColor: "#3a2b1f",
+  },
+  orderItemImagePlaceholder: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    marginRight: 12,
+    backgroundColor: "#3a2b1f",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  orderItemInfo: {
+    flex: 1,
+    marginRight: 12,
   },
   totalRow: {
     flexDirection: "row",

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   UIManager,
   TextInput,
   ImageBackground,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Card, useTheme, Chip } from "react-native-paper";
@@ -32,14 +33,16 @@ const MenuScreen = () => {
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
   const categoryRefs = useRef<{ [key: string]: View | null }>({});
+  const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const [menuCategories, setMenuCategories] = useState<
     Array<{ id: string; name: string }>
   >([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>("");
+  const [searchInput, setSearchInput] = useState<string>("");
+  const [committedSearchQuery, setCommittedSearchQuery] = useState<string>("");
+  const [isSearchPending, setIsSearchPending] = useState<boolean>(false);
   const [dietaryFilters, setDietaryFilters] = useState({
     isVegetarian: false,
     isVegan: false,
@@ -56,14 +59,50 @@ const MenuScreen = () => {
     }
   }, []);
 
-  // Debounce search query
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-    }, 1500); // Wait 1500ms after user stops typing
+  const commitSearch = useCallback((value: string) => {
+    setCommittedSearchQuery(value.trim());
+    setIsSearchPending(false);
+  }, []);
 
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+  const triggerImmediateSearch = useCallback(() => {
+    if (searchTimerRef.current) {
+      clearTimeout(searchTimerRef.current);
+      searchTimerRef.current = null;
+    }
+    commitSearch(searchInput);
+  }, [searchInput, commitSearch]);
+
+  // Debounce search query with a friendlier delay and indicator
+  useEffect(() => {
+    const trimmed = searchInput.trim();
+
+    if (!trimmed) {
+      if (searchTimerRef.current) {
+        clearTimeout(searchTimerRef.current);
+        searchTimerRef.current = null;
+      }
+      commitSearch("");
+      setIsSearchPending(false);
+      return;
+    }
+
+    setIsSearchPending(true);
+    if (searchTimerRef.current) {
+      clearTimeout(searchTimerRef.current);
+    }
+
+    searchTimerRef.current = setTimeout(() => {
+      commitSearch(searchInput);
+      searchTimerRef.current = null;
+    }, 2000);
+
+    return () => {
+      if (searchTimerRef.current) {
+        clearTimeout(searchTimerRef.current);
+        searchTimerRef.current = null;
+      }
+    };
+  }, [searchInput, commitSearch]);
 
   useEffect(() => {
     const fetchMenu = async () => {
@@ -101,7 +140,7 @@ const MenuScreen = () => {
 
   // Auto-expand categories when searching
   useEffect(() => {
-    if (debouncedSearchQuery.trim()) {
+    if (committedSearchQuery.trim()) {
       // When there's a search query, expand all categories that have items
       const categoriesWithItems = menuCategories
         .filter((c) => c.id !== "all")
@@ -114,15 +153,15 @@ const MenuScreen = () => {
       // When search is cleared, collapse all categories
       setExpandedCategories([]);
     }
-  }, [debouncedSearchQuery, menuCategories, menuItems]);
+  }, [committedSearchQuery, menuCategories, menuItems]);
 
   // Client-side filtering for better UX (no page reload)
   const getFilteredItems = () => {
     let filtered = menuItems;
 
     // Apply search filter (client-side)
-    if (debouncedSearchQuery.trim()) {
-      const searchLower = debouncedSearchQuery.toLowerCase();
+    if (committedSearchQuery.trim()) {
+      const searchLower = committedSearchQuery.toLowerCase();
       filtered = filtered.filter((item) => 
         item.name.toLowerCase().includes(searchLower) ||
         (item.description && item.description.toLowerCase().includes(searchLower))
@@ -172,7 +211,7 @@ const MenuScreen = () => {
           }))
           // Filter out empty categories when searching
           .filter(({ items }) => 
-            debouncedSearchQuery.trim() ? items.length > 0 : true
+            committedSearchQuery.trim() ? items.length > 0 : true
           )
       : [
           {
@@ -283,6 +322,7 @@ const MenuScreen = () => {
               menuItemId: item.id,
               name: item.name,
               price: item.price,
+              imageUrl: item.imageUrl ?? null,
             })
           }
         >
@@ -338,9 +378,25 @@ const MenuScreen = () => {
           style={styles.searchInput}
           placeholder={t("menu.search")}
           placeholderTextColor="#e0b97f80"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
+          value={searchInput}
+          onChangeText={setSearchInput}
+          onSubmitEditing={triggerImmediateSearch}
         />
+        <View style={styles.searchActions}>
+          {isSearchPending && (
+            <View style={styles.searchPending}>
+              <ActivityIndicator size="small" color="#e0b97f" />
+              <Text style={styles.searchPendingText}>{t("menu.searching")}</Text>
+            </View>
+          )}
+          <TouchableOpacity
+            style={styles.searchButton}
+            onPress={triggerImmediateSearch}
+            disabled={!searchInput.trim() && !committedSearchQuery}
+          >
+            <Text style={styles.searchButtonText}>{t("common.search")}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Dietary Filters */}
@@ -580,6 +636,63 @@ const styles = StyleSheet.create({
     color: "#fffbe8", // Color of text user types (light cream)
     borderWidth: 1, // 1px border around the input
     borderColor: "#e0b97f40", // Gold/tan border color with 40 transparency (hex alpha)
+  },
+
+  // ============================================================================
+  // SEARCH ACTIONS - Row containing pending indicator + manual trigger button
+  // ============================================================================
+  searchActions: {
+    flexDirection: "row", // Pending indicator + button sit horizontally
+    alignItems: "center", // Vertically center contents
+    gap: 12, // Space between pending indicator and button
+    marginTop: 10, // Breathing room below the input
+  },
+
+  // ============================================================================
+  // SEARCH PENDING - Badge showing that debounce is waiting
+  // ============================================================================
+  searchPending: {
+    flexDirection: "row", // Spinner + text in a row
+    alignItems: "center", // Vertically center spinner/text
+    backgroundColor: "#2d2117", // Match search input background
+    borderRadius: 12, // Rounded pill look
+    paddingHorizontal: 14, // Horizontal padding
+    paddingVertical: 10, // Vertical padding
+    borderWidth: 1, // Subtle border to stand out
+    borderColor: "#e0b97f40", // Semi-transparent gold border
+    flex: 1, // Take remaining width so button stays compact
+  },
+
+  // ============================================================================
+  // SEARCH PENDING TEXT - Copy next to spinner
+  // ============================================================================
+  searchPendingText: {
+    marginLeft: 8, // Space between spinner and text
+    color: "#e0b97f", // Gold accent color
+    fontSize: 14, // Compact text size
+    fontWeight: "600", // Slight emphasis
+  },
+
+  // ============================================================================
+  // SEARCH BUTTON - Manual trigger button
+  // ============================================================================
+  searchButton: {
+    paddingHorizontal: 18, // Inner horizontal spacing
+    paddingVertical: 12, // Inner vertical spacing
+    borderRadius: 12, // Rounded button corners
+    backgroundColor: "#e0b97f", // Gold background to stand out
+    minWidth: 110, // Ensure button doesn't shrink too small
+    alignItems: "center", // Center the button text
+  },
+
+  // ============================================================================
+  // SEARCH BUTTON TEXT - Text for manual trigger
+  // ============================================================================
+  searchButtonText: {
+    color: "#1a120b", // Dark text for contrast on gold
+    fontWeight: "700", // Bold for better readability
+    letterSpacing: 0.5, // Slight letter spacing for polish
+    textTransform: "uppercase", // Make it feel like an action button
   },
 
   // ============================================================================

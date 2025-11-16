@@ -9,7 +9,6 @@ import CookieSettingsScreen from "../screens/CookieSettingsScreen";
 import QRScannerScreen from "../screens/QRScannerScreen";
 import { useAuth } from "../contexts/AuthContext";
 import MenuScreen from "../screens/MenuScreen";
-import ReservationsScreen from "../screens/ReservationsScreen";
 import OrdersScreen from "../screens/OrdersScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import FavoritesScreen from "../screens/FavoritesScreen";
@@ -19,7 +18,6 @@ import AdminScreen from "../screens/AdminScreen";
 import CheckoutScreen from "../screens/CheckoutScreen";
 import Icon from "react-native-paper/src/components/Icon";
 import { useTranslation } from "../hooks/useTranslation";
-import logger from '../utils/logger';
 import { useCart } from "../contexts/CartContext";
 import { View, Text, StyleSheet } from "react-native";
 const Stack = createStackNavigator();
@@ -42,9 +40,6 @@ function MainTabs() {
         break;
       case "Cart":
         iconName = "cart";
-        break;
-      case "Reservations":
-        iconName = "calendar-clock";
         break;
       case "Orders":
         iconName = "receipt";
@@ -77,7 +72,6 @@ function MainTabs() {
       { name: "Menu", component: MenuScreen, label: t("navigation.menu") },
       { name: "Favorites", component: FavoritesScreen, label: t("navigation.favorites") },
       { name: "Cart", component: CartScreen, label: t("navigation.cart") },
-      { name: "Reservations", component: ReservationsScreen, label: t("navigation.reservations") },
       { name: "Orders", component: OrdersScreen, label: t("navigation.orders") },
       { name: "Profile", component: ProfileScreen, label: t("navigation.profile") },
     ];

@@ -42,14 +42,16 @@ const LoginScreen: React.FC<NavigationProps> = ({ navigation }) => {
 
   const validateForm = (): boolean => {
     const errors: { email?: string; password?: string } = {};
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
 
-    if (!email.trim()) {
+    if (!trimmedEmail) {
       errors.email = t("auth.emailRequired");
-    } else if (!validateEmail(email)) {
+    } else if (!validateEmail(trimmedEmail)) {
       errors.email = t("errors.invalidEmail");
     }
 
-    if (!password.trim()) {
+    if (!trimmedPassword) {
       errors.password = t("auth.passwordRequired");
     }
 
@@ -63,7 +65,7 @@ const LoginScreen: React.FC<NavigationProps> = ({ navigation }) => {
     }
 
     try {
-      await login({ email: email.trim().toLowerCase(), password });
+  await login({ email: email.trim().toLowerCase(), password: password.trim() });
       // Navigation will be handled automatically by the navigation structure
     } catch (e: any) {
       // Error is handled by the AuthContext and displayed via the error prop
@@ -119,7 +121,7 @@ const LoginScreen: React.FC<NavigationProps> = ({ navigation }) => {
           <Card style={styles.card}>
             <Card.Content>
               <Title style={styles.title}>{t("auth.login")}</Title>
-              <Text style={styles.subtitle}>{t("auth.loginSuccess")}</Text>
+              <Text style={styles.subtitle}>{t("auth.loginSubtitle")}</Text>
 
               <View style={styles.inputContainer}>
                 <TextInput

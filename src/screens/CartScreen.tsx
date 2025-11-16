@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useCart } from "../contexts/CartContext";
@@ -76,6 +77,18 @@ const CartScreen = () => {
               <Card.Title
                 title={item.name}
                 subtitle={`€${item.price.toFixed(2)}`}
+                left={() =>
+                  item.imageUrl ? (
+                    <Image
+                      source={{ uri: item.imageUrl }}
+                      style={styles.cartImage}
+                    />
+                  ) : (
+                    <View style={styles.cartImagePlaceholder}>
+                      <Text style={{ fontSize: 20 }}>🍽️</Text>
+                    </View>
+                  )
+                }
               />
               <Card.Content>
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -148,6 +161,21 @@ const styles = StyleSheet.create({
     color: "#fffbe8",
   },
   card: { marginBottom: 12, backgroundColor: "#2d2117" },
+  cartImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    marginRight: 12,
+  },
+  cartImagePlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    marginRight: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#3a2b1f",
+  },
   qtyBtn: {
     backgroundColor: "#fffbe8",
     borderRadius: 8,

@@ -46,7 +46,8 @@
     "emailRequired": "E-Mail ist erforderlich",
     "passwordRequired": "Passwort ist erforderlich",
     "nameRequired": "Name ist erforderlich",
-    "passwordsDoNotMatch": "Passwörter stimmen nicht überein"
+    "passwordsDoNotMatch": "Passwörter stimmen nicht überein",
+    "loginSubtitle": "Melde dich an, um fortzufahren"
   },
   "menu": {
     "title": "Menü",
@@ -57,6 +58,7 @@
     "addToFavorites": "Zu Favoriten hinzufügen",
     "removeFromFavorites": "Aus Favoriten entfernen",
     "search": "Suche Gerichte...",
+  "searching": "Suche läuft...",
     "filters": "Filter",
     "vegetarian": "Vegetarisch",
     "vegan": "Vegan",
@@ -267,7 +269,8 @@
       "descriptionPlaceholder": "Beschreibung",
       "pricePlaceholder": "Preis",
       "loyaltyMultiplierPlaceholder": "Treuepunkte-Multiplikator (z.B. 1,5 = 150% Punkte)",
-      "imageUrlPlaceholder": "Bild-URL (optional)"
+      "imageUrlPlaceholder": "Bild-URL (optional)",
+      "imagePreviewPlaceholder": "Bildvorschau erscheint hier"
     },
     "settings": {
       "minOrderTitle": "Mindestbestellwert",
@@ -275,7 +278,16 @@
       "minOrderLabel": "Mindestwert (€):",
       "minOrderPlaceholder": "15.00",
       "saving": "Wird gespeichert...",
-      "saveSetting": "Einstellung speichern"
+      "saveSetting": "Einstellung speichern",
+      "loyaltyResetTitle": "Treuepunkte zurücksetzen",
+      "loyaltyResetDescription": "Setzt das Treuepunkte-Guthaben aller Nutzer sofort auf 0. Diese Aktion kann nicht rückgängig gemacht werden.",
+      "resetButton": "Alle Punkte zurücksetzen",
+      "resetting": "Setze zurück...",
+      "resetConfirmTitle": "Alle Treuepunkte zurücksetzen?",
+      "resetConfirmDescription": "Dadurch wird das Guthaben aller Kunden auf 0 gesetzt. Dieser Vorgang kann nicht rückgängig gemacht werden.",
+      "resetConfirmButton": "Ja, zurücksetzen",
+      "resetSuccess": "Treuepunkte für {{count}} Nutzer zurückgesetzt.",
+      "resetError": "Treuepunkte konnten nicht zurückgesetzt werden."
     }
   }
 }

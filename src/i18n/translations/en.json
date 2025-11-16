@@ -46,7 +46,8 @@
     "emailRequired": "Email is required",
     "passwordRequired": "Password is required",
     "nameRequired": "Name is required",
-    "passwordsDoNotMatch": "Passwords do not match"
+    "passwordsDoNotMatch": "Passwords do not match",
+    "loginSubtitle": "Sign in to continue"
   },
   "menu": {
     "title": "Menu",
@@ -57,6 +58,7 @@
     "addToFavorites": "Add to Favorites",
     "removeFromFavorites": "Remove from Favorites",
     "search": "Search dishes...",
+  "searching": "Searching...",
     "filters": "Filters",
     "vegetarian": "Vegetarian",
     "vegan": "Vegan",
@@ -267,7 +269,8 @@
       "descriptionPlaceholder": "Description",
       "pricePlaceholder": "Price",
       "loyaltyMultiplierPlaceholder": "Loyalty Points Multiplier (e.g., 1.5 = 150% points)",
-      "imageUrlPlaceholder": "Image URL (optional)"
+      "imageUrlPlaceholder": "Image URL (optional)",
+      "imagePreviewPlaceholder": "Image preview will appear here"
     },
     "settings": {
       "minOrderTitle": "Minimum Order Value",
@@ -275,7 +278,16 @@
       "minOrderLabel": "Minimum Value (€):",
       "minOrderPlaceholder": "15.00",
       "saving": "Saving...",
-      "saveSetting": "Save Setting"
+      "saveSetting": "Save Setting",
+      "loyaltyResetTitle": "Loyalty Points Reset",
+      "loyaltyResetDescription": "Zero every user's loyalty balance immediately. Use with care—this cannot be undone.",
+      "resetButton": "Reset All Points",
+      "resetting": "Resetting...",
+      "resetConfirmTitle": "Reset all loyalty points?",
+      "resetConfirmDescription": "This will set every customer's loyalty balance to 0. This action cannot be undone.",
+      "resetConfirmButton": "Yes, reset",
+      "resetSuccess": "Loyalty points reset for {{count}} users.",
+      "resetError": "Failed to reset loyalty points."
     }
   }
 }

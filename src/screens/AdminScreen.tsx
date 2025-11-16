@@ -9,6 +9,7 @@ import {
   ScrollView,
   TextInput,
   Modal,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Card, useTheme, Button, FAB } from "react-native-paper";
@@ -68,6 +69,7 @@ const AdminScreen = () => {
   // Settings states
   const [minOrderValue, setMinOrderValue] = useState("");
   const [savingSettings, setSavingSettings] = useState(false);
+  const [resettingPoints, setResettingPoints] = useState(false);
 
   const fetchOrders = useCallback(async () => {
     if (!token) return;
@@ -160,6 +162,58 @@ const AdminScreen = () => {
     } finally {
       setSavingSettings(false);
     }
+  };
+
+  const resetAllLoyaltyPoints = async () => {
+    if (!token) return;
+    setResettingPoints(true);
+    try {
+      const response = await fetch(`${ENV.API_URL}/loyalty/reset`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to reset loyalty points");
+      }
+
+      const data = await response.json();
+      Alert.alert(
+        t("common.success"),
+        t("admin.settings.resetSuccess", {
+          count: data.usersUpdated ?? 0,
+        })
+      );
+
+      await updateUser({ loyaltyPoints: 0 });
+    } catch (err: any) {
+      logger.error("Failed to reset loyalty points", err);
+      Alert.alert(
+        t("common.error"),
+        err.message || t("admin.settings.resetError")
+      );
+    } finally {
+      setResettingPoints(false);
+    }
+  };
+
+  const confirmResetLoyaltyPoints = () => {
+    Alert.alert(
+      t("admin.settings.resetConfirmTitle"),
+      t("admin.settings.resetConfirmDescription"),
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("admin.settings.resetConfirmButton"),
+          style: "destructive",
+          onPress: resetAllLoyaltyPoints,
+        },
+      ]
+    );
   };
 
   useEffect(() => {
@@ -752,6 +806,12 @@ const AdminScreen = () => {
               renderItem={({ item }) => (
                 <Card style={styles.menuItemCard}>
                   <Card.Content>
+                    {item.imageUrl ? (
+                      <Image
+                        source={{ uri: item.imageUrl }}
+                        style={styles.menuItemImage}
+                      />
+                    ) : null}
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                       <Text style={styles.itemName}>{item.name}</Text>
                       {item.loyaltyPointsMultiplier && item.loyaltyPointsMultiplier > 1.0 && (
@@ -953,6 +1013,18 @@ const AdminScreen = () => {
                     setItemForm({ ...itemForm, imageUrl: text })
                   }
                 />
+                {itemForm.imageUrl ? (
+                  <Image
+                    source={{ uri: itemForm.imageUrl }}
+                    style={styles.modalImagePreview}
+                  />
+                ) : (
+                  <View style={styles.modalImagePlaceholder}>
+                    <Text style={styles.modalImagePlaceholderText}>
+                      {t("admin.modals.imagePreviewPlaceholder")}
+                    </Text>
+                  </View>
+                )}
                 <Text style={styles.label}>{t("admin.menu.categoryLabel")}:</Text>
                 <ScrollView
                   horizontal
@@ -1029,6 +1101,26 @@ const AdminScreen = () => {
                 >
                   <Text style={styles.saveButtonText}>
                     {savingSettings ? t("admin.settings.saving") : t("admin.settings.saveSetting")}
+                  </Text>
+                </TouchableOpacity>
+              </Card.Content>
+            </Card>
+
+            <Card style={styles.card}>
+              <Card.Title title={t("admin.settings.loyaltyResetTitle")} />
+              <Card.Content>
+                <Text style={styles.settingDescription}>
+                  {t("admin.settings.loyaltyResetDescription")}
+                </Text>
+                <TouchableOpacity
+                  style={[styles.resetButton, resettingPoints && styles.resetButtonDisabled]}
+                  onPress={confirmResetLoyaltyPoints}
+                  disabled={resettingPoints}
+                >
+                  <Text style={styles.resetButtonText}>
+                    {resettingPoints
+                      ? t("admin.settings.resetting")
+                      : t("admin.settings.resetButton")}
                   </Text>
                 </TouchableOpacity>
               </Card.Content>
@@ -1129,6 +1221,13 @@ const styles = StyleSheet.create({
   menuItemCard: {
     backgroundColor: "#2d2117",
     marginBottom: 12,
+  },
+  menuItemImage: {
+    width: "100%",
+    height: 160,
+    borderRadius: 12,
+    marginBottom: 12,
+    backgroundColor: "#1f160f",
   },
   itemName: {
     fontSize: 18,
@@ -1247,6 +1346,27 @@ const styles = StyleSheet.create({
   categoryOptionTextSelected: {
     color: "#231a13",
   },
+  modalImagePreview: {
+    width: "100%",
+    height: 200,
+    borderRadius: 16,
+    marginBottom: 16,
+    backgroundColor: "#1f160f",
+  },
+  modalImagePlaceholder: {
+    width: "100%",
+    height: 200,
+    borderRadius: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#4b3a2a",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalImagePlaceholderText: {
+    color: "#b8a68a",
+    fontStyle: "italic",
+  },
   modalActions: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -1287,6 +1407,21 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     color: "#231a13",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  resetButton: {
+    backgroundColor: "#d32f2f",
+    borderRadius: 8,
+    padding: 14,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  resetButtonDisabled: {
+    opacity: 0.6,
+  },
+  resetButtonText: {
+    color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
   },

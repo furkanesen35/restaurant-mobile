@@ -22,23 +22,27 @@ const RegisterScreen = ({ navigation }: NavigationProps) => {
     setError("");
     setSuccess("");
 
-    if (!email || !password || !confirmPassword) {
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedPassword = password.trim();
+    const trimmedConfirm = confirmPassword.trim();
+
+    if (!trimmedEmail || !trimmedPassword || !trimmedConfirm) {
       setError("All fields are required");
       return;
     }
 
-    if (password !== confirmPassword) {
+    if (trimmedPassword !== trimmedConfirm) {
       setError("Passwords do not match");
       return;
     }
 
-    if (password.length < 6) {
+    if (trimmedPassword.length < 6) {
       setError("Password must be at least 6 characters");
       return;
     }
 
     try {
-      await register({ email, password });
+      await register({ email: trimmedEmail, password: trimmedPassword });
       setSuccess("Registration successful!");
     } catch (e: any) {
       setError(e.message || "Registration failed");

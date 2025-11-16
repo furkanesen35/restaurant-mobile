@@ -83,6 +83,7 @@ const FavoritesScreen = () => {
       menuItemId: item.id,
       name: item.name,
       price: item.price,
+      imageUrl: item.imageUrl ?? null,
     });
     Alert.alert(t("cart.itemAdded"), `${item.name} ${t("cart.itemAdded")}`);
   };
@@ -132,6 +133,12 @@ const FavoritesScreen = () => {
         ) : favorites.length > 0 ? (
           favorites.map((favorite) => (
             <Card key={favorite.id} style={styles.favoriteCard}>
+              {favorite.menuItem.imageUrl ? (
+                <Card.Cover
+                  source={{ uri: favorite.menuItem.imageUrl }}
+                  style={styles.favoriteImage}
+                />
+              ) : null}
               <Card.Content>
                 <View style={styles.cardHeader}>
                   <View style={styles.itemInfo}>
@@ -271,6 +278,11 @@ const styles = StyleSheet.create({
     borderRadius: 16, // Rounded corners for modern look
     borderWidth: 1, // 1px border
     borderColor: "#e0b97f", // Gold border to match theme
+  },
+
+  favoriteImage: {
+    height: 170,
+    backgroundColor: "#3a2b1f",
   },
 
   // ============================================================================

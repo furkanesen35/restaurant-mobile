@@ -21,13 +21,13 @@ interface Token {
   code: string;
   points: number;
   createdAt: string;
-  expiresAt: string;
+  expiresAt?: string | null;
   isActive: boolean;
   location?: string;
   notes?: string;
   redeemedBy?: any;
   redeemedAt?: string;
-  isExpired: boolean;
+  isExpired?: boolean;
   isRedeemed: boolean;
 }
 
@@ -41,7 +41,6 @@ export default function QRTokenManagement() {
 
   // Form state
   const [points, setPoints] = useState('50');
-  const [expiryHours, setExpiryHours] = useState('24');
   const [location, setLocation] = useState('');
   const [notes, setNotes] = useState('');
   const [creating, setCreating] = useState(false);
@@ -77,7 +76,6 @@ export default function QRTokenManagement() {
       setCreating(true);
       const response = await apiClient.post('/api/loyalty/tokens', {
         points: parseInt(points),
-        expiryHours: parseInt(expiryHours),
         location: location || undefined,
         notes: notes || undefined,
       });
@@ -129,12 +127,14 @@ export default function QRTokenManagement() {
 
   const resetForm = () => {
     setPoints('50');
-    setExpiryHours('24');
     setLocation('');
     setNotes('');
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString?: string | null) => {
+    if (!dateString) {
+      return '—';
+    }
     const date = new Date(dateString);
     return date.toLocaleString('en-US', {
       day: '2-digit',
@@ -148,16 +148,12 @@ export default function QRTokenManagement() {
   const renderToken = ({ item }: { item: Token }) => {
     const statusColor = item.isRedeemed
       ? '#22c55e'
-      : item.isExpired
-      ? '#ef4444'
       : item.isActive
       ? '#3b82f6'
       : '#9ca3af';
 
     const statusText = item.isRedeemed
       ? 'Redeemed'
-      : item.isExpired
-      ? 'Expired'
       : item.isActive
       ? 'Active'
       : 'Inactive';
@@ -181,13 +177,6 @@ export default function QRTokenManagement() {
             <Ionicons name="time" size={16} color="#9ca3af" />
             <Text style={styles.detailText}>
               Created: {formatDate(item.createdAt)}
-            </Text>
-          </View>
-
-          <View style={styles.detailRow}>
-            <Ionicons name="hourglass" size={16} color="#9ca3af" />
-            <Text style={styles.detailText}>
-              Expires: {formatDate(item.expiresAt)}
             </Text>
           </View>
 
@@ -312,30 +301,6 @@ export default function QRTokenManagement() {
                 keyboardType="number-pad"
               />
 
-              <Text style={styles.label}>Validity (Hours) *</Text>
-              <View style={styles.expiryButtons}>
-                {[1, 24, 168].map((hours) => (
-                  <TouchableOpacity
-                    key={hours}
-                    style={[
-                      styles.expiryButton,
-                      expiryHours === hours.toString() && styles.expiryButtonActive,
-                    ]}
-                    onPress={() => setExpiryHours(hours.toString())}
-                  >
-                    <Text
-                      style={[
-                        styles.expiryButtonText,
-                        expiryHours === hours.toString() &&
-                          styles.expiryButtonTextActive,
-                      ]}
-                    >
-                      {hours === 1 ? '1h' : hours === 24 ? '24h' : '1 Week'}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
               <Text style={styles.label}>Location (optional)</Text>
               <TextInput
                 style={styles.input}
@@ -399,10 +364,6 @@ export default function QRTokenManagement() {
 
                 <Text style={styles.qrCode}>{selectedToken.code}</Text>
                 <Text style={styles.qrPoints}>{selectedToken.points} Points</Text>
-                <Text style={styles.qrExpiry}>
-                  Valid until: {formatDate(selectedToken.expiresAt)}
-                </Text>
-
                 <Text style={styles.qrInstructions}>
                   Customers can scan this QR code with the app to collect points
                 </Text>
@@ -604,29 +565,6 @@ const styles = StyleSheet.create({
     minHeight: 80,
     textAlignVertical: 'top',
   },
-  expiryButtons: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  expiryButton: {
-    flex: 1,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#3d3127',
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  expiryButtonActive: {
-    backgroundColor: cozyTheme.colors.primary,
-    borderColor: cozyTheme.colors.primary,
-  },
-  expiryButtonText: {
-    color: cozyTheme.colors.onSurface,
-    fontWeight: '600',
-  },
-  expiryButtonTextActive: {
-    color: '#fff',
-  },
   createButton: {
     backgroundColor: cozyTheme.colors.primary,
     padding: 16,
@@ -683,11 +621,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: cozyTheme.colors.primary,
     marginBottom: 4,
-  },
-  qrExpiry: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 16,
   },
   qrInstructions: {
     fontSize: 13,
