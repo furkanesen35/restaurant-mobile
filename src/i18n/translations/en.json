@@ -255,7 +255,7 @@
       "categories": "Categories",
       "menuItems": "Menu Items",
       "categoryFilter": "Menu Items ({{categoryName}})",
-      "addCategory": "+ Add Category",
+      "addCategory": "New Category",
       "addItem": "+ Add Item",
       "noItemsInCategory": "No menu items in this category. Use the + button to add items.",
       "noItems": "No menu items yet. Select a category or use the + button to add items.",

@@ -32,10 +32,10 @@ const STATUS_OPTIONS = [
 
 const AdminScreen = () => {
   const { colors } = useTheme();
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const { token, user, updateUser } = useAuth();
   const [activeTab, setActiveTab] = useState<
-    "orders" | "menu" | "qr" | "settings" | "delivery"
+    "orders" | "menu" | "qr" | "settings"
   >("orders");
   const [orders, setOrders] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -70,9 +70,13 @@ const AdminScreen = () => {
     null
   );
 
+  // Delivery settings
+  const [deliveryExpanded, setDeliveryExpanded] = useState(false);
+
   // Delivery postal code management
   const [postalCodes, setPostalCodes] = useState<AllowedPostalCode[]>([]);
   const [postalCodesLoading, setPostalCodesLoading] = useState(false);
+  const [postalCodesLoaded, setPostalCodesLoaded] = useState(false);
   const [postalCodeModalVisible, setPostalCodeModalVisible] = useState(false);
   const [editingPostalCode, setEditingPostalCode] = useState<AllowedPostalCode | null>(null);
   const [postalCodeForm, setPostalCodeForm] = useState({
@@ -89,6 +93,44 @@ const AdminScreen = () => {
   const [minOrderValue, setMinOrderValue] = useState("");
   const [savingSettings, setSavingSettings] = useState(false);
   const [resettingPoints, setResettingPoints] = useState(false);
+
+  const resolveItemCategoryId = (item: any): number | null => {
+    if (typeof item?.categoryId === "number") return item.categoryId;
+    if (typeof item?.category === "number") return item.category;
+    const raw = item?.categoryId ?? item?.category;
+    if (typeof raw === "string") {
+      const parsed = parseInt(raw, 10);
+      return Number.isNaN(parsed) ? null : parsed;
+    }
+    return null;
+  };
+
+  const getLocalizedValue = useCallback(
+    (item: any, key: "name" | "description") => {
+      if (!item) return "";
+      const deValue = item[`${key}De`];
+      const enValue = item[`${key}En`];
+      const fallback = item[key] || "";
+
+      if (currentLanguage?.startsWith("en")) {
+        return enValue || fallback || deValue || "";
+      }
+
+      return deValue || fallback || enValue || "";
+    },
+    [currentLanguage]
+  );
+
+  const selectedCategory = selectedCategoryId
+    ? categories.find((cat) => cat.id === selectedCategoryId) || null
+    : null;
+
+  const filteredMenuItems =
+    selectedCategoryId && selectedCategory
+      ? menuItems.filter(
+          (item) => resolveItemCategoryId(item) === selectedCategoryId
+        )
+      : menuItems;
 
   const fetchOrders = useCallback(async () => {
     if (!token) return;
@@ -162,6 +204,7 @@ const AdminScreen = () => {
       }
       const data: AllowedPostalCode[] = await response.json();
       setPostalCodes(data || []);
+      setPostalCodesLoaded(true);
     } catch (err: any) {
       logger.error("Failed to fetch postal codes:", err);
       Alert.alert(
@@ -267,9 +310,7 @@ const AdminScreen = () => {
         fetchOrders();
       } else if (activeTab === "settings") {
         fetchSettings();
-      } else if (activeTab === "delivery") {
-        fetchPostalCodes();
-      } else {
+      } else if (activeTab === "menu") {
         fetchCategories();
         fetchMenuItems();
       }
@@ -283,8 +324,27 @@ const AdminScreen = () => {
     fetchCategories,
     fetchMenuItems,
     fetchSettings,
-    fetchPostalCodes,
   ]);
+
+  useEffect(() => {
+    if (deliveryExpanded && !postalCodesLoaded) {
+      fetchPostalCodes();
+    }
+  }, [deliveryExpanded, postalCodesLoaded, fetchPostalCodes]);
+
+  useEffect(() => {
+    if (categories.length === 0) {
+      if (selectedCategoryId !== null) {
+        setSelectedCategoryId(null);
+      }
+      return;
+    }
+
+    const exists = categories.some((cat) => cat.id === selectedCategoryId);
+    if (!exists) {
+      setSelectedCategoryId(categories[0].id);
+    }
+  }, [categories, selectedCategoryId]);
 
   const updateStatus = async (
     orderId: number,
@@ -671,19 +731,6 @@ const AdminScreen = () => {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.tab, activeTab === "delivery" && styles.activeTab]}
-            onPress={() => setActiveTab("delivery")}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === "delivery" && styles.activeTabText,
-              ]}
-            >
-              {t("admin.tabs.delivery")}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
             style={[styles.tab, activeTab === "settings" && styles.activeTab]}
             onPress={() => setActiveTab("settings")}
           >
@@ -905,56 +952,9 @@ const AdminScreen = () => {
 
             {/* Categories Section */}
             <Text style={styles.sectionTitle}>{t("admin.menu.categories")}</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.categoryScroll}
-            >
-              {categories.map((cat) => (
-                <Card
-                  key={cat.id}
-                  style={[
-                    styles.categoryCard,
-                    selectedCategoryId === cat.id && {
-                      borderColor: "#e0b97f",
-                      borderWidth: 2,
-                    },
-                  ]}
-                >
-                  <Card.Content style={{ paddingBottom: 12 }}>
-                    <TouchableOpacity
-                      activeOpacity={0.7}
-                      onPress={() => {
-                        setSelectedCategoryId(
-                          selectedCategoryId === cat.id ? null : cat.id
-                        );
-                      }}
-                    >
-                      <Text style={styles.categoryName}>{cat.name}</Text>
-                    </TouchableOpacity>
-                    <View style={styles.categoryActions}>
-                      <TouchableOpacity
-                        style={styles.editBtn}
-                        onPress={() => {
-                          setEditingCategory(cat);
-                          setCategoryForm({ name: cat.name });
-                          setShowCategoryModal(true);
-                        }}
-                      >
-                        <Text style={styles.btnText}>{t("common.edit")}</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.deleteBtn}
-                        onPress={() => deleteCategory(cat.id)}
-                      >
-                        <Text style={styles.btnText}>{t("common.delete")}</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </Card.Content>
-                </Card>
-              ))}
+            {categories.length === 0 ? (
               <TouchableOpacity
-                style={styles.addCategoryBtn}
+                style={[styles.addPostalButton, { marginTop: 8 }]}
                 onPress={() => {
                   setEditingCategory(null);
                   setCategoryForm({ name: "" });
@@ -963,29 +963,93 @@ const AdminScreen = () => {
               >
                 <Text style={styles.addBtnText}>{t("admin.menu.addCategory")}</Text>
               </TouchableOpacity>
-            </ScrollView>
+            ) : (
+              <>
+                <View style={styles.categoryScrollWrapper}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.categoryScroll}
+                    contentContainerStyle={styles.categoryScrollContent}
+                  >
+                    <TouchableOpacity
+                      style={styles.categoryChipAdd}
+                      onPress={() => {
+                        setEditingCategory(null);
+                        setCategoryForm({ name: "" });
+                        setShowCategoryModal(true);
+                      }}
+                    >
+                      <Text style={styles.categoryChipAddText}>
+                        {`+ ${t("admin.menu.addCategory")}`}
+                      </Text>
+                    </TouchableOpacity>
+                    {categories.map((cat) => (
+                      <TouchableOpacity
+                        key={cat.id}
+                        style={[
+                          styles.categoryChip,
+                          selectedCategoryId === cat.id &&
+                            styles.categoryChipSelected,
+                        ]}
+                        onPress={() => setSelectedCategoryId(cat.id)}
+                      >
+                        <Text
+                          style={[
+                            styles.categoryChipText,
+                            selectedCategoryId === cat.id &&
+                              styles.categoryChipTextSelected,
+                          ]}
+                          numberOfLines={1}
+                        >
+                          {cat.name}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+                {selectedCategory && (
+                  <Card style={styles.card}>
+                    <Card.Content>
+                      <View style={styles.categoryDetailHeader}>
+                        <Text style={styles.categoryDetailTitle}>
+                          {selectedCategory.name}
+                        </Text>
+                        <View style={styles.categoryDetailActions}>
+                          <TouchableOpacity
+                            style={[styles.editBtn, styles.categoryDetailButton]}
+                            onPress={() => {
+                              setEditingCategory(selectedCategory);
+                              setCategoryForm({ name: selectedCategory.name });
+                              setShowCategoryModal(true);
+                            }}
+                          >
+                            <Text style={styles.btnText}>{t("common.edit")}</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.deleteBtn}
+                            onPress={() => deleteCategory(selectedCategory.id)}
+                          >
+                            <Text style={styles.btnText}>{t("common.delete")}</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    </Card.Content>
+                  </Card>
+                )}
+              </>
+            )}
 
             {/* Menu Items Section */}
             <Text style={styles.sectionTitle}>
-              {selectedCategoryId
+              {selectedCategory
                 ? t("admin.menu.categoryFilter", {
-                    categoryName:
-                      categories.find((c) => c.id === selectedCategoryId)
-                        ?.name || "Category",
+                    categoryName: selectedCategory.name,
                   })
                 : t("admin.menu.menuItems")}
             </Text>
             <FlatList
-              data={
-                selectedCategoryId
-                  ? (menuItems || []).filter((item) => {
-                      // Handle both categoryId (number) and category (string) properties
-                      const itemCategoryId =
-                        item.categoryId || parseInt(item.category);
-                      return itemCategoryId === selectedCategoryId;
-                    })
-                  : menuItems || []
-              }
+              data={filteredMenuItems || []}
               keyExtractor={(item) => item.id.toString()}
               ListEmptyComponent={
                 <Text
@@ -995,77 +1059,95 @@ const AdminScreen = () => {
                     marginTop: 16,
                   }}
                 >
-                  {selectedCategoryId
+                  {selectedCategory
                     ? t("admin.menu.noItemsInCategory")
                     : t("admin.menu.noItems")}
                 </Text>
               }
-              renderItem={({ item }) => (
-                <Card style={styles.menuItemCard}>
-                  <Card.Content>
-                    {item.imageUrl ? (
-                      <Image
-                        source={{ uri: item.imageUrl }}
-                        style={styles.menuItemImage}
-                      />
-                    ) : null}
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <Text style={styles.itemName}>{item.name}</Text>
-                      {item.loyaltyPointsMultiplier && item.loyaltyPointsMultiplier > 1.0 && (
-                        <View style={styles.bonusPointsBadge}>
-                          <Text style={styles.bonusPointsText}>
-                            {t("admin.menu.bonusPoints", { multiplier: item.loyaltyPointsMultiplier })}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                    <Text style={styles.itemDesc}>{item.description}</Text>
-                    <Text style={styles.itemPrice}>${item.price}</Text>
-                    <Text style={styles.itemCategory}>
-                      {t("admin.menu.categoryLabel")}:{" "}
-                      {
-                        categories.find(
-                          (c) =>
-                            c.id ===
-                            (item.categoryId || parseInt(item.category))
-                        )?.name
-                      }
-                    </Text>
-                    <View style={styles.itemActions}>
-                      <TouchableOpacity
-                        style={styles.editBtn}
-                        onPress={() => {
-                          setEditingItem(item);
-                          setItemForm({
-                            name: item.name,
-                            description: item.description || "",
-                            nameDe: item.nameDe || item.name,
-                            nameEn: item.nameEn || "",
-                            descriptionDe: item.descriptionDe || item.description || "",
-                            descriptionEn: item.descriptionEn || "",
-                            price: item.price.toString(),
-                            categoryId: (
-                              item.categoryId || item.category
-                            ).toString(),
-                            imageUrl: item.imageUrl || "",
-                            available: item.available !== false,
-                            loyaltyPointsMultiplier: (item.loyaltyPointsMultiplier || 1.0).toString(),
-                          });
-                          setShowItemModal(true);
+              renderItem={({ item }) => {
+                const localizedName = getLocalizedValue(item, "name");
+                const localizedDescription = getLocalizedValue(
+                  item,
+                  "description"
+                );
+                const resolvedCategoryId = resolveItemCategoryId(item);
+
+                return (
+                  <Card style={styles.menuItemCard}>
+                    <Card.Content>
+                      {item.imageUrl ? (
+                        <Image
+                          source={{ uri: item.imageUrl }}
+                          style={styles.menuItemImage}
+                        />
+                      ) : null}
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "space-between",
                         }}
                       >
-                        <Text style={styles.btnText}>{t("common.edit")}</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.deleteBtn}
-                        onPress={() => deleteMenuItem(item.id)}
-                      >
-                        <Text style={styles.btnText}>{t("common.delete")}</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </Card.Content>
-                </Card>
-              )}
+                        <Text style={styles.itemName}>{localizedName}</Text>
+                        {item.loyaltyPointsMultiplier &&
+                          item.loyaltyPointsMultiplier > 1.0 && (
+                            <View style={styles.bonusPointsBadge}>
+                              <Text style={styles.bonusPointsText}>
+                                {t("admin.menu.bonusPoints", {
+                                  multiplier: item.loyaltyPointsMultiplier,
+                                })}
+                              </Text>
+                            </View>
+                          )}
+                      </View>
+                      <Text style={styles.itemDesc}>{localizedDescription}</Text>
+                      <Text style={styles.itemPrice}>${item.price}</Text>
+                      <Text style={styles.itemCategory}>
+                        {t("admin.menu.categoryLabel")}:{" "}
+                        {
+                          categories.find((c) => c.id === resolvedCategoryId)
+                            ?.name
+                        }
+                      </Text>
+                      <View style={styles.itemActions}>
+                        <TouchableOpacity
+                          style={styles.editBtn}
+                          onPress={() => {
+                            setEditingItem(item);
+                            setItemForm({
+                              name: item.name,
+                              description: item.description || "",
+                              nameDe: item.nameDe || item.name,
+                              nameEn: item.nameEn || "",
+                              descriptionDe:
+                                item.descriptionDe || item.description || "",
+                              descriptionEn: item.descriptionEn || "",
+                              price: item.price.toString(),
+                              categoryId:
+                                (resolvedCategoryId ?? item.categoryId ?? item.category)?.toString() ||
+                                "",
+                              imageUrl: item.imageUrl || "",
+                              available: item.available !== false,
+                              loyaltyPointsMultiplier: (
+                                item.loyaltyPointsMultiplier || 1.0
+                              ).toString(),
+                            });
+                            setShowItemModal(true);
+                          }}
+                        >
+                          <Text style={styles.btnText}>{t("common.edit")}</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.deleteBtn}
+                          onPress={() => deleteMenuItem(item.id)}
+                        >
+                          <Text style={styles.btnText}>{t("common.delete")}</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </Card.Content>
+                  </Card>
+                );
+              }}
             />
 
             {/* FAB for adding menu item */}
@@ -1082,7 +1164,9 @@ const AdminScreen = () => {
                   descriptionDe: "",
                   descriptionEn: "",
                   price: "",
-                  categoryId: categories[0]?.id?.toString() || "",
+                  categoryId:
+                    (selectedCategoryId ?? categories[0]?.id)?.toString() ||
+                    "",
                   imageUrl: "",
                   available: true,
                   loyaltyPointsMultiplier: "1.0",
@@ -1093,89 +1177,6 @@ const AdminScreen = () => {
           </>
         )}
 
-        {/* Delivery Tab */}
-        {activeTab === "delivery" && (
-          <ScrollView>
-            <Text style={[styles.title, { color: "#e0b97f" }]}>
-              {t("admin.delivery.title")}
-            </Text>
-            <Text style={styles.settingDescription}>
-              {t("admin.delivery.description")}
-            </Text>
-
-            <TouchableOpacity
-              style={styles.addPostalButton}
-              onPress={() => openPostalCodeModal()}
-            >
-              <Text style={styles.addBtnText}>{t("admin.delivery.addButton")}</Text>
-            </TouchableOpacity>
-
-            {postalCodesLoading ? (
-              <Text style={{ color: colors.onBackground, marginTop: 16 }}>
-                {t("common.loading")}
-              </Text>
-            ) : postalCodes.length === 0 ? (
-              <Text
-                style={{
-                  color: colors.onBackground,
-                  textAlign: "center",
-                  marginTop: 24,
-                }}
-              >
-                {t("admin.delivery.empty")}
-              </Text>
-            ) : (
-              postalCodes.map((code) => (
-                <Card key={code.id || code.postalCode} style={styles.card}>
-                  <Card.Content>
-                    <View style={styles.postalHeader}>
-                      <Text style={styles.postalCodeValue}>{code.postalCode}</Text>
-                      <View
-                        style={[
-                          styles.statusPill,
-                          code.isActive !== false
-                            ? styles.statusActive
-                            : styles.statusInactive,
-                        ]}
-                      >
-                        <Text style={styles.statusPillText}>
-                          {code.isActive !== false
-                            ? t("common.active")
-                            : t("common.inactive")}
-                        </Text>
-                      </View>
-                    </View>
-                    <Text style={styles.postalMeta}>
-                      {[code.city, code.district].filter(Boolean).join(" • ") ||
-                        code.city}
-                    </Text>
-                    {code.radiusKm ? (
-                      <Text style={styles.postalMeta}>
-                        {t("admin.delivery.radiusLabel", {
-                          radius: code.radiusKm,
-                        })}
-                      </Text>
-                    ) : null}
-                    <View style={styles.itemActions}>
-                      <TouchableOpacity
-                        style={styles.editBtn}
-                        onPress={() => openPostalCodeModal(code)}
-                      >
-                        <Text style={styles.btnText}>{t("common.edit")}</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.deleteBtn}
-                        onPress={() => confirmDeletePostalCode(code)}
-                      >
-                        <Text style={styles.btnText}>{t("common.delete")}</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </Card.Content>
-                </Card>
-              ))
-            )}
-          </ScrollView>
-        )}
 
         {/* Category Modal */}
         <Modal
@@ -1487,6 +1488,101 @@ const AdminScreen = () => {
         {activeTab === "settings" && (
           <ScrollView>
             <Card style={styles.card}>
+              <TouchableOpacity
+                style={styles.accordionHeader}
+                onPress={() => setDeliveryExpanded((prev) => !prev)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.accordionTitle}>
+                  {t("admin.delivery.title")}
+                </Text>
+                <Text style={styles.accordionIcon}>
+                  {deliveryExpanded ? "−" : "+"}
+                </Text>
+              </TouchableOpacity>
+              {deliveryExpanded && (
+                <View style={styles.accordionContent}>
+                  <Text style={styles.settingDescription}>
+                    {t("admin.delivery.description")}
+                  </Text>
+
+                  <TouchableOpacity
+                    style={styles.addPostalButton}
+                    onPress={() => openPostalCodeModal()}
+                  >
+                    <Text style={styles.addBtnText}>
+                      {t("admin.delivery.addButton")}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {postalCodesLoading ? (
+                    <Text style={{ color: colors.onBackground, marginTop: 16 }}>
+                      {t("common.loading")}
+                    </Text>
+                  ) : postalCodes.length === 0 ? (
+                    <Text
+                      style={{
+                        color: colors.onBackground,
+                        textAlign: "center",
+                        marginTop: 24,
+                      }}
+                    >
+                      {t("admin.delivery.empty")}
+                    </Text>
+                  ) : (
+                    postalCodes.map((code) => (
+                      <Card key={code.id || code.postalCode} style={styles.innerCard}>
+                        <Card.Content>
+                          <View style={styles.postalHeader}>
+                            <Text style={styles.postalCodeValue}>{code.postalCode}</Text>
+                            <View
+                              style={[
+                                styles.statusPill,
+                                code.isActive !== false
+                                  ? styles.statusActive
+                                  : styles.statusInactive,
+                              ]}
+                            >
+                              <Text style={styles.statusPillText}>
+                                {code.isActive !== false
+                                  ? t("common.active")
+                                  : t("common.inactive")}
+                              </Text>
+                            </View>
+                          </View>
+                          <Text style={styles.postalMeta}>
+                            {[code.city, code.district].filter(Boolean).join(" • ") ||
+                              code.city}
+                          </Text>
+                          {code.radiusKm ? (
+                            <Text style={styles.postalMeta}>
+                              {t("admin.delivery.radiusLabel", {
+                                radius: code.radiusKm,
+                              })}
+                            </Text>
+                          ) : null}
+                          <View style={styles.itemActions}>
+                            <TouchableOpacity
+                              style={styles.editBtn}
+                              onPress={() => openPostalCodeModal(code)}
+                            >
+                              <Text style={styles.btnText}>{t("common.edit")}</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={styles.deleteBtn}
+                              onPress={() => confirmDeletePostalCode(code)}
+                            >
+                              <Text style={styles.btnText}>{t("common.delete")}</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </Card.Content>
+                      </Card>
+                    ))
+                  )}
+                </View>
+              )}
+            </Card>
+            <Card style={styles.card}>
               <Card.Title title={t("admin.settings.minOrderTitle")} />
               <Card.Content>
                 <Text style={styles.settingDescription}>
@@ -1554,6 +1650,29 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 4,
   },
+  accordionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 8,
+    paddingVertical: 12,
+  },
+  accordionTitle: {
+    color: "#fffbe8",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  accordionIcon: {
+    color: "#e0b97f",
+    fontSize: 24,
+    fontWeight: "bold",
+    paddingHorizontal: 4,
+  },
+  accordionContent: {
+    marginTop: 4,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
   tab: {
     flex: 1,
     paddingVertical: 12,
@@ -1585,6 +1704,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   card: { marginBottom: 12, backgroundColor: "#2d2117" },
+  innerCard: {
+    marginBottom: 12,
+    backgroundColor: "#231a13",
+  },
   statusBtn: {
     padding: 8,
     borderRadius: 8,
@@ -1594,33 +1717,75 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  categoryScroll: {
-    maxHeight: 160,
+  categoryScrollWrapper: {
+    minHeight: 56,
     marginBottom: 16,
   },
-  categoryCard: {
+  categoryScroll: {
+    flexGrow: 0,
+  },
+  categoryScrollContent: {
+    alignItems: "center",
+    paddingVertical: 4,
+    paddingRight: 8,
+  },
+  categoryChip: {
+    paddingHorizontal: 18,
+    paddingVertical: 0,
+    minHeight: 44,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#4b3a2a",
+    marginRight: 8,
     backgroundColor: "#2d2117",
-    marginRight: 12,
-    minWidth: 160,
-    minHeight: 140,
-  },
-  categoryName: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#fffbe8",
-    marginBottom: 8,
-  },
-  categoryActions: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  addCategoryBtn: {
-    backgroundColor: "#e0b97f",
-    borderRadius: 8,
-    padding: 16,
     justifyContent: "center",
     alignItems: "center",
-    width: 150,
+  },
+  categoryChipSelected: {
+    borderColor: "#e0b97f",
+    backgroundColor: "rgba(224, 185, 127, 0.2)",
+  },
+  categoryChipText: {
+    color: "#fffbe8",
+    fontWeight: "600",
+    lineHeight: 18,
+    textAlign: "center",
+    maxWidth: 120,
+  },
+  categoryChipTextSelected: {
+    color: "#e0b97f",
+  },
+  categoryChipAdd: {
+    paddingHorizontal: 18,
+    paddingVertical: 0,
+    minHeight: 44,
+    borderRadius: 999,
+    backgroundColor: "#e0b97f",
+    marginRight: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  categoryChipAddText: {
+    color: "#231a13",
+    fontWeight: "700",
+    lineHeight: 18,
+  },
+  categoryDetailHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  categoryDetailTitle: {
+    color: "#fffbe8",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  categoryDetailActions: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  categoryDetailButton: {
+    marginRight: 8,
   },
   addPostalButton: {
     backgroundColor: "#e0b97f",
