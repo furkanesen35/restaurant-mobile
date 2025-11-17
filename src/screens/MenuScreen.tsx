@@ -106,7 +106,6 @@ const MenuScreen = () => {
           price: item.price,
           imageUrl: item.imageUrl ?? null,
         });
-        Alert.alert(t("cart.itemAdded"), item.name);
       } catch (error: any) {
         handleCartError(error);
       }
