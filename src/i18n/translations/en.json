@@ -17,7 +17,9 @@
     "search": "Search",
     "filter": "Filter",
     "clear": "Clear",
-    "apply": "Apply"
+    "apply": "Apply",
+    "active": "Active",
+    "inactive": "Inactive"
   },
   "auth": {
     "login": "Login",
@@ -230,6 +232,7 @@
       "orders": "Orders",
       "menu": "Menu",
       "qr": "QR-Codes",
+      "delivery": "Delivery",
       "settings": "Settings"
     },
     "orders": {
@@ -297,6 +300,30 @@
       "resetConfirmButton": "Yes, reset",
       "resetSuccess": "Loyalty points reset for {{count}} users.",
       "resetError": "Failed to reset loyalty points."
+    },
+    "delivery": {
+      "title": "Delivery Postal Codes",
+      "description": "Only addresses within these postal codes can place delivery orders.",
+      "addButton": "Add Postal Code",
+      "empty": "No delivery postal codes configured yet.",
+      "loadError": "Failed to load delivery postal codes.",
+      "saveSuccess": "Postal code saved successfully.",
+      "saveError": "Unable to save postal code.",
+      "deleteConfirmTitle": "Delete postal code?",
+      "deleteConfirmMessage": "Remove {{postalCode}} from the delivery list?",
+      "deleteSuccess": "Postal code deleted.",
+      "deleteError": "Unable to delete postal code.",
+      "formRequired": "Postal code and city are required.",
+      "editTitle": "Edit Postal Code",
+      "addTitle": "New Postal Code",
+      "postalPlaceholder": "Postal code (e.g., 27568)",
+      "cityPlaceholder": "City",
+      "districtPlaceholder": "District / note (optional)",
+      "radiusPlaceholder": "Radius in km (optional)",
+      "sortPlaceholder": "Sort order (optional)",
+      "activeLabel": "Enable for ordering",
+      "activeHint": "Disable to pause deliveries for this postal code.",
+      "radiusLabel": "Approx. {{radius}} km coverage"
     }
   }
 }

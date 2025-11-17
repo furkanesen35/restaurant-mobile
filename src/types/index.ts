@@ -128,3 +128,13 @@ export interface ErrorMessageProps {
   error?: string | null;
   onDismiss?: () => void;
 }
+
+export interface AllowedPostalCode {
+  id?: number;
+  postalCode: string;
+  city: string;
+  district?: string | null;
+  radiusKm?: number | null;
+  isActive?: boolean;
+  sortOrder?: number;
+}

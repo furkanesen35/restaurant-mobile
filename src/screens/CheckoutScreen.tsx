@@ -21,6 +21,8 @@ import { CardField, useStripe } from "@stripe/stripe-react-native";
 import ENV from "../config/env";
 import { useNavigation } from "@react-navigation/native";
 import logger from '../utils/logger';
+import PostalCodePicker from "../components/PostalCodePicker";
+import { AllowedPostalCode } from "../types";
 type PaymentMethod = {
   id: number;
   type: string;
@@ -59,6 +61,8 @@ const CheckoutScreen = () => {
     null
   );
   const [loadingAddresses, setLoadingAddresses] = useState(true);
+  const [allowedPostalCodes, setAllowedPostalCodes] = useState<AllowedPostalCode[]>([]);
+  const [loadingPostalCodes, setLoadingPostalCodes] = useState(true);
 
   // New address form state
   const [newAddressForm, setNewAddressForm] = useState({
@@ -72,6 +76,49 @@ const CheckoutScreen = () => {
   const [savePaymentToProfile, setSavePaymentToProfile] = useState(true);
 
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  // Fetch allowed postal codes for delivery
+  React.useEffect(() => {
+    let isMounted = true;
+
+    const fetchPostalCodes = async () => {
+      try {
+        const res = await fetch(`${ENV.API_URL}/api/postal-codes`);
+        if (!res.ok) throw new Error("Failed to load delivery area");
+        const data: AllowedPostalCode[] = await res.json();
+        if (isMounted) {
+          setAllowedPostalCodes(data || []);
+        }
+      } catch (err) {
+        logger.error("Error fetching postal codes:", err);
+        if (isMounted) {
+          Alert.alert(
+            "Delivery area unavailable",
+            "We couldn't load the delivery postal codes. Please retry in a moment."
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingPostalCodes(false);
+        }
+      }
+    };
+
+    fetchPostalCodes();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Auto-select first postal code when list loads
+  React.useEffect(() => {
+    if (allowedPostalCodes.length > 0 && !newAddressForm.postalCode) {
+      setNewAddressForm((prev) => ({
+        ...prev,
+        postalCode: allowedPostalCodes[0].postalCode,
+      }));
+    }
+  }, [allowedPostalCodes, newAddressForm.postalCode]);
 
   // Fetch payment methods on mount
   React.useEffect(() => {
@@ -360,7 +407,7 @@ const CheckoutScreen = () => {
     }
   };
 
-  if (loadingMethods || loadingAddresses) {
+  if (loadingMethods || loadingAddresses || loadingPostalCodes) {
     return (
       <View style={[styles.container, styles.centered]}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -437,7 +484,14 @@ const CheckoutScreen = () => {
             </Text>
 
             {/* Saved Addresses */}
-            {addresses.map((address) => (
+            {addresses.map((address) => {
+              const deliverable =
+                allowedPostalCodes.length === 0 ||
+                allowedPostalCodes.some(
+                  (code) => code.postalCode === address.postalCode
+                );
+
+              return (
               <TouchableOpacity
                 key={address.id}
                 style={[
@@ -463,12 +517,18 @@ const CheckoutScreen = () => {
                   <Text style={{ color: colors.onBackground }}>
                     📞 {address.phone}
                   </Text>
+                      {!deliverable && (
+                        <Text style={styles.addressWarning}>
+                          Outside current delivery zone
+                        </Text>
+                      )}
                 </View>
                 {selectedAddressId === address.id && (
                   <Text style={{ color: colors.primary, fontSize: 20 }}>✓</Text>
                 )}
-              </TouchableOpacity>
-            ))}
+                </TouchableOpacity>
+              );
+            })}
 
             {/* Add New Address Option */}
             <TouchableOpacity
@@ -522,14 +582,22 @@ const CheckoutScreen = () => {
                   style={styles.input}
                   placeholderTextColor="#999"
                 />
-                <TextInput
-                  placeholder="Postal Code"
+                <PostalCodePicker
                   value={newAddressForm.postalCode}
-                  onChangeText={(text) =>
-                    setNewAddressForm({ ...newAddressForm, postalCode: text })
+                  onSelect={(postalCode) =>
+                    setNewAddressForm({ ...newAddressForm, postalCode })
                   }
-                  style={styles.input}
-                  placeholderTextColor="#999"
+                  postalCodes={allowedPostalCodes}
+                  label="Postal Code"
+                  placeholder={
+                    allowedPostalCodes.length
+                      ? "Select Postal Code"
+                      : "No postal codes available"
+                  }
+                  helperText="Orders are limited to these postal codes"
+                  disabled={allowedPostalCodes.length === 0}
+                  modalTitle="Select Delivery Postal Code"
+                  closeLabel="Close"
                 />
                 <TextInput
                   placeholder="Phone"
@@ -820,6 +888,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     marginBottom: 4,
+  },
+  addressWarning: {
+    color: "#ffcc80",
+    fontSize: 12,
+    marginTop: 6,
   },
   formSection: {
     backgroundColor: "#2d2117",

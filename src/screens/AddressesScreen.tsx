@@ -11,6 +11,8 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import ENV from "../config/env";
 import logger from '../utils/logger';
+import PostalCodePicker from "../components/PostalCodePicker";
+import { AllowedPostalCode } from "../types";
 type Address = {
   id: number;
   label: string;
@@ -31,6 +33,8 @@ const AddressesScreen = () => {
     phone: "",
   });
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [allowedPostalCodes, setAllowedPostalCodes] = useState<AllowedPostalCode[]>([]);
+  const [postalCodesLoading, setPostalCodesLoading] = useState(true);
 
   const fetchAddresses = useCallback(async () => {
     try {
@@ -47,6 +51,41 @@ const AddressesScreen = () => {
   useEffect(() => {
     fetchAddresses();
   }, [fetchAddresses]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchPostalCodes = async () => {
+      try {
+        const res = await fetch(`${ENV.API_URL}/api/postal-codes`);
+        if (!res.ok) throw new Error("Failed to load delivery area");
+        const data: AllowedPostalCode[] = await res.json();
+        if (isMounted) {
+          setAllowedPostalCodes(data || []);
+        }
+      } catch (err) {
+        logger.error("Error fetching postal codes:", err);
+      } finally {
+        if (isMounted) {
+          setPostalCodesLoading(false);
+        }
+      }
+    };
+
+    fetchPostalCodes();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (allowedPostalCodes.length > 0 && !form.postalCode) {
+      setForm((prev) => ({
+        ...prev,
+        postalCode: allowedPostalCodes[0].postalCode,
+      }));
+    }
+  }, [allowedPostalCodes, form.postalCode]);
 
   const handleSave = async () => {
     try {
@@ -114,23 +153,35 @@ const AddressesScreen = () => {
       <FlatList
         data={addresses}
         keyExtractor={(item: Address) => item.id.toString()}
-        renderItem={({ item }: { item: Address }) => (
-          <View style={styles.addressCard}>
-            <Text style={styles.label}>{item.label}</Text>
-            <Text>
-              {item.street}, {item.city}, {item.postalCode}
-            </Text>
-            <Text>{item.phone}</Text>
-            <View style={styles.actions}>
-              <Button title="Edit" onPress={() => handleEdit(item)} />
-              <Button
-                title="Delete"
-                color="red"
-                onPress={() => handleDelete(item.id)}
-              />
+        renderItem={({ item }: { item: Address }) => {
+          const deliverable =
+            allowedPostalCodes.length === 0 ||
+            allowedPostalCodes.some(
+              (code) => code.postalCode === item.postalCode
+            );
+          return (
+            <View style={styles.addressCard}>
+              <Text style={styles.label}>{item.label}</Text>
+              <Text>
+                {item.street}, {item.city}, {item.postalCode}
+              </Text>
+              <Text>{item.phone}</Text>
+              {!deliverable && (
+                <Text style={styles.warningText}>
+                  Outside current delivery area
+                </Text>
+              )}
+              <View style={styles.actions}>
+                <Button title="Edit" onPress={() => handleEdit(item)} />
+                <Button
+                  title="Delete"
+                  color="red"
+                  onPress={() => handleDelete(item.id)}
+                />
+              </View>
             </View>
-          </View>
-        )}
+          );
+        }}
       />
       <View style={styles.form}>
         <Text style={styles.formTitle}>
@@ -154,11 +205,24 @@ const AddressesScreen = () => {
           onChangeText={(v) => setForm((f) => ({ ...f, city: v }))}
           style={styles.input}
         />
-        <TextInput
-          placeholder="Postal Code"
+        <PostalCodePicker
           value={form.postalCode}
-          onChangeText={(v) => setForm((f) => ({ ...f, postalCode: v }))}
-          style={styles.input}
+          onSelect={(postalCode) =>
+            setForm((prev) => ({ ...prev, postalCode }))
+          }
+          postalCodes={allowedPostalCodes}
+          label="Postal Code"
+          placeholder={
+            postalCodesLoading
+              ? "Loading postal codes..."
+              : allowedPostalCodes.length
+              ? "Select Postal Code"
+              : "No postal codes available"
+          }
+          helperText="Only these postal codes can order"
+          disabled={allowedPostalCodes.length === 0}
+          modalTitle="Select Delivery Postal Code"
+          closeLabel="Close"
         />
         <TextInput
           placeholder="Phone"
@@ -202,6 +266,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 8,
+  },
+  warningText: {
+    color: "#d97706",
+    marginTop: 4,
+    fontSize: 12,
+    fontWeight: "600",
   },
   form: {
     marginTop: 24,

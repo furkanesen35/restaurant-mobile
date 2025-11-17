@@ -10,6 +10,7 @@ import {
   TextInput,
   Modal,
   Image,
+  Switch,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Card, useTheme, Button, FAB } from "react-native-paper";
@@ -19,6 +20,7 @@ import ENV from "../config/env";
 import QRTokenManagement from "../components/QRTokenManagement";
 import { useTranslation } from "../hooks/useTranslation";
 import logger from '../utils/logger';
+import { AllowedPostalCode } from "../types";
 const STATUS_OPTIONS = [
   "pending",
   "confirmed",
@@ -32,7 +34,9 @@ const AdminScreen = () => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const { token, user, updateUser } = useAuth();
-  const [activeTab, setActiveTab] = useState<"orders" | "menu" | "qr" | "settings">("orders");
+  const [activeTab, setActiveTab] = useState<
+    "orders" | "menu" | "qr" | "settings" | "delivery"
+  >("orders");
   const [orders, setOrders] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [menuItems, setMenuItems] = useState<any[]>([]);
@@ -65,6 +69,21 @@ const AdminScreen = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
     null
   );
+
+  // Delivery postal code management
+  const [postalCodes, setPostalCodes] = useState<AllowedPostalCode[]>([]);
+  const [postalCodesLoading, setPostalCodesLoading] = useState(false);
+  const [postalCodeModalVisible, setPostalCodeModalVisible] = useState(false);
+  const [editingPostalCode, setEditingPostalCode] = useState<AllowedPostalCode | null>(null);
+  const [postalCodeForm, setPostalCodeForm] = useState({
+    postalCode: "",
+    city: "Bremerhaven",
+    district: "",
+    radiusKm: "",
+    sortOrder: "",
+    isActive: true,
+  });
+  const [savingPostalCode, setSavingPostalCode] = useState(false);
 
   // Settings states
   const [minOrderValue, setMinOrderValue] = useState("");
@@ -127,6 +146,32 @@ const AdminScreen = () => {
       setMenuItems([]);
     }
   }, []);
+
+  const fetchPostalCodes = useCallback(async () => {
+    if (!token) return;
+    try {
+      setPostalCodesLoading(true);
+      const response = await fetch(`${ENV.API_URL}/api/postal-codes/admin`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to load postal codes");
+      }
+      const data: AllowedPostalCode[] = await response.json();
+      setPostalCodes(data || []);
+    } catch (err: any) {
+      logger.error("Failed to fetch postal codes:", err);
+      Alert.alert(
+        t("common.error"),
+        err.message || t("admin.delivery.loadError")
+      );
+    } finally {
+      setPostalCodesLoading(false);
+    }
+  }, [token, t]);
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -222,6 +267,8 @@ const AdminScreen = () => {
         fetchOrders();
       } else if (activeTab === "settings") {
         fetchSettings();
+      } else if (activeTab === "delivery") {
+        fetchPostalCodes();
       } else {
         fetchCategories();
         fetchMenuItems();
@@ -236,6 +283,7 @@ const AdminScreen = () => {
     fetchCategories,
     fetchMenuItems,
     fetchSettings,
+    fetchPostalCodes,
   ]);
 
   const updateStatus = async (
@@ -432,6 +480,142 @@ const AdminScreen = () => {
     ]);
   };
 
+  const resetPostalCodeForm = () => {
+    setPostalCodeForm({
+      postalCode: "",
+      city: "Bremerhaven",
+      district: "",
+      radiusKm: "",
+      sortOrder: "",
+      isActive: true,
+    });
+    setEditingPostalCode(null);
+  };
+
+  const openPostalCodeModal = (entry?: AllowedPostalCode) => {
+    if (entry) {
+      setEditingPostalCode(entry);
+      setPostalCodeForm({
+        postalCode: entry.postalCode,
+        city: entry.city,
+        district: entry.district || "",
+        radiusKm: entry.radiusKm ? entry.radiusKm.toString() : "",
+        sortOrder:
+          entry.sortOrder === undefined ? "" : entry.sortOrder.toString(),
+        isActive: entry.isActive !== false,
+      });
+    } else {
+      resetPostalCodeForm();
+    }
+    setPostalCodeModalVisible(true);
+  };
+
+  const closePostalCodeModal = () => {
+    setPostalCodeModalVisible(false);
+    resetPostalCodeForm();
+  };
+
+  const savePostalCodeEntry = async () => {
+    if (!postalCodeForm.postalCode.trim() || !postalCodeForm.city.trim()) {
+      Alert.alert(t("common.error"), t("admin.delivery.formRequired"));
+      return;
+    }
+
+    try {
+      setSavingPostalCode(true);
+      const parsedRadius = postalCodeForm.radiusKm
+        ? parseFloat(postalCodeForm.radiusKm)
+        : null;
+      const parsedSortOrder = postalCodeForm.sortOrder
+        ? parseInt(postalCodeForm.sortOrder, 10)
+        : 0;
+      const payload = {
+        postalCode: postalCodeForm.postalCode.trim(),
+        city: postalCodeForm.city.trim(),
+        district: (postalCodeForm.district || "").trim() || null,
+        radiusKm:
+          parsedRadius !== null && !Number.isNaN(parsedRadius)
+            ? parsedRadius
+            : null,
+        sortOrder: Number.isNaN(parsedSortOrder) ? 0 : parsedSortOrder,
+        isActive: postalCodeForm.isActive,
+      };
+
+      const method = editingPostalCode ? "PUT" : "POST";
+      const url = editingPostalCode
+        ? `${ENV.API_URL}/api/postal-codes/${editingPostalCode.id}`
+        : `${ENV.API_URL}/api/postal-codes`;
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to save postal code");
+      }
+
+      Alert.alert(t("common.success"), t("admin.delivery.saveSuccess"));
+      setPostalCodeModalVisible(false);
+      resetPostalCodeForm();
+      fetchPostalCodes();
+    } catch (err: any) {
+      logger.error("Failed to save postal code", err);
+      Alert.alert(
+        t("common.error"),
+        err.message || t("admin.delivery.saveError")
+      );
+    } finally {
+      setSavingPostalCode(false);
+    }
+  };
+
+  const confirmDeletePostalCode = (entry: AllowedPostalCode) => {
+    if (!entry.id) return;
+    Alert.alert(
+      t("admin.delivery.deleteConfirmTitle"),
+      t("admin.delivery.deleteConfirmMessage", { postalCode: entry.postalCode }),
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("common.delete"),
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const response = await fetch(
+                `${ENV.API_URL}/api/postal-codes/${entry.id}`,
+                {
+                  method: "DELETE",
+                  headers: { Authorization: `Bearer ${token}` },
+                }
+              );
+              if (!response.ok) {
+                const text = await response.text();
+                throw new Error(text || "Failed to delete postal code");
+              }
+              Alert.alert(
+                t("common.success"),
+                t("admin.delivery.deleteSuccess")
+              );
+              fetchPostalCodes();
+            } catch (err: any) {
+              logger.error("Failed to delete postal code", err);
+              Alert.alert(
+                t("common.error"),
+                err.message || t("admin.delivery.deleteError")
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
+
   if (!user || user.role !== "admin") {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -484,6 +668,19 @@ const AdminScreen = () => {
               ]}
             >
               {t("admin.tabs.qr")}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === "delivery" && styles.activeTab]}
+            onPress={() => setActiveTab("delivery")}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "delivery" && styles.activeTabText,
+              ]}
+            >
+              {t("admin.tabs.delivery")}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -896,6 +1093,90 @@ const AdminScreen = () => {
           </>
         )}
 
+        {/* Delivery Tab */}
+        {activeTab === "delivery" && (
+          <ScrollView>
+            <Text style={[styles.title, { color: "#e0b97f" }]}>
+              {t("admin.delivery.title")}
+            </Text>
+            <Text style={styles.settingDescription}>
+              {t("admin.delivery.description")}
+            </Text>
+
+            <TouchableOpacity
+              style={styles.addPostalButton}
+              onPress={() => openPostalCodeModal()}
+            >
+              <Text style={styles.addBtnText}>{t("admin.delivery.addButton")}</Text>
+            </TouchableOpacity>
+
+            {postalCodesLoading ? (
+              <Text style={{ color: colors.onBackground, marginTop: 16 }}>
+                {t("common.loading")}
+              </Text>
+            ) : postalCodes.length === 0 ? (
+              <Text
+                style={{
+                  color: colors.onBackground,
+                  textAlign: "center",
+                  marginTop: 24,
+                }}
+              >
+                {t("admin.delivery.empty")}
+              </Text>
+            ) : (
+              postalCodes.map((code) => (
+                <Card key={code.id || code.postalCode} style={styles.card}>
+                  <Card.Content>
+                    <View style={styles.postalHeader}>
+                      <Text style={styles.postalCodeValue}>{code.postalCode}</Text>
+                      <View
+                        style={[
+                          styles.statusPill,
+                          code.isActive !== false
+                            ? styles.statusActive
+                            : styles.statusInactive,
+                        ]}
+                      >
+                        <Text style={styles.statusPillText}>
+                          {code.isActive !== false
+                            ? t("common.active")
+                            : t("common.inactive")}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={styles.postalMeta}>
+                      {[code.city, code.district].filter(Boolean).join(" • ") ||
+                        code.city}
+                    </Text>
+                    {code.radiusKm ? (
+                      <Text style={styles.postalMeta}>
+                        {t("admin.delivery.radiusLabel", {
+                          radius: code.radiusKm,
+                        })}
+                      </Text>
+                    ) : null}
+                    <View style={styles.itemActions}>
+                      <TouchableOpacity
+                        style={styles.editBtn}
+                        onPress={() => openPostalCodeModal(code)}
+                      >
+                        <Text style={styles.btnText}>{t("common.edit")}</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.deleteBtn}
+                        onPress={() => confirmDeletePostalCode(code)}
+                      >
+                        <Text style={styles.btnText}>{t("common.delete")}</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </Card.Content>
+                </Card>
+              ))
+            )}
+          </ScrollView>
+        )}
+
         {/* Category Modal */}
         <Modal
           visible={showCategoryModal}
@@ -1106,6 +1387,99 @@ const AdminScreen = () => {
           </View>
         </Modal>
 
+        {/* Postal Code Modal */}
+        <Modal
+          visible={postalCodeModalVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={closePostalCodeModal}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>
+                {editingPostalCode
+                  ? t("admin.delivery.editTitle")
+                  : t("admin.delivery.addTitle")}
+              </Text>
+              <TextInput
+                style={styles.input}
+                placeholder={t("admin.delivery.postalPlaceholder")}
+                placeholderTextColor="#999"
+                value={postalCodeForm.postalCode}
+                onChangeText={(text) =>
+                  setPostalCodeForm((prev) => ({ ...prev, postalCode: text }))
+                }
+              />
+              <TextInput
+                style={styles.input}
+                placeholder={t("admin.delivery.cityPlaceholder")}
+                placeholderTextColor="#999"
+                value={postalCodeForm.city}
+                onChangeText={(text) =>
+                  setPostalCodeForm((prev) => ({ ...prev, city: text }))
+                }
+              />
+              <TextInput
+                style={styles.input}
+                placeholder={t("admin.delivery.districtPlaceholder")}
+                placeholderTextColor="#999"
+                value={postalCodeForm.district}
+                onChangeText={(text) =>
+                  setPostalCodeForm((prev) => ({ ...prev, district: text }))
+                }
+              />
+              <TextInput
+                style={styles.input}
+                placeholder={t("admin.delivery.radiusPlaceholder")}
+                placeholderTextColor="#999"
+                keyboardType="numeric"
+                value={postalCodeForm.radiusKm}
+                onChangeText={(text) =>
+                  setPostalCodeForm((prev) => ({ ...prev, radiusKm: text }))
+                }
+              />
+              <TextInput
+                style={styles.input}
+                placeholder={t("admin.delivery.sortPlaceholder")}
+                placeholderTextColor="#999"
+                keyboardType="number-pad"
+                value={postalCodeForm.sortOrder}
+                onChangeText={(text) =>
+                  setPostalCodeForm((prev) => ({ ...prev, sortOrder: text }))
+                }
+              />
+              <View style={styles.toggleContainer}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.toggleLabel}>
+                    {t("admin.delivery.activeLabel")}
+                  </Text>
+                  <Text style={[styles.toggleSubtext, { color: "#b8a68a" }]}>
+                    {t("admin.delivery.activeHint")}
+                  </Text>
+                </View>
+                <Switch
+                  value={postalCodeForm.isActive}
+                  onValueChange={(value) =>
+                    setPostalCodeForm((prev) => ({ ...prev, isActive: value }))
+                  }
+                  trackColor={{ false: "#767577", true: "#4caf50" }}
+                  thumbColor={postalCodeForm.isActive ? "#fff" : "#f4f3f4"}
+                />
+              </View>
+              <View style={styles.modalActions}>
+                <Button onPress={closePostalCodeModal}>{t("common.cancel")}</Button>
+                <Button
+                  mode="contained"
+                  onPress={savePostalCodeEntry}
+                  disabled={savingPostalCode}
+                >
+                  {savingPostalCode ? t("common.loading") : t("common.save")}
+                </Button>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
         {/* QR Codes Tab */}
         {activeTab === "qr" && <QRTokenManagement />}
 
@@ -1248,6 +1622,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: 150,
   },
+  addPostalButton: {
+    backgroundColor: "#e0b97f",
+    borderRadius: 8,
+    padding: 14,
+    alignItems: "center",
+    marginBottom: 16,
+  },
   addBtnText: {
     color: "#231a13",
     fontWeight: "bold",
@@ -1284,6 +1665,59 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#999",
     marginTop: 4,
+  },
+  postalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  postalCodeValue: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#fffbe8",
+  },
+  statusPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  statusActive: {
+    borderColor: "#4caf50",
+    backgroundColor: "rgba(76, 175, 80, 0.15)",
+  },
+  statusInactive: {
+    borderColor: "#d32f2f",
+    backgroundColor: "rgba(211, 47, 47, 0.15)",
+  },
+  statusPillText: {
+    color: "#fffbe8",
+    fontWeight: "600",
+    fontSize: 12,
+  },
+  postalMeta: {
+    color: "#b8a68a",
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  toggleContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#3a2c1f",
+  },
+  toggleLabel: {
+    color: "#fffbe8",
+    fontWeight: "600",
+    fontSize: 16,
+  },
+  toggleSubtext: {
+    color: "#b8a68a",
+    fontSize: 12,
   },
   itemActions: {
     flexDirection: "row",

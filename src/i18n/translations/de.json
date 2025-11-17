@@ -17,7 +17,9 @@
     "search": "Suchen",
     "filter": "Filter",
     "clear": "Löschen",
-    "apply": "Anwenden"
+    "apply": "Anwenden",
+    "active": "Aktiv",
+    "inactive": "Inaktiv"
   },
   "auth": {
     "login": "Anmelden",
@@ -65,7 +67,31 @@
     "glutenFree": "Glutenfrei",
     "spicy": "Scharf",
     "outOfStock": "Nicht verfügbar",
-    "popular": "Beliebt",
+    },
+    "delivery": {
+      "title": "Liefer-PLZ",
+      "description": "Nur Adressen innerhalb dieser Postleitzahlen können liefern.",
+      "addButton": "PLZ hinzufügen",
+      "empty": "Es wurden noch keine Liefer-PLZ definiert.",
+      "loadError": "Liefer-PLZ konnten nicht geladen werden.",
+      "saveSuccess": "PLZ erfolgreich gespeichert.",
+      "saveError": "PLZ konnte nicht gespeichert werden.",
+      "deleteConfirmTitle": "PLZ löschen?",
+      "deleteConfirmMessage": "Soll die PLZ {{postalCode}} aus der Lieferliste entfernt werden?",
+      "deleteSuccess": "PLZ wurde gelöscht.",
+      "deleteError": "PLZ konnte nicht gelöscht werden.",
+      "formRequired": "PLZ und Stadt sind erforderlich.",
+      "editTitle": "PLZ bearbeiten",
+      "addTitle": "Neue PLZ",
+      "postalPlaceholder": "PLZ (z. B. 27568)",
+      "cityPlaceholder": "Stadt",
+      "districtPlaceholder": "Stadtteil / Hinweis (optional)",
+      "radiusPlaceholder": "Radius in km (optional)",
+      "sortPlaceholder": "Sortierreihenfolge (optional)",
+      "activeLabel": "Für Bestellungen aktivieren",
+      "activeHint": "Deaktivieren, um Lieferungen für diese PLZ zu pausieren.",
+      "radiusLabel": "Ca. {{radius}} km Reichweite"
+    }
     "new": "Neu",
     "noItemsFound": "Keine Artikel gefunden",
     "price": "Preis",
@@ -230,6 +256,7 @@
       "orders": "Bestellungen",
       "menu": "Menü",
       "qr": "QR-Codes",
+      "delivery": "Liefergebiete",
       "settings": "Einstellungen"
     },
     "orders": {
