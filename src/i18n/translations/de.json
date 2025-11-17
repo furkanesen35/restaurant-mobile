@@ -87,6 +87,8 @@
     "clearCart": "Warenkorb leeren",
     "itemAdded": "Artikel hinzugefügt",
     "itemRemoved": "Artikel entfernt",
+    "loginRequired": "Bitte melde dich an, um deinen Warenkorb zu verwalten",
+    "updateFailed": "Der Warenkorb konnte nicht aktualisiert werden. Bitte versuche es erneut.",
     "quantity": "Menge"
   },
   "checkout": {

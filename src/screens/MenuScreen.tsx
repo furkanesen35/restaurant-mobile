@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
   Modal,
   Pressable,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Card, useTheme } from "react-native-paper";
@@ -83,6 +84,35 @@ const MenuScreen = () => {
     }
     commitSearch(searchInput);
   }, [searchInput, commitSearch]);
+
+  const handleCartError = useCallback(
+    (error: any) => {
+      const code = error?.code || error?.message;
+      if (code === "LOGIN_REQUIRED") {
+        Alert.alert(t("auth.login"), t("cart.loginRequired"));
+        return;
+      }
+      Alert.alert(t("common.error"), t("cart.updateFailed"));
+    },
+    [t]
+  );
+
+  const handleAddToCart = useCallback(
+    async (item: MenuItem) => {
+      try {
+        await addToCart({
+          menuItemId: item.id,
+          name: item.name,
+          price: item.price,
+          imageUrl: item.imageUrl ?? null,
+        });
+        Alert.alert(t("cart.itemAdded"), item.name);
+      } catch (error: any) {
+        handleCartError(error);
+      }
+    },
+    [addToCart, handleCartError, t]
+  );
 
   // Debounce search query with a friendlier delay and indicator
   useEffect(() => {
@@ -355,17 +385,10 @@ const MenuScreen = () => {
       <Card.Content>
         <Text style={{ color: colors.onBackground }}>{item.description}</Text>
         <DietaryBadges item={item} />
-        <TouchableOpacity
-          style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
-          onPress={() =>
-            addToCart({
-              menuItemId: item.id,
-              name: item.name,
-              price: item.price,
-              imageUrl: item.imageUrl ?? null,
-            })
-          }
-        >
+          <TouchableOpacity
+            style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
+            onPress={() => handleAddToCart(item)}
+          >
           <Text style={[styles.addToCartButtonText, { color: colors.onPrimary }]}>
             {t("menu.addToCart")}
           </Text>

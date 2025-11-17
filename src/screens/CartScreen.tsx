@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -13,9 +13,9 @@ import { useCart } from "../contexts/CartContext";
 import { useTheme, Card } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigation, useIsFocused } from "@react-navigation/native";
-import axios from "axios";
 import { useTranslation } from "../hooks/useTranslation";
 import logger from '../utils/logger';
+import ENV from "../config/env";
 const CartScreen = () => {
   const { cart, updateQuantity, removeFromCart } = useCart();
   const { colors } = useTheme();
@@ -26,18 +26,63 @@ const CartScreen = () => {
   const [minOrderValue, setMinOrderValue] = useState<number>(0);
 
   useEffect(() => {
-    // Fetch minimum order value setting when screen is focused
-    if (isFocused) {
-      axios
-        .get("http://192.168.1.110:3000/api/settings/minOrderValue")
-        .then((response: any) => {
-          setMinOrderValue(parseFloat(response.data.value));
-        })
-        .catch((error: any) => {
-          logger.warn("Could not fetch minimum order value:", error);
-        });
-    }
+    if (!isFocused) return;
+
+    let isMounted = true;
+
+    const fetchMinOrder = async () => {
+      try {
+        const response = await fetch(`${ENV.API_URL}/api/settings/minOrderValue`);
+        if (!response.ok) throw new Error("Failed to fetch");
+        const data = await response.json();
+        if (isMounted && data?.value) {
+          setMinOrderValue(parseFloat(data.value));
+        }
+      } catch (error) {
+        logger.warn("Could not fetch minimum order value:", error);
+      }
+    };
+
+    fetchMinOrder();
+
+    return () => {
+      isMounted = false;
+    };
   }, [isFocused]);
+
+  const handleCartError = useCallback(
+    (error: any) => {
+      const code = error?.code || error?.message;
+      if (code === "LOGIN_REQUIRED") {
+        Alert.alert(t("auth.login"), t("cart.loginRequired"));
+        return;
+      }
+      Alert.alert(t("common.error"), t("cart.updateFailed"));
+    },
+    [t]
+  );
+
+  const handleUpdateQuantity = useCallback(
+    async (menuItemId: string, quantity: number) => {
+      try {
+        await updateQuantity(menuItemId, quantity);
+      } catch (error) {
+        handleCartError(error);
+      }
+    },
+    [updateQuantity, handleCartError]
+  );
+
+  const handleRemoveItem = useCallback(
+    async (menuItemId: string) => {
+      try {
+        await removeFromCart(menuItemId);
+      } catch (error) {
+        handleCartError(error);
+      }
+    },
+    [removeFromCart, handleCartError]
+  );
 
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const isBelowMinimum = minOrderValue > 0 && total < minOrderValue;
@@ -99,7 +144,7 @@ const CartScreen = () => {
                   <View style={styles.quantityGroup}>
                     <TouchableOpacity
                       onPress={() =>
-                        updateQuantity(item.menuItemId, item.quantity - 1)
+                        handleUpdateQuantity(item.menuItemId, item.quantity - 1)
                       }
                       style={styles.qtyBtn}
                     >
@@ -108,7 +153,7 @@ const CartScreen = () => {
                     <Text style={styles.qtyText}>{item.quantity}</Text>
                     <TouchableOpacity
                       onPress={() =>
-                        updateQuantity(item.menuItemId, item.quantity + 1)
+                        handleUpdateQuantity(item.menuItemId, item.quantity + 1)
                       }
                       style={styles.qtyBtn}
                     >
@@ -116,7 +161,7 @@ const CartScreen = () => {
                     </TouchableOpacity>
                   </View>
                   <TouchableOpacity
-                    onPress={() => removeFromCart(item.menuItemId)}
+                    onPress={() => handleRemoveItem(item.menuItemId)}
                     style={styles.removeBtn}
                   >
                     <Text style={styles.removeBtnText}>

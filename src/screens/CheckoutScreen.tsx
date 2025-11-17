@@ -367,7 +367,11 @@ const CheckoutScreen = () => {
       }
 
       // Success!
-      clearCart();
+      try {
+        await clearCart();
+      } catch (cartError) {
+        logger.warn("Failed to clear cart after order", cartError);
+      }
       Alert.alert(
         "Order placed!",
         pointsEarned > 0

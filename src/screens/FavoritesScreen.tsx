@@ -78,15 +78,34 @@ const FavoritesScreen = () => {
     }
   };
 
-  const handleAddToCart = (item: MenuItem) => {
-    addToCart({
-      menuItemId: item.id,
-      name: item.name,
-      price: item.price,
-      imageUrl: item.imageUrl ?? null,
-    });
-    Alert.alert(t("cart.itemAdded"), `${item.name} ${t("cart.itemAdded")}`);
-  };
+  const handleCartError = useCallback(
+    (error: any) => {
+      const code = error?.code || error?.message;
+      if (code === "LOGIN_REQUIRED") {
+        Alert.alert(t("auth.login"), t("cart.loginRequired"));
+        return;
+      }
+      Alert.alert(t("common.error"), t("cart.updateFailed"));
+    },
+    [t]
+  );
+
+  const handleAddToCart = useCallback(
+    async (item: MenuItem) => {
+      try {
+        await addToCart({
+          menuItemId: item.id,
+          name: item.name,
+          price: item.price,
+          imageUrl: item.imageUrl ?? null,
+        });
+        Alert.alert(t("cart.itemAdded"), item.name);
+      } catch (error: any) {
+        handleCartError(error);
+      }
+    },
+    [addToCart, handleCartError, t]
+  );
 
   const handleRefresh = () => {
     fetchFavorites(true);

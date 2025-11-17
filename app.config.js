@@ -18,6 +18,8 @@ export default {
     },
     ios: {
       supportsTablet: true,
+      bundleIdentifier: "com.burgermeister.restaurantmobile",
+      buildNumber: "1.0.0",
     },
     android: {
       package: "com.burgermeister_schmidt.restaurantmobile",

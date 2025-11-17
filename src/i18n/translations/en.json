@@ -87,6 +87,8 @@
     "clearCart": "Clear Cart",
     "itemAdded": "Item added",
     "itemRemoved": "Item removed",
+    "loginRequired": "Please log in to manage your cart",
+    "updateFailed": "We couldn't update your cart. Please try again.",
     "quantity": "Quantity"
   },
   "checkout": {
