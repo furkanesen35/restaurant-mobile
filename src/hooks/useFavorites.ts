@@ -19,8 +19,11 @@ export const useFavorites = () => {
         (response.data || []).map((fav) => fav.menuItem.id)
       );
       setFavorites(favoriteIds);
-    } catch (err) {
-      logger.error("Error fetching favorites:", err);
+    } catch (err: any) {
+      // Don't log 401 errors as they're expected when not logged in
+      if (err?.statusCode !== 401) {
+        logger.error("Error fetching favorites:", err);
+      }
     } finally {
       setLoading(false);
     }
@@ -31,7 +34,12 @@ export const useFavorites = () => {
   }, [fetchFavorites]);
 
   const toggleFavorite = async (menuItemId: string) => {
-    if (!user || !token) return;
+    if (!user || !token) {
+      const error = new Error("LOGIN_REQUIRED") as Error & { code?: string; statusCode?: number };
+      error.code = "LOGIN_REQUIRED";
+      error.statusCode = 401;
+      throw error;
+    }
 
     const isFavorite = favorites.has(menuItemId);
 
@@ -52,8 +60,11 @@ export const useFavorites = () => {
       } else {
         await apiClient.post("/api/favorites", { menuItemId });
       }
-    } catch (err) {
-      logger.error("Error toggling favorite:", err);
+    } catch (err: any) {
+      // Don't log 401 errors as they're expected when not logged in
+      if (err?.statusCode !== 401) {
+        logger.error("Error toggling favorite:", err);
+      }
       // Revert optimistic update on error
       setFavorites((prev) => {
         const newSet = new Set(prev);

@@ -88,7 +88,8 @@ const MenuScreen = () => {
   const handleCartError = useCallback(
     (error: any) => {
       const code = error?.code || error?.message;
-      if (code === "LOGIN_REQUIRED") {
+      const statusCode = error?.statusCode;
+      if (code === "LOGIN_REQUIRED" || statusCode === 401) {
         Alert.alert(t("auth.login"), t("cart.loginRequired"));
         return;
       }
@@ -110,7 +111,22 @@ const MenuScreen = () => {
         handleCartError(error);
       }
     },
-    [addToCart, handleCartError, t]
+    [addToCart, handleCartError]
+  );
+
+  const handleToggleFavorite = useCallback(
+    async (menuItemId: string) => {
+      try {
+        await toggleFavorite(menuItemId);
+      } catch (error: any) {
+        const statusCode = error?.statusCode;
+        const code = error?.code;
+        if (code === "LOGIN_REQUIRED" || statusCode === 401) {
+          Alert.alert(t("auth.login"), t("cart.loginRequired"));
+        }
+      }
+    },
+    [toggleFavorite, t]
   );
 
   // Debounce search query with a friendlier delay and indicator
@@ -376,7 +392,7 @@ const MenuScreen = () => {
         }
         subtitle={`€${item.price.toFixed(2)}`}
         right={() => (
-          <TouchableOpacity onPress={() => toggleFavorite(item.id)} style={{ marginRight: 8 }}>
+          <TouchableOpacity onPress={() => handleToggleFavorite(item.id)} style={{ marginRight: 8 }}>
             <Text style={{ fontSize: 24 }}>{isFavorite(item.id) ? "❤️" : "🤍"}</Text>
           </TouchableOpacity>
         )}

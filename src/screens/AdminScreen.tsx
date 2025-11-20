@@ -153,7 +153,10 @@ const AdminScreen = () => {
       logger.info(`Admin orders fetched: ${data.length} orders`);
       setOrders(data);
     } catch (err: any) {
-      logger.error("Admin fetch error:", err);
+      // Don't log 401 errors as they're expected when not admin
+      if (!err.message?.includes('401')) {
+        logger.error("Admin fetch error:", err);
+      }
       Alert.alert("Error", err.message || "Failed to fetch orders");
     } finally {
       setLoading(false);

@@ -79,8 +79,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       );
       const payload = response.data?.items || (response.data as unknown as ApiCartItem[]);
       setCart(normalizeCartItems(payload));
-    } catch (error) {
-      logger.error("Failed to load cart", error);
+    } catch (error: any) {
+      // Don't log 401 errors as they're expected when not logged in
+      if (error?.statusCode !== 401) {
+        logger.error("Failed to load cart", error);
+      }
     } finally {
       setLoading(false);
       setInitialized(true);
@@ -113,8 +116,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         );
         const payload = response.data?.items || [];
         setCart(normalizeCartItems(payload));
-      } catch (error) {
-        logger.error("Failed to add to cart", error);
+      } catch (error: any) {
+        // Don't log 401 errors as they're expected when not logged in
+        if (error?.statusCode !== 401 && error?.code !== "LOGIN_REQUIRED") {
+          logger.error("Failed to add to cart", error);
+        }
         throw error;
       } finally {
         setLoading(false);

@@ -47,7 +47,10 @@ const OrdersScreen = () => {
       } catch (err: any) {
         const errorMessage = parseErrorMessage(err);
         setError(errorMessage);
-        logger.error("Error fetching orders:", err);
+        // Don't log 401 errors as they're expected when not logged in
+        if (err?.statusCode !== 401) {
+          logger.error("Error fetching orders:", err);
+        }
       } finally {
         setLoading(false);
         setRefreshing(false);

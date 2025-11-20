@@ -110,17 +110,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           storedToken = localStorage.getItem("token");
           storedUser = localStorage.getItem("user");
         }
-        if (storedToken) {
-          setToken(storedToken);
-          // Optionally validate token here
-        }
-        if (storedUser) {
+        if (storedToken && storedUser) {
           try {
             const parsedUser = JSON.parse(storedUser);
+            setToken(storedToken);
             setUser(parsedUser);
+            
+            // Validate token with backend
+            try {
+              await apiClient.get("/auth/me");
+              // Token is valid, keep user logged in
+              logger.info("Session restored successfully");
+            } catch (validationError: any) {
+              // Token is invalid (401, 403, etc.) - clear session
+              logger.info("Stored token is invalid, clearing session");
+              await AsyncStorage.removeItem("token");
+              await AsyncStorage.removeItem("user");
+              await AsyncStorage.removeItem("refreshToken");
+              if (typeof window !== "undefined" && window.localStorage) {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+              }
+              setToken(null);
+              setUser(null);
+            }
           } catch (parseError) {
             logger.warn("Failed to parse stored user data:", parseError);
             await AsyncStorage.removeItem("user");
+            setUser(null);
           }
         }
       } catch (error) {

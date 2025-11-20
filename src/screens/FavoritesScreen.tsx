@@ -50,7 +50,10 @@ const FavoritesScreen = () => {
       } catch (err: any) {
         const errorMessage = parseErrorMessage(err);
         setError(errorMessage);
-        logger.error("Error fetching favorites:", err);
+        // Don't log 401 errors as they're expected when not logged in
+        if (err?.statusCode !== 401) {
+          logger.error("Error fetching favorites:", err);
+        }
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -73,7 +76,10 @@ const FavoritesScreen = () => {
       );
       Alert.alert(t("common.success"), t("menu.removeFromFavorites"));
     } catch (err: any) {
-      logger.error("Error removing favorite:", err);
+      // Don't log 401 errors as they're expected when not logged in
+      if (err?.statusCode !== 401) {
+        logger.error("Error removing favorite:", err);
+      }
       Alert.alert(t("common.error"), t("errors.somethingWentWrong"));
     }
   };

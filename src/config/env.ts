@@ -2,7 +2,7 @@
 import logger from '../utils/logger';
 
 const ENV = {
-  API_URL: process.env.EXPO_PUBLIC_API_URL || "http://192.168.1.110:3000",
+  API_URL: process.env.EXPO_PUBLIC_API_URL || "http://40.67.194.111:3000",
   STRIPE_PUBLISHABLE_KEY: process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || "",
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || "",
 };
