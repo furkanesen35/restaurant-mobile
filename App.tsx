@@ -40,7 +40,7 @@ if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental
 }
 
 const linking = {
-  prefixes: ["restaurantapp://", "exp://192.168.1.110:8081"],
+  prefixes: ["burgermeister://", "restaurantapp://", "exp://192.168.1.110:8081"],
   config: {
     screens: {
       Login: "login",
