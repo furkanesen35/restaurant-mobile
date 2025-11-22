@@ -63,6 +63,11 @@ const linking = {
 };
 
 export default function App() {
+  React.useEffect(() => {
+    console.log("[ENV] API_URL ->", ENV.API_URL);
+    console.log("[ENV] Stripe key set ->", !!ENV.STRIPE_PUBLISHABLE_KEY);
+  }, []);
+
   return (
     <SafeAreaProvider>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />

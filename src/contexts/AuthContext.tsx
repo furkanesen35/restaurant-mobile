@@ -118,10 +118,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             
             // Validate token with backend
             try {
+              console.log('[Auth] Validating stored token...');
               await apiClient.get("/auth/me");
               // Token is valid, keep user logged in
               logger.info("Session restored successfully");
             } catch (validationError: any) {
+              console.log('[Auth] Token validation failed:', validationError);
               // Token is invalid (401, 403, etc.) - clear session
               logger.info("Stored token is invalid, clearing session");
               await AsyncStorage.removeItem("token");
@@ -200,16 +202,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     setError(null);
     try {
+      console.log('[Auth] Attempting login for:', credentials.email);
       const response = await apiClient.post<AuthResponse>(
         "/auth/login",
         credentials
       );
+      console.log('[Auth] Login response:', response);
       if (response.data) {
         await storeAuthData(response.data);
       } else {
         throw new Error("Login failed - no data received");
       }
     } catch (error) {
+      console.log('[Auth] Login error details:', error);
       const apiError = error as ApiError;
       const errorMessage =
         apiError.message || "Login failed. Please try again.";
@@ -225,16 +230,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     setError(null);
     try {
+      console.log('[Auth] Attempting register for:', credentials.email);
       const response = await apiClient.post<AuthResponse>(
         "/auth/register",
         credentials
       );
+      console.log('[Auth] Register response:', response);
       if (response.data) {
         await storeAuthData(response.data);
       } else {
         throw new Error("Registration failed - no data received");
       }
     } catch (error) {
+      console.log('[Auth] Register error details:', error);
       const apiError = error as ApiError;
       const errorMessage =
         apiError.message || "Registration failed. Please try again.";
