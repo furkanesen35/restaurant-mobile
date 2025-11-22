@@ -33,6 +33,7 @@ export default {
         "ACCESS_NETWORK_STATE",
         "VIBRATE"
       ],
+      usesCleartextTraffic: true,
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
     },
