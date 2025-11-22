@@ -109,11 +109,15 @@ class ApiClient {
         throw error;
       }
 
+      // Log the raw error for debugging
+      console.error("[ApiClient] Raw network error:", error);
+
       throw {
         error: "Network error",
         message:
           "Failed to connect to server. Please check your internet connection.",
         statusCode: 0,
+        details: error,
       } as ApiError;
     }
   }

@@ -8,7 +8,7 @@ import React, {
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
-import { Platform } from "react-native";
+import { Platform, Alert } from "react-native";
 import {
   User,
   LoginCredentials,
@@ -218,6 +218,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const apiError = error as ApiError;
       const errorMessage =
         apiError.message || "Login failed. Please try again.";
+      
+      // Show alert for production debugging
+      if (!__DEV__) {
+        Alert.alert("Login Error", JSON.stringify(error, null, 2));
+      }
+      
       setError(errorMessage);
       logger.error("[AuthContext] login error:", errorMessage);
       throw new Error(errorMessage);

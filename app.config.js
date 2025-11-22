@@ -2,7 +2,18 @@ import "dotenv/config";
 
 export default {
   expo: {
-    plugins: ["expo-web-browser", "expo-font"],
+    plugins: [
+      "expo-web-browser",
+      "expo-font",
+      [
+        "expo-build-properties",
+        {
+          android: {
+            usesCleartextTraffic: true,
+          },
+        },
+      ],
+    ],
     name: "restaurant-mobile",
     slug: "restaurant-mobile",
     scheme: "restaurantapp",
@@ -20,6 +31,11 @@ export default {
       supportsTablet: true,
       bundleIdentifier: "com.burgermeister.restaurantmobile",
       buildNumber: "1.0.0",
+      infoPlist: {
+        NSAppTransportSecurity: {
+          NSAllowsArbitraryLoads: true,
+        },
+      },
     },
     android: {
       package: "com.burgermeister_schmidt.restaurantmobile",
