@@ -19,9 +19,11 @@ export default [
     files: ["**/*.config.js"],
     languageOptions: {
       globals: {
-        module: "readonly",
         process: "readonly",
       },
+    },
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
     },
   },
   {

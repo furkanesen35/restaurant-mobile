@@ -2,7 +2,7 @@ import "dotenv/config";
 
 export default {
   expo: {
-    plugins: ["expo-web-browser"],
+    plugins: ["expo-web-browser", "expo-font"],
     name: "restaurant-mobile",
     slug: "restaurant-mobile",
     scheme: "restaurantapp",
@@ -27,6 +27,12 @@ export default {
         foregroundImage: "./assets/adaptive-icon.png",
         backgroundColor: "#ffffff",
       },
+      permissions: [
+        "CAMERA",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "VIBRATE"
+      ],
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
     },
