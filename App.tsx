@@ -11,6 +11,7 @@ import ENV from "./src/config/env";
 
 import RootNavigator from "./src/navigation/RootNavigator";
 import { CartProvider } from "./src/contexts/CartContext";
+import { FavoritesProvider } from "./src/contexts/FavoritesContext";
 import { CookieConsentProvider } from "./src/contexts/CookieConsentContext";
 import { LanguageProvider } from "./src/contexts/LanguageContext";
 import CookieConsentBanner from "./src/components/CookieConsentBanner";
@@ -77,10 +78,12 @@ export default function App() {
             <CookieConsentProvider>
               <AuthProvider>
                 <CartProvider>
-                  <NavigationContainer linking={linking}>
-                    <RootNavigator />
-                    <CookieConsentBanner />
-                  </NavigationContainer>
+                  <FavoritesProvider>
+                    <NavigationContainer linking={linking}>
+                      <RootNavigator />
+                      <CookieConsentBanner />
+                    </NavigationContainer>
+                  </FavoritesProvider>
                 </CartProvider>
               </AuthProvider>
             </CookieConsentProvider>

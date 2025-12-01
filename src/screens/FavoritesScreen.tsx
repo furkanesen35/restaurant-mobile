@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Card, useTheme, IconButton } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
 import { useCart } from "../contexts/CartContext";
+import { useFavorites } from "../contexts/FavoritesContext";
 import { useIsFocused } from "@react-navigation/native";
 import { MenuItem } from "../types";
 import { formatCurrency, parseErrorMessage } from "../utils/validation";
@@ -29,6 +30,7 @@ const FavoritesScreen = () => {
   const { colors } = useTheme();
   const { user, token } = useAuth();
   const { addToCart } = useCart();
+  const { toggleFavorite, refetch: refetchFavoritesContext } = useFavorites();
   const isFocused = useIsFocused();
   const { t } = useTranslation();
 
@@ -70,7 +72,9 @@ const FavoritesScreen = () => {
 
   const removeFavorite = async (menuItemId: string) => {
     try {
-      await apiClient.delete(`/api/favorites/${menuItemId}`);
+      // Use the context's toggleFavorite to ensure sync across all screens
+      await toggleFavorite(menuItemId);
+      // Update local state to reflect the change immediately
       setFavorites((prev) =>
         prev.filter((fav) => fav.menuItem.id !== menuItemId)
       );

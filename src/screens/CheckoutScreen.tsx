@@ -186,7 +186,7 @@ const CheckoutScreen = () => {
     }
 
     // Check if address is selected or new address is being added
-    if (selectedAddressId === null && selectedAddressId !== -1) {
+    if (selectedAddressId === null) {
       Alert.alert("Error", "Please select a delivery address.");
       return;
     }
@@ -206,7 +206,7 @@ const CheckoutScreen = () => {
     }
 
     // Check if payment method is selected or new card is being added
-    if (selectedMethodId === null && selectedMethodId !== -1) {
+    if (selectedMethodId === null) {
       Alert.alert("Error", "Please select a payment method.");
       return;
     }
