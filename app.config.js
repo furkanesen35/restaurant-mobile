@@ -3,16 +3,17 @@ import "dotenv/config";
 export default {
   expo: {
     plugins: [
-      "expo-web-browser",
-      "expo-font",
-      [
-        "expo-build-properties",
-        {
-          android: {
-            usesCleartextTraffic: true,
+        "expo-web-browser",
+        "expo-font",
+        "expo-localization",
+        [
+          "expo-build-properties",
+          {
+            android: {
+              usesCleartextTraffic: true,
+            },
           },
-        },
-      ],
+        ],
     ],
     name: "restaurant-mobile",
     slug: "restaurant-mobile",

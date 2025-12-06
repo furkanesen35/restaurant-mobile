@@ -30,7 +30,7 @@ const FavoritesScreen = () => {
   const { colors } = useTheme();
   const { user, token } = useAuth();
   const { addToCart } = useCart();
-  const { toggleFavorite, refetch: refetchFavoritesContext } = useFavorites();
+  const { toggleFavorite, refetch: _refetchFavoritesContext } = useFavorites();
   const isFocused = useIsFocused();
   const { t } = useTranslation();
 
@@ -113,7 +113,7 @@ const FavoritesScreen = () => {
         handleCartError(error);
       }
     },
-    [addToCart, handleCartError, t]
+    [addToCart, handleCartError]
   );
 
   const handleRefresh = () => {

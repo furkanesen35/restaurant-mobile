@@ -19,7 +19,9 @@ import CheckoutScreen from "../screens/CheckoutScreen";
 import Icon from "react-native-paper/src/components/Icon";
 import { useTranslation } from "../hooks/useTranslation";
 import { useCart } from "../contexts/CartContext";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Platform } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { moderateScale, isSmallDevice } from "../utils/responsive";
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -27,7 +29,17 @@ function MainTabs() {
   const { user } = useAuth();
   const { t } = useTranslation();
   const { cart } = useCart();
+  const insets = useSafeAreaInsets();
   const totalCartQuantity = cart.reduce((sum, item) => sum + item.quantity, 0);
+  
+  // Calculate proper bottom padding for Samsung and other Android devices with navigation bars
+  // Minimum padding of 8, but add safe area inset for devices with gesture nav or traditional nav bar
+  const bottomPadding = Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 0);
+  
+  // Responsive tab bar height based on device size
+  const tabBarHeight = isSmallDevice() ? moderateScale(52) : moderateScale(60);
+  const iconSize = isSmallDevice() ? moderateScale(20) : moderateScale(24);
+  const labelFontSize = isSmallDevice() ? moderateScale(10) : moderateScale(12);
 
   const getTabIcon = (routeName: string, focused: boolean, color: string, size: number) => {
     let iconName = "home";
@@ -88,20 +100,20 @@ function MainTabs() {
     <Tab.Navigator 
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarIcon: ({ focused, color, size }) => 
-          getTabIcon(route.name, focused, color, size),
+        tabBarIcon: ({ focused, color, size: _size }) => 
+          getTabIcon(route.name, focused, color, iconSize),
         tabBarActiveTintColor: "#f5e6c8",
         tabBarInactiveTintColor: "#b8a68a",
         tabBarStyle: {
           backgroundColor: "#1a120b",
           borderTopColor: "#2d2117",
           borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
+          height: tabBarHeight + bottomPadding,
+          paddingBottom: bottomPadding,
+          paddingTop: moderateScale(6),
         },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: labelFontSize,
           fontWeight: "600",
         },
       })}
