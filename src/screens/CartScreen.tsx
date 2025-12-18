@@ -73,9 +73,9 @@ const CartScreen = () => {
   );
 
   const handleUpdateQuantity = useCallback(
-    async (menuItemId: string, quantity: number) => {
+    async (cartItemId: number, quantity: number) => {
       try {
-        await updateQuantity(menuItemId, quantity);
+        await updateQuantity(cartItemId, quantity);
       } catch (error) {
         handleCartError(error);
       }
@@ -84,7 +84,7 @@ const CartScreen = () => {
   );
 
   const handleRemoveItem = useCallback(
-    async (cartItemId: string) => {
+    async (cartItemId: number) => {
       try {
         await removeFromCart(cartItemId);
       } catch (error) {
@@ -116,6 +116,9 @@ const CartScreen = () => {
     navigation.navigate("Checkout" as never);
   };
 
+  // Debug: Log cart items
+  console.log("[CartScreen] Rendering cart with items:", JSON.stringify(cart, null, 2));
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <Text style={styles.title}>{t("cart.title")}</Text>
@@ -126,12 +129,11 @@ const CartScreen = () => {
       ) : (
         <FlatList
           data={cart}
-          keyExtractor={(item, index) => `${item.menuItemId}-${index}`}
+          keyExtractor={(item) => item.cartItemId.toString()}
           renderItem={({ item }) => {
             const itemTotal = calculateItemTotal(item);
             const hasModifiers = item.modifiers && item.modifiers.length > 0;
-            // Use cartItemId if available, otherwise fallback to menuItemId
-            const cartItemId = (item as any).cartItemId?.toString() || item.menuItemId;
+            console.log("[CartScreen] Item:", item.name, "hasModifiers:", hasModifiers, "modifiers:", item.modifiers);
             
             return (
               <Card style={styles.card}>
@@ -184,7 +186,7 @@ const CartScreen = () => {
                     <View style={styles.quantityGroup}>
                       <TouchableOpacity
                         onPress={() =>
-                          handleUpdateQuantity(cartItemId, item.quantity - 1)
+                          handleUpdateQuantity(item.cartItemId, item.quantity - 1)
                         }
                         style={styles.qtyBtn}
                       >
@@ -193,7 +195,7 @@ const CartScreen = () => {
                       <Text style={styles.qtyText}>{item.quantity}</Text>
                       <TouchableOpacity
                         onPress={() =>
-                          handleUpdateQuantity(cartItemId, item.quantity + 1)
+                          handleUpdateQuantity(item.cartItemId, item.quantity + 1)
                         }
                         style={styles.qtyBtn}
                       >
@@ -201,7 +203,7 @@ const CartScreen = () => {
                       </TouchableOpacity>
                     </View>
                     <TouchableOpacity
-                      onPress={() => handleRemoveItem(cartItemId)}
+                      onPress={() => handleRemoveItem(item.cartItemId)}
                       style={styles.removeBtn}
                     >
                       <Text style={styles.removeBtnText}>

@@ -141,6 +141,14 @@ const MenuItemDetailScreen = () => {
         };
       });
 
+      console.log("[MenuItemDetailScreen] Adding to cart:", {
+        menuItemId: item.id,
+        name: item.name,
+        quantity,
+        selectedModifiers,
+        modifiersWithDetails,
+      });
+
       await addToCart({
         menuItemId: item.id,
         name: item.name,
@@ -154,10 +162,12 @@ const MenuItemDetailScreen = () => {
         t("cart.title"),
         t("cart.itemAdded"),
         [
-          { text: t("common.continueShopping"), style: "cancel" },
+          { text: t("cart.continueShopping"), style: "cancel" },
           {
             text: t("cart.goToCart"),
-            onPress: () => navigation.navigate("Cart" as never),
+            onPress: () => {
+              navigation.goBack();
+            },
           },
         ]
       );

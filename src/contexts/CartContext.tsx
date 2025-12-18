@@ -20,6 +20,7 @@ export type CartItemModifier = {
 };
 
 export type CartItem = {
+  cartItemId: number;
   menuItemId: string;
   name: string;
   price: number;
@@ -28,7 +29,11 @@ export type CartItem = {
   modifiers?: CartItemModifier[];
 };
 
-type AddToCartInput = Omit<CartItem, "quantity"> & { 
+type AddToCartInput = {
+  menuItemId: string;
+  name: string;
+  price: number;
+  imageUrl?: string | null;
   quantity?: number;
   modifiers?: SelectedModifier[];
 };
@@ -39,8 +44,8 @@ type CartContextType = {
   initialized: boolean;
   refreshCart: () => Promise<void>;
   addToCart: (item: AddToCartInput) => Promise<void>;
-  removeFromCart: (menuItemId: string) => Promise<void>;
-  updateQuantity: (menuItemId: string, quantity: number) => Promise<void>;
+  removeFromCart: (cartItemId: number) => Promise<void>;
+  updateQuantity: (cartItemId: number, quantity: number) => Promise<void>;
   clearCart: () => Promise<void>;
 };
 
@@ -52,6 +57,7 @@ type ApiCartItemModifier = {
 };
 
 type ApiCartItem = {
+  cartItemId: number;
   menuItemId: string | number;
   quantity: number;
   name: string;
@@ -62,20 +68,27 @@ type ApiCartItem = {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-const normalizeCartItems = (items: ApiCartItem[] = []): CartItem[] =>
-  items.map((item) => ({
-    menuItemId: item.menuItemId.toString(),
-    name: item.name,
-    price: item.price,
-    quantity: item.quantity,
-    imageUrl: item.imageUrl ?? null,
-    modifiers: item.modifiers?.map((mod) => ({
-      modifierId: mod.modifierId,
-      quantity: mod.quantity,
-      name: mod.name,
-      price: mod.price,
-    })) ?? [],
-  }));
+const normalizeCartItems = (items: ApiCartItem[] = []): CartItem[] => {
+  console.log("[CartContext] Normalizing cart items:", JSON.stringify(items, null, 2));
+  return items.map((item) => {
+    const normalized = {
+      cartItemId: item.cartItemId,
+      menuItemId: item.menuItemId.toString(),
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+      imageUrl: item.imageUrl ?? null,
+      modifiers: item.modifiers?.map((mod) => ({
+        modifierId: mod.modifierId,
+        quantity: mod.quantity,
+        name: mod.name,
+        price: mod.price,
+      })) ?? [],
+    };
+    console.log("[CartContext] Normalized item modifiers:", item.name, normalized.modifiers);
+    return normalized;
+  });
+};
 
 const loginRequiredError = () => {
   const error = new Error("LOGIN_REQUIRED") as Error & { code?: string };
@@ -134,17 +147,22 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       }
       try {
         setLoading(true);
+        const requestBody = {
+          menuItemId,
+          quantity,
+          modifiers: modifiers.map((mod) => ({
+            modifierId: mod.modifierId,
+            quantity: mod.quantity,
+          })),
+        };
+        console.log("[CartContext] addToCart request:", JSON.stringify(requestBody, null, 2));
+        
         const response = await apiClient.post<{ items: ApiCartItem[] }>(
           "/api/cart",
-          {
-            menuItemId,
-            quantity,
-            modifiers: modifiers.map((mod) => ({
-              modifierId: mod.modifierId,
-              quantity: mod.quantity,
-            })),
-          }
+          requestBody
         );
+        console.log("[CartContext] addToCart response:", JSON.stringify(response, null, 2));
+        
         const payload = response.data?.items || [];
         setCart(normalizeCartItems(payload));
       } catch (error: any) {
@@ -161,14 +179,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const removeFromCart = useCallback(
-    async (menuItemId: string) => {
+    async (cartItemId: number) => {
       if (!user) {
         throw loginRequiredError();
       }
       try {
         setLoading(true);
         const response = await apiClient.delete<{ items: ApiCartItem[] }>(
-          `/api/cart/${menuItemId}`
+          `/api/cart/${cartItemId}`
         );
         setCart(normalizeCartItems(response.data?.items || []));
       } catch (error) {
@@ -182,14 +200,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const updateQuantity = useCallback(
-    async (menuItemId: string, quantity: number) => {
+    async (cartItemId: number, quantity: number) => {
       if (!user) {
         throw loginRequiredError();
       }
       try {
         setLoading(true);
         const response = await apiClient.patch<{ items: ApiCartItem[] }>(
-          `/api/cart/${menuItemId}`,
+          `/api/cart/${cartItemId}`,
           { quantity }
         );
         setCart(normalizeCartItems(response.data?.items || []));

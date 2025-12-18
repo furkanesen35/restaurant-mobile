@@ -37,7 +37,7 @@ const AdminScreen = () => {
   const { t, currentLanguage } = useTranslation();
   const { token, user, updateUser } = useAuth();
   const [activeTab, setActiveTab] = useState<
-    "orders" | "menu" | "modifiers" | "qr" | "settings"
+    "orders" | "menu" | "qr" | "settings"
   >("orders");
   const [orders, setOrders] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -95,6 +95,7 @@ const AdminScreen = () => {
   const [modifiers, setModifiers] = useState<MenuItemModifier[]>([]);
   const [modifiersLoading, setModifiersLoading] = useState(false);
   const [modifierModalVisible, setModifierModalVisible] = useState(false);
+  const [showModifierForm, setShowModifierForm] = useState(false);
   const [editingModifier, setEditingModifier] = useState<MenuItemModifier | null>(null);
   const [modifierForm, setModifierForm] = useState({
     menuItemId: "",
@@ -264,6 +265,7 @@ const AdminScreen = () => {
   const openModifierModal = (modifier?: MenuItemModifier) => {
     if (modifier) {
       setEditingModifier(modifier);
+      setShowModifierForm(true);
       setModifierForm({
         menuItemId: modifier.menuItemId.toString(),
         name: modifier.name,
@@ -276,6 +278,7 @@ const AdminScreen = () => {
       });
     } else {
       setEditingModifier(null);
+      setShowModifierForm(false);
       setModifierForm({
         menuItemId: selectedCategoryId ? "" : "",
         name: "",
@@ -329,6 +332,8 @@ const AdminScreen = () => {
 
       Alert.alert(t("common.success"), editingModifier ? "Modifier updated" : "Modifier created");
       setModifierModalVisible(false);
+      setShowModifierForm(false);
+      setEditingModifier(null);
       fetchModifiers();
     } catch (err: any) {
       logger.error("Failed to save modifier:", err);
@@ -471,9 +476,7 @@ const AdminScreen = () => {
       } else if (activeTab === "menu") {
         fetchCategories();
         fetchMenuItems();
-      } else if (activeTab === "modifiers") {
-        fetchModifiers();
-        fetchMenuItems(); // Need menu items for dropdown
+        fetchModifiers(); // Load modifiers when menu tab is active
       }
     }
   }, [
@@ -877,19 +880,6 @@ const AdminScreen = () => {
               ]}
             >
               {t("admin.tabs.menu")}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === "modifiers" && styles.activeTab]}
-            onPress={() => setActiveTab("modifiers")}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === "modifiers" && styles.activeTabText,
-              ]}
-            >
-              Extras
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -1325,6 +1315,30 @@ const AdminScreen = () => {
               }}
             />
 
+            {/* Extras/Modifiers Section - small inline button */}
+            <View style={{ flexDirection: "row", justifyContent: "flex-end", marginTop: 16, marginBottom: 8 }}>
+              <TouchableOpacity
+                style={{ backgroundColor: "#4a90e2", paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6 }}
+                onPress={() => {
+                  setModifierModalVisible(true);
+                  setEditingModifier(null);
+                  setShowModifierForm(false);
+                  setModifierForm({
+                    menuItemId: "",
+                    name: "",
+                    nameEn: "",
+                    nameDe: "",
+                    price: "",
+                    category: "",
+                    maxQuantity: "",
+                    isAvailable: true,
+                  });
+                }}
+              >
+                <Text style={{ color: "#fff", fontWeight: "600", fontSize: 13 }}>⚙️ Extras</Text>
+              </TouchableOpacity>
+            </View>
+
             {/* FAB for adding menu item */}
             <FAB
               style={styles.fab}
@@ -1656,181 +1670,219 @@ const AdminScreen = () => {
           </View>
         </Modal>
 
-        {/* Modifiers Tab */}
-        {activeTab === "modifiers" && (
-          <View style={{ flex: 1 }}>
-            {modifiersLoading ? (
-              <ActivityIndicator size="large" color="#c8a97e" style={{ marginTop: 40 }} />
-            ) : (
-              <FlatList
-                data={modifiers}
-                keyExtractor={(item) => item.id.toString()}
-                contentContainerStyle={{ padding: 16, paddingBottom: 80 }}
-                ListEmptyComponent={
-                  <Text style={{ color: "#b8a68a", textAlign: "center", marginTop: 40 }}>
-                    {t("admin.modifiers.noModifiers")}
-                  </Text>
-                }
-                renderItem={({ item }) => {
-                  const menuItem = menuItems.find((m) => m.id === item.menuItemId);
-                  return (
-                    <Card style={styles.card}>
-                      <View style={{ flexDirection: "row", alignItems: "center", padding: 12 }}>
-                        <View style={{ flex: 1 }}>
-                          <Text style={styles.itemName}>
-                            {item.nameEn || item.name}
-                          </Text>
-                          <Text style={{ color: "#b8a68a", fontSize: 12 }}>
-                            {menuItem?.name || `Item #${item.menuItemId}`}
-                          </Text>
-                          <Text style={{ color: "#c8a97e", fontSize: 14, marginTop: 4 }}>
-                            +€{item.price.toFixed(2)}
-                          </Text>
-                          {item.category && (
-                            <Text style={{ color: "#888", fontSize: 12, marginTop: 2 }}>
-                              {item.category}
-                            </Text>
-                          )}
-                        </View>
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                          <Text style={{ color: item.isAvailable ? "#4caf50" : "#f44336", fontSize: 12 }}>
-                            {item.isAvailable ? "Active" : "Inactive"}
-                          </Text>
-                          <TouchableOpacity
-                            onPress={() => openModifierModal(item)}
-                            style={{ padding: 8 }}
-                          >
-                            <Ionicons name="pencil" size={20} color="#c8a97e" />
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            onPress={() => deleteModifier(item.id)}
-                            style={{ padding: 8 }}
-                          >
-                            <Ionicons name="trash" size={20} color="#f44336" />
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    </Card>
-                  );
-                }}
-              />
-            )}
-            <FAB
-              style={[styles.fab, { backgroundColor: "#c8a97e" }]}
-              icon="plus"
-              color="#181818"
-              onPress={() => openModifierModal()}
-            />
+        {/* Modifiers Modal - Full Screen for better UX */}
+        <Modal
+          visible={modifierModalVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setModifierModalVisible(false)}
+        >
+          <View style={{ flex: 1, backgroundColor: "#231a13" }}>
+            <SafeAreaView style={{ flex: 1 }}>
+              {/* Header */}
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16, borderBottomWidth: 1, borderBottomColor: "#333" }}>
+                <Text style={{ color: "#e0b97f", fontSize: 20, fontWeight: "bold" }}>
+                  {t("admin.modifiers.title")}
+                </Text>
+                <TouchableOpacity onPress={() => {
+                  setModifierModalVisible(false);
+                  setEditingModifier(null);
+                  setShowModifierForm(false);
+                }}>
+                  <Ionicons name="close" size={28} color="#fff" />
+                </TouchableOpacity>
+              </View>
 
-            {/* Modifier Modal */}
-            <Modal
-              visible={modifierModalVisible}
-              transparent
-              animationType="slide"
-              onRequestClose={() => setModifierModalVisible(false)}
-            >
-              <View style={styles.modalOverlay}>
-                <View style={styles.modalContent}>
-                  <Text style={styles.modalTitle}>
+              {/* Content */}
+              {showModifierForm || editingModifier ? (
+                // Add/Edit Form
+                <ScrollView style={{ flex: 1, padding: 16 }}>
+                  <Text style={{ color: "#e0b97f", fontWeight: "600", fontSize: 18, marginBottom: 16 }}>
                     {editingModifier ? t("admin.modifiers.editModifier") : t("admin.modifiers.addModifier")}
                   </Text>
-                  <ScrollView style={{ maxHeight: 400 }}>
-                    <Text style={{ color: "#b8a68a", marginBottom: 4 }}>
-                      {t("admin.modifiers.selectMenuItem")}
-                    </Text>
-                    <View style={{ 
-                      borderWidth: 1, 
-                      borderColor: "#333", 
-                      borderRadius: 8, 
-                      marginBottom: 12,
-                      backgroundColor: "#1c1c1c"
-                    }}>
-                      {menuItems.slice(0, 20).map((item) => (
-                        <TouchableOpacity
-                          key={item.id}
-                          onPress={() => setModifierForm((prev) => ({ ...prev, menuItemId: item.id.toString() }))}
-                          style={{
-                            padding: 12,
-                            borderBottomWidth: 1,
-                            borderBottomColor: "#333",
-                            backgroundColor: modifierForm.menuItemId === item.id.toString() ? "#2a2a2a" : "transparent"
-                          }}
-                        >
-                          <Text style={{ color: modifierForm.menuItemId === item.id.toString() ? "#c8a97e" : "#fff" }}>
-                            {item.name}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                    <TextInput
-                      style={styles.input}
-                      placeholder={t("admin.modifiers.name")}
-                      placeholderTextColor="#888"
-                      value={modifierForm.name}
-                      onChangeText={(text) => setModifierForm((prev) => ({ ...prev, name: text }))}
-                    />
-                    <TextInput
-                      style={styles.input}
-                      placeholder={t("admin.modifiers.nameEn")}
-                      placeholderTextColor="#888"
-                      value={modifierForm.nameEn}
-                      onChangeText={(text) => setModifierForm((prev) => ({ ...prev, nameEn: text }))}
-                    />
-                    <TextInput
-                      style={styles.input}
-                      placeholder={t("admin.modifiers.nameDe")}
-                      placeholderTextColor="#888"
-                      value={modifierForm.nameDe}
-                      onChangeText={(text) => setModifierForm((prev) => ({ ...prev, nameDe: text }))}
-                    />
-                    <TextInput
-                      style={styles.input}
-                      placeholder={t("admin.modifiers.price")}
-                      placeholderTextColor="#888"
-                      keyboardType="decimal-pad"
-                      value={modifierForm.price}
-                      onChangeText={(text) => setModifierForm((prev) => ({ ...prev, price: text }))}
-                    />
-                    <TextInput
-                      style={styles.input}
-                      placeholder={t("admin.modifiers.category")}
-                      placeholderTextColor="#888"
-                      value={modifierForm.category}
-                      onChangeText={(text) => setModifierForm((prev) => ({ ...prev, category: text }))}
-                    />
-                    <TextInput
-                      style={styles.input}
-                      placeholder={t("admin.modifiers.maxQuantity")}
-                      placeholderTextColor="#888"
-                      keyboardType="number-pad"
-                      value={modifierForm.maxQuantity}
-                      onChangeText={(text) => setModifierForm((prev) => ({ ...prev, maxQuantity: text }))}
-                    />
-                    <View style={styles.toggleContainer}>
-                      <Text style={styles.toggleLabel}>{t("admin.modifiers.available")}</Text>
-                      <Switch
-                        value={modifierForm.isAvailable}
-                        onValueChange={(value) => setModifierForm((prev) => ({ ...prev, isAvailable: value }))}
-                        trackColor={{ false: "#767577", true: "#4caf50" }}
-                        thumbColor={modifierForm.isAvailable ? "#fff" : "#f4f3f4"}
+                  
+                  <Text style={styles.label}>{t("admin.modifiers.selectMenuItem")}</Text>
+                  <ScrollView style={{ maxHeight: 120, borderWidth: 1, borderColor: "#333", borderRadius: 8, marginBottom: 12, backgroundColor: "#1c1c1c" }} nestedScrollEnabled>
+                    {menuItems.map((item) => (
+                      <TouchableOpacity
+                        key={item.id}
+                        onPress={() => setModifierForm((prev) => ({ ...prev, menuItemId: item.id.toString() }))}
+                        style={{
+                          padding: 10,
+                          borderBottomWidth: 1,
+                          borderBottomColor: "#333",
+                          backgroundColor: modifierForm.menuItemId === item.id.toString() ? "#2a2a2a" : "transparent"
+                        }}
+                      >
+                        <Text style={{ color: modifierForm.menuItemId === item.id.toString() ? "#c8a97e" : "#fff", fontSize: 14 }}>
+                          {item.name}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+
+                  <View style={{ flexDirection: "row", gap: 8 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.label}>{t("admin.modifiers.nameEn")}</Text>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Extra Cheese"
+                        placeholderTextColor="#666"
+                        value={modifierForm.nameEn}
+                        onChangeText={(text) => setModifierForm((prev) => ({ ...prev, nameEn: text }))}
                       />
                     </View>
-                  </ScrollView>
-                  <View style={styles.modalActions}>
-                    <Button onPress={() => setModifierModalVisible(false)}>{t("common.cancel")}</Button>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.label}>{t("admin.modifiers.nameDe")}</Text>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Extra Käse"
+                        placeholderTextColor="#666"
+                        value={modifierForm.nameDe}
+                        onChangeText={(text) => setModifierForm((prev) => ({ ...prev, nameDe: text }))}
+                      />
+                    </View>
+                  </View>
+
+                  <View style={{ flexDirection: "row", gap: 8 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.label}>{t("admin.modifiers.price")}</Text>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="1.50"
+                        placeholderTextColor="#666"
+                        keyboardType="decimal-pad"
+                        value={modifierForm.price}
+                        onChangeText={(text) => setModifierForm((prev) => ({ ...prev, price: text }))}
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.label}>{t("admin.modifiers.category")}</Text>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Toppings"
+                        placeholderTextColor="#666"
+                        value={modifierForm.category}
+                        onChangeText={(text) => setModifierForm((prev) => ({ ...prev, category: text }))}
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.label}>{t("admin.modifiers.maxQuantity")}</Text>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="5"
+                        placeholderTextColor="#666"
+                        keyboardType="number-pad"
+                        value={modifierForm.maxQuantity}
+                        onChangeText={(text) => setModifierForm((prev) => ({ ...prev, maxQuantity: text }))}
+                      />
+                    </View>
+                  </View>
+
+                  <View style={styles.toggleContainer}>
+                    <Text style={styles.toggleLabel}>{t("admin.modifiers.available")}</Text>
+                    <Switch
+                      value={modifierForm.isAvailable}
+                      onValueChange={(value) => setModifierForm((prev) => ({ ...prev, isAvailable: value }))}
+                      trackColor={{ false: "#767577", true: "#4caf50" }}
+                      thumbColor={modifierForm.isAvailable ? "#fff" : "#f4f3f4"}
+                    />
+                  </View>
+
+                  <View style={{ flexDirection: "row", gap: 12, marginTop: 16 }}>
+                    <Button
+                      mode="outlined"
+                      onPress={() => {
+                        setShowModifierForm(false);
+                        setEditingModifier(null);
+                      }}
+                      style={{ flex: 1 }}
+                      textColor="#fff"
+                    >
+                      {t("common.cancel")}
+                    </Button>
                     <Button
                       mode="contained"
                       onPress={saveModifier}
                       disabled={savingModifier}
+                      style={{ flex: 1 }}
                     >
                       {savingModifier ? t("common.loading") : t("common.save")}
                     </Button>
                   </View>
-                </View>
-              </View>
-            </Modal>
+                </ScrollView>
+              ) : (
+                // List View
+                <>
+                  {modifiersLoading ? (
+                    <ActivityIndicator size="large" color="#c8a97e" style={{ marginTop: 40 }} />
+                  ) : (
+                    <FlatList
+                      data={modifiers}
+                      keyExtractor={(item) => item.id.toString()}
+                      contentContainerStyle={{ padding: 16 }}
+                      ListEmptyComponent={
+                        <Text style={{ color: "#b8a68a", textAlign: "center", marginTop: 40 }}>
+                          {t("admin.modifiers.noModifiers")}
+                        </Text>
+                      }
+                      renderItem={({ item }) => {
+                        const menuItem = menuItems.find((m) => m.id === item.menuItemId);
+                        return (
+                          <View style={{ flexDirection: "row", alignItems: "center", padding: 12, backgroundColor: "#2d2117", borderRadius: 8, marginBottom: 8 }}>
+                            <View style={{ flex: 1 }}>
+                              <Text style={{ color: "#fff", fontWeight: "600" }}>
+                                {item.nameEn || item.name}
+                              </Text>
+                              <Text style={{ color: "#b8a68a", fontSize: 12 }}>
+                                {menuItem?.name || `Item #${item.menuItemId}`} • €{item.price.toFixed(2)}
+                              </Text>
+                            </View>
+                            <TouchableOpacity
+                              onPress={() => openModifierModal(item)}
+                              style={{ padding: 8 }}
+                            >
+                              <Ionicons name="pencil" size={20} color="#c8a97e" />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              onPress={() => deleteModifier(item.id)}
+                              style={{ padding: 8 }}
+                            >
+                              <Ionicons name="trash" size={20} color="#f44336" />
+                            </TouchableOpacity>
+                          </View>
+                        );
+                      }}
+                    />
+                  )}
+                  
+                  {/* Add Button */}
+                  <View style={{ padding: 16, borderTopWidth: 1, borderTopColor: "#333" }}>
+                    <Button
+                      mode="contained"
+                      onPress={() => {
+                        setShowModifierForm(true);
+                        setModifierForm({
+                          menuItemId: "",
+                          name: "",
+                          nameEn: "",
+                          nameDe: "",
+                          price: "",
+                          category: "",
+                          maxQuantity: "5",
+                          isAvailable: true,
+                        });
+                      }}
+                      icon="plus"
+                    >
+                      {t("admin.modifiers.addModifier")}
+                    </Button>
+                  </View>
+                </>
+              )}
+            </SafeAreaView>
           </View>
-        )}
+        </Modal>
 
         {/* QR Codes Tab */}
         {activeTab === "qr" && <QRTokenManagement />}
