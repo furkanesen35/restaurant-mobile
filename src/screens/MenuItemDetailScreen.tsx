@@ -166,7 +166,12 @@ const MenuItemDetailScreen = () => {
           {
             text: t("cart.goToCart"),
             onPress: () => {
+              // First go back to MainTabs, then navigate to Cart tab
               navigation.goBack();
+              // Use setTimeout to ensure the navigation back completes first
+              setTimeout(() => {
+                navigation.getParent()?.navigate("MainTabs", { screen: "Cart" });
+              }, 100);
             },
           },
         ]

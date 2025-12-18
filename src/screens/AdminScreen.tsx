@@ -1315,29 +1315,27 @@ const AdminScreen = () => {
               }}
             />
 
-            {/* Extras/Modifiers Section - small inline button */}
-            <View style={{ flexDirection: "row", justifyContent: "flex-end", marginTop: 16, marginBottom: 8 }}>
-              <TouchableOpacity
-                style={{ backgroundColor: "#4a90e2", paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6 }}
-                onPress={() => {
-                  setModifierModalVisible(true);
-                  setEditingModifier(null);
-                  setShowModifierForm(false);
-                  setModifierForm({
-                    menuItemId: "",
-                    name: "",
-                    nameEn: "",
-                    nameDe: "",
-                    price: "",
-                    category: "",
-                    maxQuantity: "",
-                    isAvailable: true,
-                  });
-                }}
-              >
-                <Text style={{ color: "#fff", fontWeight: "600", fontSize: 13 }}>⚙️ Extras</Text>
-              </TouchableOpacity>
-            </View>
+            {/* Extras FAB on left side */}
+            <FAB
+              style={[styles.fab, { left: 16, right: undefined }]}
+              icon="cog"
+              label="Extras"
+              onPress={() => {
+                setModifierModalVisible(true);
+                setEditingModifier(null);
+                setShowModifierForm(false);
+                setModifierForm({
+                  menuItemId: "",
+                  name: "",
+                  nameEn: "",
+                  nameDe: "",
+                  price: "",
+                  category: "",
+                  maxQuantity: "",
+                  isAvailable: true,
+                });
+              }}
+            />
 
             {/* FAB for adding menu item */}
             <FAB
@@ -1702,13 +1700,13 @@ const AdminScreen = () => {
                   </Text>
                   
                   <Text style={styles.label}>{t("admin.modifiers.selectMenuItem")}</Text>
-                  <ScrollView style={{ maxHeight: 120, borderWidth: 1, borderColor: "#333", borderRadius: 8, marginBottom: 12, backgroundColor: "#1c1c1c" }} nestedScrollEnabled>
+                  <ScrollView style={{ maxHeight: 280, borderWidth: 1, borderColor: "#333", borderRadius: 8, marginBottom: 16, backgroundColor: "#1c1c1c" }} nestedScrollEnabled>
                     {menuItems.map((item) => (
                       <TouchableOpacity
                         key={item.id}
                         onPress={() => setModifierForm((prev) => ({ ...prev, menuItemId: item.id.toString() }))}
                         style={{
-                          padding: 10,
+                          padding: 12,
                           borderBottomWidth: 1,
                           borderBottomColor: "#333",
                           backgroundColor: modifierForm.menuItemId === item.id.toString() ? "#2a2a2a" : "transparent"
@@ -1757,7 +1755,7 @@ const AdminScreen = () => {
                       />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.label}>{t("admin.modifiers.category")}</Text>
+                      <Text style={styles.label} numberOfLines={1}>{t("admin.modifiers.category")}</Text>
                       <TextInput
                         style={styles.input}
                         placeholder="Toppings"
@@ -1767,7 +1765,7 @@ const AdminScreen = () => {
                       />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.label}>{t("admin.modifiers.maxQuantity")}</Text>
+                      <Text style={styles.label} numberOfLines={1}>{t("admin.modifiers.maxQuantity")}</Text>
                       <TextInput
                         style={styles.input}
                         placeholder="5"
