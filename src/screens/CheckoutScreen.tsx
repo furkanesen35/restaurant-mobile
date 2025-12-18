@@ -259,7 +259,7 @@ const CheckoutScreen = () => {
         throw new Error("Failed to create payment intent");
       }
 
-      const { clientSecret } = await paymentIntentRes.json();
+      const { clientSecret, paymentIntentId } = await paymentIntentRes.json();
 
       // Step 2: Confirm payment with Stripe
       let paymentResult;
@@ -359,8 +359,30 @@ const CheckoutScreen = () => {
       }
 
       const orderData = await orderRes.json();
+      const orderId = orderData?.data?.id;
       const pointsEarned = orderData?.loyaltyPointsEarned ?? 0;
       const updatedBalance = orderData?.loyaltyPointsBalance;
+
+      // Step 4: Link paymentIntentId to the order for refund processing
+      if (orderId && paymentIntentId) {
+        try {
+          await fetch(`${ENV.API_URL}/api/payment/link-order`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              orderId: orderId,
+              paymentIntentId: paymentIntentId,
+            }),
+          });
+          logger.info("Payment linked to order successfully");
+        } catch (linkErr) {
+          logger.warn("Failed to link payment to order:", linkErr);
+          // Don't fail the order if linking fails
+        }
+      }
 
       if (typeof updatedBalance === "number") {
         await updateUser({ loyaltyPoints: updatedBalance });

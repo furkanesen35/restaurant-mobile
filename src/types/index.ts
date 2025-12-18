@@ -39,6 +39,8 @@ export type OrderStatus =
   | "delivered"
   | "cancelled";
 
+export type RefundStatus = "pending" | "succeeded" | "failed" | "cancelled";
+
 export interface OrderItem {
   id?: number;
   menuItem: {
@@ -58,6 +60,12 @@ export interface Order {
   estimatedTime?: string;
   estimatedDeliveryTime?: string;
   total?: number;
+  // Payment & Refund fields
+  paymentIntentId?: string;
+  refundId?: string;
+  refundStatus?: RefundStatus;
+  refundAmount?: number;
+  refundedAt?: string;
 }
 
 // Auth types

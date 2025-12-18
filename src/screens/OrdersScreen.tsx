@@ -64,6 +64,12 @@ const OrdersScreen = () => {
       const response = await apiClient.patch<{
         loyaltyPointsBalance?: number;
         loyaltyPointsDeducted?: number;
+        refund?: {
+          refundId?: string;
+          refundStatus?: string;
+          refundAmount?: number;
+          error?: string;
+        };
       }>(`/order/${orderId}/status`, {
         status: "cancelled",
       });
@@ -73,7 +79,27 @@ const OrdersScreen = () => {
         await updateUser({ loyaltyPoints: response.data.loyaltyPointsBalance });
       }
       
-      Alert.alert(t("common.success"), t("orders.cancelled"));
+      // Show appropriate message based on refund status
+      const refund = response.data?.refund;
+      if (refund?.refundStatus === "succeeded") {
+        Alert.alert(
+          t("common.success"), 
+          `${t("orders.cancelled")}. €${refund.refundAmount?.toFixed(2)} will be refunded to your payment method.`
+        );
+      } else if (refund?.refundStatus === "pending") {
+        Alert.alert(
+          t("common.success"), 
+          `${t("orders.cancelled")}. Your refund is being processed.`
+        );
+      } else if (refund?.error) {
+        Alert.alert(
+          t("orders.cancelled"),
+          `Order cancelled but refund could not be processed automatically. Please contact support.`
+        );
+      } else {
+        Alert.alert(t("common.success"), t("orders.cancelled"));
+      }
+      
       fetchOrders(); // Refresh orders
     } catch (err: any) {
       logger.error("Error cancelling order:", err);
@@ -177,6 +203,28 @@ const OrdersScreen = () => {
           <Chip mode="outlined" style={styles.statusChip}>
             {order.status}
           </Chip>
+
+          {/* Refund Status for cancelled orders */}
+          {order.status === "cancelled" && order.refundStatus && (
+            <View style={styles.refundSection}>
+              <Chip 
+                mode="flat" 
+                style={[
+                  styles.refundChip,
+                  order.refundStatus === "succeeded" && styles.refundSuccessChip,
+                  order.refundStatus === "pending" && styles.refundPendingChip,
+                  order.refundStatus === "failed" && styles.refundFailedChip,
+                ]}
+                textStyle={styles.refundChipText}
+              >
+                {order.refundStatus === "succeeded" 
+                  ? `✓ Refunded €${order.refundAmount?.toFixed(2) || '0.00'}`
+                  : order.refundStatus === "pending"
+                  ? "⏳ Refund pending"
+                  : "⚠ Refund failed"}
+              </Chip>
+            </View>
+          )}
 
           {/* Progress Bar for active orders */}
           {order.status !== "delivered" && order.status !== "cancelled" && (
@@ -654,6 +702,56 @@ const styles = StyleSheet.create({
   // ============================================================================
   orderFooter: {
     marginTop: 8, // 8px space from items list above
+  },
+
+  // ============================================================================
+  // REFUND SECTION - Container for refund status chip
+  // Used by: View wrapping refund chip for cancelled orders
+  // ============================================================================
+  refundSection: {
+    marginTop: 8,
+    marginBottom: 4,
+  },
+
+  // ============================================================================
+  // REFUND CHIP - Base style for refund status chip
+  // Used by: Chip showing refund status
+  // ============================================================================
+  refundChip: {
+    alignSelf: "flex-start",
+  },
+
+  // ============================================================================
+  // REFUND SUCCESS CHIP - Green chip for successful refunds
+  // Used by: Chip when refundStatus === "succeeded"
+  // ============================================================================
+  refundSuccessChip: {
+    backgroundColor: "#2d5a27", // Dark green background
+  },
+
+  // ============================================================================
+  // REFUND PENDING CHIP - Orange chip for pending refunds
+  // Used by: Chip when refundStatus === "pending"
+  // ============================================================================
+  refundPendingChip: {
+    backgroundColor: "#6b5a00", // Dark gold/yellow background
+  },
+
+  // ============================================================================
+  // REFUND FAILED CHIP - Red chip for failed refunds
+  // Used by: Chip when refundStatus === "failed"
+  // ============================================================================
+  refundFailedChip: {
+    backgroundColor: "#6b2727", // Dark red background
+  },
+
+  // ============================================================================
+  // REFUND CHIP TEXT - Text styling for refund chips
+  // Used by: Chip textStyle prop
+  // ============================================================================
+  refundChipText: {
+    color: "#fffbe8", // Light cream text
+    fontSize: 12,
   },
 });
 
