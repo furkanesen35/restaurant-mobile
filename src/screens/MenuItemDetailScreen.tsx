@@ -166,12 +166,8 @@ const MenuItemDetailScreen = () => {
           {
             text: t("cart.goToCart"),
             onPress: () => {
-              // First go back to MainTabs, then navigate to Cart tab
+              // Just go back - user is already in cart after adding
               navigation.goBack();
-              // Use setTimeout to ensure the navigation back completes first
-              setTimeout(() => {
-                navigation.getParent()?.navigate("MainTabs", { screen: "Cart" });
-              }, 100);
             },
           },
         ]
