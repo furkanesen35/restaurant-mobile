@@ -211,11 +211,20 @@ const CheckoutScreen = () => {
       return;
     }
 
-    if (selectedMethodId === -1 && !cardComplete) {
-      Alert.alert("Error", "Please enter valid card details.");
+    logger.info("Payment method check:", { 
+      selectedMethodId, 
+      cardComplete,
+      isNewCard: selectedMethodId === -1 
+    });
+
+    // Always require card details for Stripe payment
+    // Saved payment methods are for display/convenience only, not for actual payment processing
+    if (!cardComplete) {
+      Alert.alert("Error", "Please enter card details to complete payment.");
       return;
     }
 
+    logger.info("Starting order placement...");
     setLoading(true);
 
     try {
@@ -265,42 +274,44 @@ const CheckoutScreen = () => {
       let paymentResult;
       let paymentMethodDetails = null;
 
-      if (selectedMethodId === -1) {
-        // Using new card
-        paymentResult = await confirmPayment(clientSecret, {
-          paymentMethodType: "Card",
-        });
+      // Always use CardField for payment confirmation
+      // Saved payment methods are for display only, actual payment always uses fresh card input
+      paymentResult = await confirmPayment(clientSecret, {
+        paymentMethodType: "Card",
+      });
 
-        // If payment successful and user wants to save card
-        if (!paymentResult.error && savePaymentToProfile && paymentResult.paymentIntent) {
-          // Extract card details from payment intent
-          const paymentIntent = paymentResult.paymentIntent;
-          if (paymentIntent.paymentMethod) {
-            paymentMethodDetails = {
-              last4: paymentIntent.paymentMethod.Card?.last4 || "****",
-              brand: paymentIntent.paymentMethod.Card?.brand || "Card",
-              expMonth: paymentIntent.paymentMethod.Card?.expMonth || 0,
-              expYear: paymentIntent.paymentMethod.Card?.expYear || 0,
-            };
-          }
-        }
-      } else {
-        // Using saved payment method
-        const selectedMethod = savedMethods.find(
-          (m) => m.id === selectedMethodId
-        );
-        if (!selectedMethod) {
-          throw new Error("Selected payment method not found");
-        }
+      logger.info("Payment confirmation result:", { 
+        hasError: !!paymentResult.error, 
+        status: paymentResult.paymentIntent?.status 
+      });
 
-        // For saved cards, you would typically have saved the Stripe payment method ID
-        // For now, we'll just simulate success since we're storing card details locally
-        paymentResult = { error: undefined };
+      // If payment successful and user wants to save card (only for new card option)
+      if (!paymentResult.error && selectedMethodId === -1 && savePaymentToProfile && paymentResult.paymentIntent) {
+        // Extract card details from payment intent
+        const paymentIntent = paymentResult.paymentIntent;
+        if (paymentIntent.paymentMethod) {
+          paymentMethodDetails = {
+            last4: paymentIntent.paymentMethod.Card?.last4 || "****",
+            brand: paymentIntent.paymentMethod.Card?.brand || "Card",
+            expMonth: paymentIntent.paymentMethod.Card?.expMonth || 0,
+            expYear: paymentIntent.paymentMethod.Card?.expYear || 0,
+          };
+        }
       }
 
       if (paymentResult.error) {
         throw new Error(paymentResult.error.message);
       }
+
+      // Verify payment was successful before creating order
+      // Stripe SDK returns "Succeeded" with capital S
+      const paymentStatus = paymentResult.paymentIntent?.status?.toLowerCase();
+      if (!paymentResult.paymentIntent || paymentStatus !== "succeeded") {
+        logger.error("Payment not successful:", { status: paymentResult.paymentIntent?.status });
+        throw new Error("Payment was not completed successfully. Please try again.");
+      }
+
+      logger.info("Payment verified successfully, creating order...");
 
       // Step 2.5: Save payment method if requested
       if (paymentMethodDetails && savePaymentToProfile) {
@@ -749,12 +760,19 @@ const CheckoutScreen = () => {
                     }}
                     style={styles.cardField}
                     onCardChange={(cardDetails) => {
+                      logger.info("Card details changed:", { 
+                        complete: cardDetails.complete,
+                        brand: cardDetails.brand,
+                        last4: cardDetails.last4,
+                        expiryMonth: cardDetails.expiryMonth,
+                        expiryYear: cardDetails.expiryYear,
+                      });
                       setCardComplete(cardDetails.complete);
                     }}
                   />
                 </View>
-                <Text style={{ color: "#888", fontSize: 12, marginTop: 8 }}>
-                  Test card: 4242 4242 4242 4242, any future date, any CVC
+                <Text style={{ color: cardComplete ? "#4CAF50" : "#888", fontSize: 12, marginTop: 8 }}>
+                  {cardComplete ? "✓ Card details complete" : "Test card: 4242 4242 4242 4242, any future date (e.g., 12/30), any CVC (e.g., 123)"}
                 </Text>
 
                 {/* Save to Profile Toggle */}
@@ -776,6 +794,39 @@ const CheckoutScreen = () => {
                     thumbColor={savePaymentToProfile ? "#fff" : "#f4f3f4"}
                   />
                 </View>
+              </View>
+            )}
+
+            {/* Card entry for saved methods (they're just references, need actual card input) */}
+            {selectedMethodId !== -1 && (
+              <View style={styles.formSection}>
+                <Text style={{ color: colors.onBackground, marginBottom: 8 }}>
+                  Enter card details to complete payment:
+                </Text>
+                <View style={styles.cardFieldWrapper}>
+                  <CardField
+                    postalCodeEnabled={false}
+                    placeholders={{
+                      number: "4242 4242 4242 4242",
+                    }}
+                    cardStyle={{
+                      backgroundColor: "#FFFFFF",
+                      textColor: "#000000",
+                      placeholderColor: "#999999",
+                    }}
+                    style={styles.cardField}
+                    onCardChange={(cardDetails) => {
+                      logger.info("Card details changed (saved method):", { 
+                        complete: cardDetails.complete,
+                        brand: cardDetails.brand,
+                      });
+                      setCardComplete(cardDetails.complete);
+                    }}
+                  />
+                </View>
+                <Text style={{ color: cardComplete ? "#4CAF50" : "#FF9800", fontSize: 12, marginTop: 8 }}>
+                  {cardComplete ? "✓ Card details complete" : "⚠ Saved cards are for reference only. Please enter card details for secure payment."}
+                </Text>
               </View>
             )}
           </View>
