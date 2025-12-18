@@ -23,6 +23,7 @@ import { useCart } from "../contexts/CartContext";
 import { View, Text, StyleSheet, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { moderateScale, isSmallDevice } from "../utils/responsive";
+import logger from "../utils/logger";
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -118,6 +119,13 @@ function MainTabs() {
           fontWeight: "600",
         },
       })}
+      screenListeners={{
+        state: (e) => {
+          const state = e.data.state;
+          const currentRoute = state.routes[state.index];
+          logger.info("[MainTabs] Tab changed to:", currentRoute.name);
+        },
+      }}
     >
       {screens.map((screen) => (
         <Tab.Screen
@@ -137,11 +145,21 @@ function MainStack() {
   const { t } = useTranslation();
   
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenListeners={{
+        state: (e) => {
+          logger.info("[MainStack] Navigation state changed:", e.data.state);
+        },
+      }}
+    >
       <Stack.Screen
         name="MainTabs"
         component={MainTabs}
         options={{ headerShown: false }}
+        listeners={{
+          focus: () => logger.info("[MainStack] MainTabs focused"),
+          blur: () => logger.info("[MainStack] MainTabs blurred"),
+        }}
       />
       <Stack.Screen
         name="Checkout"
@@ -150,6 +168,10 @@ function MainStack() {
           title: t("navigation.checkout"),
           headerStyle: { backgroundColor: "#231a13" },
           headerTintColor: "#d4af37",
+        }}
+        listeners={{
+          focus: () => logger.info("[MainStack] Checkout focused"),
+          blur: () => logger.info("[MainStack] Checkout blurred"),
         }}
       />
       <Stack.Screen

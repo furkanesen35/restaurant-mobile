@@ -166,8 +166,10 @@ const MenuItemDetailScreen = () => {
           {
             text: t("cart.goToCart"),
             onPress: () => {
-              // Just go back - user is already in cart after adding
-              navigation.goBack();
+              logger.info("[MenuItemDetail] Go to Cart button pressed");
+              // Navigate to MainTabs Cart screen directly (will dismiss this screen)
+              // @ts-ignore - Navigation typing
+              navigation.navigate("MainTabs", { screen: "Cart" });
             },
           },
         ]

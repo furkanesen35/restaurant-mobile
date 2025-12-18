@@ -424,10 +424,10 @@ const MenuScreen = () => {
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.customizeButton, { borderColor: colors.primary }]}
+              style={[styles.customizeButton, { borderColor: colors.primary, backgroundColor: 'rgba(224, 185, 127, 0.1)' }]}
               onPress={() => handleNavigateToDetail(item)}
             >
-              <Text style={[styles.customizeButtonText, { color: colors.primary }]}>
+              <Text style={[styles.customizeButtonText, { color: '#f5e6d3' }]}>
                 {t("menu.customize")}
               </Text>
             </TouchableOpacity>
@@ -1054,11 +1054,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   addToCartButton: {
-    marginTop: 12,
+    flex: 1,
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 14,
-    alignSelf: "flex-start",
   },
   addToCartButtonText: {
     fontWeight: "bold",
@@ -1066,14 +1065,18 @@ const styles = StyleSheet.create({
   },
   cardButtonRow: {
     flexDirection: "row",
+    alignItems: "stretch",
     gap: 10,
     marginTop: 12,
   },
   customizeButton: {
+    flex: 1,
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderWidth: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   customizeButtonText: {
     fontWeight: "bold",

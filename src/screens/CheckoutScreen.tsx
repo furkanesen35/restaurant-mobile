@@ -20,6 +20,7 @@ import { useTheme } from "react-native-paper";
 import { CardField, useStripe } from "@stripe/stripe-react-native";
 import ENV from "../config/env";
 import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
 import logger from '../utils/logger';
 import PostalCodePicker from "../components/PostalCodePicker";
 import { AllowedPostalCode } from "../types";
@@ -43,11 +44,30 @@ type Address = {
   phone: string;
 };
 
+type MainTabsParamList = {
+  Menu: undefined;
+  Favorites: undefined;
+  Cart: undefined;
+  Orders: undefined;
+  Profile: undefined;
+  Admin?: undefined;
+};
+
+type MainStackParamList = {
+  MainTabs: { screen?: keyof MainTabsParamList };
+  Checkout: undefined;
+  MenuItemDetail: undefined;
+  CookieSettings: undefined;
+  QRScanner: undefined;
+};
+
+type CheckoutScreenNav = StackNavigationProp<MainStackParamList, "Checkout">;
+
 const CheckoutScreen = () => {
   const { token, user, updateUser } = useAuth();
   const { cart, clearCart } = useCart();
   const { colors } = useTheme();
-  const navigation = useNavigation();
+  const navigation = useNavigation<CheckoutScreenNav>();
   const { confirmPayment } = useStripe();
 
   const [savedMethods, setSavedMethods] = useState<PaymentMethod[]>([]);
@@ -425,14 +445,40 @@ const CheckoutScreen = () => {
           {
             text: "View Orders",
             onPress: () => {
-              // Navigate back to MainTabs Orders screen
-              navigation.navigate("MainTabs" as never, { screen: "Orders" } as never);
+              logger.info("[Checkout] View Orders button pressed");
+              logger.info("[Checkout] Current navigation state:", navigation.getState());
+              logger.info("[Checkout] Parent navigation exists:", !!navigation.getParent());
+              
+              try {
+                // Navigate back to MainTabs and switch to Orders tab
+                logger.info("[Checkout] Calling goBack()...");
+                navigation.goBack();
+                
+                // Use setTimeout to ensure navigation completes before switching tabs
+                setTimeout(() => {
+                  logger.info("[Checkout] Attempting to navigate to Orders tab...");
+                  const parent = navigation.getParent();
+                  if (parent) {
+                    logger.info("[Checkout] Parent navigator found, navigating to MainTabs > Orders");
+                    // @ts-ignore - Parent navigation typing
+                    parent.navigate("MainTabs", { screen: "Orders" });
+                    logger.info("[Checkout] Navigation command sent");
+                  } else {
+                    logger.error("[Checkout] No parent navigator found!");
+                  }
+                }, 100);
+              } catch (error) {
+                logger.error("[Checkout] Navigation error:", error);
+              }
             },
           },
           {
             text: "Stay Here",
             style: "cancel",
-            onPress: () => navigation.goBack(),
+            onPress: () => {
+              logger.info("[Checkout] Stay Here button pressed");
+              navigation.goBack();
+            },
           },
         ]
       );

@@ -107,6 +107,7 @@ const AdminScreen = () => {
     maxQuantity: "5",
     isAvailable: true,
   });
+  const [expandedCategories, setExpandedCategories] = useState<Record<number, boolean>>({});
   const [savingModifier, setSavingModifier] = useState(false);
 
   // Settings states
@@ -1701,23 +1702,72 @@ const AdminScreen = () => {
                   
                   <Text style={styles.label}>{t("admin.modifiers.selectMenuItem")}</Text>
                   <ScrollView style={{ maxHeight: 280, borderWidth: 1, borderColor: "#333", borderRadius: 8, marginBottom: 16, backgroundColor: "#1c1c1c" }} nestedScrollEnabled>
-                    {menuItems.map((item) => (
-                      <TouchableOpacity
-                        key={item.id}
-                        onPress={() => setModifierForm((prev) => ({ ...prev, menuItemId: item.id.toString() }))}
-                        style={{
-                          padding: 12,
-                          borderBottomWidth: 1,
-                          borderBottomColor: "#333",
-                          backgroundColor: modifierForm.menuItemId === item.id.toString() ? "#2a2a2a" : "transparent"
-                        }}
-                      >
-                        <Text style={{ color: modifierForm.menuItemId === item.id.toString() ? "#c8a97e" : "#fff", fontSize: 14 }}>
-                          {item.name}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
+                    {categories.map((category) => {
+                      const categoryItems = menuItems.filter((item) => {
+                        const itemCategoryId = resolveItemCategoryId(item);
+                        return itemCategoryId === category.id;
+                      });
+                      
+                      if (categoryItems.length === 0) return null;
+                      
+                      const isExpanded = expandedCategories[category.id] || false;
+                      
+                      return (
+                        <View key={category.id}>
+                          {/* Category Header */}
+                          <TouchableOpacity
+                            onPress={() => setExpandedCategories(prev => ({ ...prev, [category.id]: !isExpanded }))}
+                            style={{
+                              padding: 12,
+                              backgroundColor: "#2a2a2a",
+                              borderBottomWidth: 1,
+                              borderBottomColor: "#333",
+                              flexDirection: "row",
+                              justifyContent: "space-between",
+                              alignItems: "center"
+                            }}
+                          >
+                            <Text style={{ color: "#e0b97f", fontWeight: "600", fontSize: 15 }}>
+                              {category.name} ({categoryItems.length})
+                            </Text>
+                            <Ionicons 
+                              name={isExpanded ? "chevron-up" : "chevron-down"} 
+                              size={20} 
+                              color="#e0b97f" 
+                            />
+                          </TouchableOpacity>
+                          
+                          {/* Category Items */}
+                          {isExpanded && categoryItems.map((item) => (
+                            <TouchableOpacity
+                              key={item.id}
+                              onPress={() => setModifierForm((prev) => ({ ...prev, menuItemId: item.id.toString() }))}
+                              style={{
+                                padding: 12,
+                                paddingLeft: 24,
+                                borderBottomWidth: 1,
+                                borderBottomColor: "#333",
+                                backgroundColor: modifierForm.menuItemId === item.id.toString() ? "#3a2b1f" : "transparent"
+                              }}
+                            >
+                              <Text style={{ color: modifierForm.menuItemId === item.id.toString() ? "#e0b97f" : "#fff", fontSize: 14 }}>
+                                {item.nameEn || item.name}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      );
+                    })}
                   </ScrollView>
+
+                  <Text style={styles.label}>{t("admin.modifiers.name")}</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Extra Cheese"
+                    placeholderTextColor="#666"
+                    value={modifierForm.name}
+                    onChangeText={(text) => setModifierForm((prev) => ({ ...prev, name: text }))}
+                  />
 
                   <View style={{ flexDirection: "row", gap: 8 }}>
                     <View style={{ flex: 1 }}>
@@ -1810,48 +1860,114 @@ const AdminScreen = () => {
                   </View>
                 </ScrollView>
               ) : (
-                // List View
+                // List View - Grouped by Menu Item
                 <>
                   {modifiersLoading ? (
                     <ActivityIndicator size="large" color="#c8a97e" style={{ marginTop: 40 }} />
                   ) : (
-                    <FlatList
-                      data={modifiers}
-                      keyExtractor={(item) => item.id.toString()}
-                      contentContainerStyle={{ padding: 16 }}
-                      ListEmptyComponent={
+                    <ScrollView contentContainerStyle={{ padding: 16 }}>
+                      {modifiers.length === 0 ? (
                         <Text style={{ color: "#b8a68a", textAlign: "center", marginTop: 40 }}>
                           {t("admin.modifiers.noModifiers")}
                         </Text>
-                      }
-                      renderItem={({ item }) => {
-                        const menuItem = menuItems.find((m) => m.id === item.menuItemId);
-                        return (
-                          <View style={{ flexDirection: "row", alignItems: "center", padding: 12, backgroundColor: "#2d2117", borderRadius: 8, marginBottom: 8 }}>
-                            <View style={{ flex: 1 }}>
-                              <Text style={{ color: "#fff", fontWeight: "600" }}>
-                                {item.nameEn || item.name}
-                              </Text>
-                              <Text style={{ color: "#b8a68a", fontSize: 12 }}>
-                                {menuItem?.name || `Item #${item.menuItemId}`} • €{item.price.toFixed(2)}
-                              </Text>
-                            </View>
-                            <TouchableOpacity
-                              onPress={() => openModifierModal(item)}
-                              style={{ padding: 8 }}
-                            >
-                              <Ionicons name="pencil" size={20} color="#c8a97e" />
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              onPress={() => deleteModifier(item.id)}
-                              style={{ padding: 8 }}
-                            >
-                              <Ionicons name="trash" size={20} color="#f44336" />
-                            </TouchableOpacity>
-                          </View>
-                        );
-                      }}
-                    />
+                      ) : (
+                        // Group modifiers by menu item
+                        (() => {
+                          const groupedByMenuItem: Record<number, MenuItemModifier[]> = {};
+                          modifiers.forEach((mod) => {
+                            if (!groupedByMenuItem[mod.menuItemId]) {
+                              groupedByMenuItem[mod.menuItemId] = [];
+                            }
+                            groupedByMenuItem[mod.menuItemId].push(mod);
+                          });
+
+                          logger.info("[Admin Modifiers] Total menuItems available:", menuItems.length);
+                          logger.info("[Admin Modifiers] Sample menuItem structure:", menuItems[0]);
+
+                          return Object.entries(groupedByMenuItem).map(([menuItemId, mods]) => {
+                            const menuItem = menuItems.find((m) => m.id.toString() === menuItemId.toString());
+                            logger.info(`[Admin Modifiers] Looking for menuItemId: ${menuItemId}, found:`, menuItem);
+                            logger.info(`[Admin Modifiers] Available fields:`, {
+                              name: menuItem?.name,
+                              nameEn: menuItem?.nameEn,
+                              nameDe: menuItem?.nameDe,
+                              currentLanguage
+                            });
+                            const menuItemName = menuItem ? (currentLanguage === 'de' ? (menuItem.nameDe || menuItem.nameEn || menuItem.name) : (menuItem.nameEn || menuItem.name)) : `Item #${menuItemId}`;
+                            logger.info(`[Admin Modifiers] Final menuItemName: ${menuItemName}`);
+                            return (
+                              <View key={menuItemId} style={{ marginBottom: 20 }}>
+                                {/* Menu Item Header */}
+                                <View style={{ 
+                                  backgroundColor: "#3a2b1f", 
+                                  padding: 12, 
+                                  borderRadius: 8, 
+                                  marginBottom: 8,
+                                  borderLeftWidth: 3,
+                                  borderLeftColor: "#e0b97f"
+                                }}>
+                                  <Text style={{ color: "#e0b97f", fontWeight: "700", fontSize: 16 }}>
+                                    {menuItemName}
+                                  </Text>
+                                  <Text style={{ color: "#b8a68a", fontSize: 12, marginTop: 2 }}>
+                                    {mods.length} {mods.length === 1 ? 'extra' : 'extras'}
+                                  </Text>
+                                </View>
+                                
+                                {/* Modifiers for this menu item */}
+                                {mods.map((item, index) => (
+                                  <View 
+                                    key={item.id} 
+                                    style={{ 
+                                      flexDirection: "row", 
+                                      alignItems: "center", 
+                                      padding: 12, 
+                                      paddingLeft: 24,
+                                      backgroundColor: "#2d2117", 
+                                      borderRadius: 8, 
+                                      marginBottom: index === mods.length - 1 ? 0 : 8,
+                                      marginLeft: 12
+                                    }}
+                                  >
+                                    <View style={{ flex: 1 }}>
+                                      <Text style={{ color: "#fff", fontWeight: "600" }}>
+                                        {item.nameEn || item.name}
+                                      </Text>
+                                      <Text style={{ color: "#b8a68a", fontSize: 12 }}>
+                                        {item.category && `${item.category} • `}€{item.price.toFixed(2)} • Max: {item.maxQuantity}
+                                      </Text>
+                                    </View>
+                                    <View style={{ 
+                                      paddingHorizontal: 8, 
+                                      paddingVertical: 4, 
+                                      borderRadius: 4,
+                                      backgroundColor: item.isAvailable ? '#1b4d1b' : '#4d1b1b',
+                                      marginRight: 8
+                                    }}>
+                                      <Text style={{ color: item.isAvailable ? '#4caf50' : '#f44336', fontSize: 10, fontWeight: '600' }}>
+                                        {item.isAvailable ? 'Available' : 'Unavailable'}
+                                      </Text>
+                                    </View>
+                                    <TouchableOpacity
+                                      onPress={() => openModifierModal(item)}
+                                      style={{ padding: 8 }}
+                                    >
+                                      <Ionicons name="pencil" size={20} color="#c8a97e" />
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                      onPress={() => deleteModifier(item.id)}
+                                      style={{ padding: 8 }}
+                                    >
+                                      <Ionicons name="trash" size={20} color="#f44336" />
+                                    </TouchableOpacity>
+                                  </View>
+                                ))}
+                              </View>
+                            );
+                          });
+                        })()
+                      )}
+                    </ScrollView>
                   )}
                   
                   {/* Add Button */}
