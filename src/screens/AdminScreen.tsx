@@ -1679,16 +1679,19 @@ const styles = StyleSheet.create({
   tab: {
     flex: 1,
     paddingVertical: 12,
+    paddingHorizontal: 4,
     alignItems: "center",
+    justifyContent: "center",
     borderRadius: 6,
   },
   activeTab: {
     backgroundColor: "#e0b97f",
   },
   tabText: {
-    fontSize: 16,
+    fontSize: 13,
     color: "#fffbe8",
     fontWeight: "600",
+    textAlign: "center",
   },
   activeTabText: {
     color: "#231a13",
