@@ -425,19 +425,8 @@ const CheckoutScreen = () => {
           {
             text: "View Orders",
             onPress: () => {
-              // Navigate back to MainTabs and switch to Orders tab
-              navigation.reset({
-                index: 0,
-                routes: [
-                  {
-                    name: "MainTabs" as never,
-                    state: {
-                      routes: [{ name: "Orders" }],
-                      index: 0,
-                    },
-                  },
-                ],
-              });
+              // Navigate back to MainTabs Orders screen
+              navigation.navigate("MainTabs" as never, { screen: "Orders" } as never);
             },
           },
           {

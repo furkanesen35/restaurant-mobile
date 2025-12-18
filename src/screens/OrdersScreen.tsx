@@ -148,12 +148,24 @@ const OrdersScreen = () => {
   );
 
   const OrderCard = React.memo(({ order }: { order: Order }) => {
-    // Calculate total from items
+    // Calculate total from items including modifiers
     const total =
       order.items && Array.isArray(order.items)
         ? order.items.reduce(
-            (sum: number, oi: OrderItem) =>
-              sum + (oi.menuItem?.price || 0) * (oi.quantity || 1),
+            (sum: number, oi: OrderItem) => {
+              const basePrice = (oi.menuItem?.price || 0) * (oi.quantity || 1);
+              
+              // Calculate modifiers total for this item
+              const modifiersTotal = oi.modifiers && Array.isArray(oi.modifiers)
+                ? oi.modifiers.reduce(
+                    (modSum: number, mod) => 
+                      modSum + (mod.priceAtOrder || 0) * (mod.quantity || 1),
+                    0
+                  ) * (oi.quantity || 1)
+                : 0;
+              
+              return sum + basePrice + modifiersTotal;
+            },
             0
           )
         : order.total || 0;
