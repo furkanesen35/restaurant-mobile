@@ -24,6 +24,7 @@ import ENV from "../config/env";
 import { MenuItem } from "../types";
 import { useTranslation } from "../hooks/useTranslation";
 import { useLanguage } from "../contexts/LanguageContext";
+import { useNavigation } from "@react-navigation/native";
 
 const MenuScreen = () => {
   const { colors } = useTheme();
@@ -31,6 +32,7 @@ const MenuScreen = () => {
   const { isFavorite, toggleFavorite } = useFavorites();
   const { t } = useTranslation();
   const { currentLanguage } = useLanguage();
+  const navigation = useNavigation();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -356,60 +358,83 @@ const MenuScreen = () => {
     );
   };
 
+  const handleNavigateToDetail = useCallback(
+    (item: MenuItem) => {
+      navigation.navigate("MenuItemDetail" as never, { item } as never);
+    },
+    [navigation]
+  );
+
   const renderMenuItemCard = (item: MenuItem, categoryLabel?: string) => (
-    <Card key={item.id} style={styles.menuCard}>
-      {item.imageUrl && (
-        <ImageBackground
-          source={{ uri: item.imageUrl }}
-          style={styles.menuCardImage}
-          imageStyle={styles.menuCardImageRadius}
-          resizeMode="cover"
-        >
-          <View style={styles.menuCardImageOverlay} />
-          {categoryLabel ? (
-            <View style={styles.menuCardImageChip}>
-              <Text style={styles.menuCardImageChipText}>{categoryLabel}</Text>
-            </View>
-          ) : null}
-        </ImageBackground>
-      )}
-      <Card.Title
-        title={
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <Text
-              style={{ fontSize: 16, fontWeight: "600", color: colors.onBackground }}
-            >
-              {item.name}
-            </Text>
-            {item.loyaltyPointsMultiplier && item.loyaltyPointsMultiplier > 1.0 && (
-              <View style={styles.bonusPointsBadge}>
-                <Text style={styles.bonusPointsText}>
-                  🌟 {item.loyaltyPointsMultiplier}x Points
-                </Text>
-              </View>
-            )}
-          </View>
-        }
-        subtitle={`€${item.price.toFixed(2)}`}
-        right={() => (
-          <TouchableOpacity onPress={() => handleToggleFavorite(item.id)} style={{ marginRight: 8 }}>
-            <Text style={{ fontSize: 24 }}>{isFavorite(item.id) ? "❤️" : "🤍"}</Text>
-          </TouchableOpacity>
-        )}
-      />
-      <Card.Content>
-        <Text style={{ color: colors.onBackground }}>{item.description}</Text>
-        <DietaryBadges item={item} />
-          <TouchableOpacity
-            style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
-            onPress={() => handleAddToCart(item)}
+    <TouchableOpacity
+      key={item.id}
+      onPress={() => handleNavigateToDetail(item)}
+      activeOpacity={0.9}
+    >
+      <Card style={styles.menuCard}>
+        {item.imageUrl && (
+          <ImageBackground
+            source={{ uri: item.imageUrl }}
+            style={styles.menuCardImage}
+            imageStyle={styles.menuCardImageRadius}
+            resizeMode="cover"
           >
-          <Text style={[styles.addToCartButtonText, { color: colors.onPrimary }]}>
-            {t("menu.addToCart")}
-          </Text>
-        </TouchableOpacity>
-      </Card.Content>
-    </Card>
+            <View style={styles.menuCardImageOverlay} />
+            {categoryLabel ? (
+              <View style={styles.menuCardImageChip}>
+                <Text style={styles.menuCardImageChipText}>{categoryLabel}</Text>
+              </View>
+            ) : null}
+          </ImageBackground>
+        )}
+        <Card.Title
+          title={
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Text
+                style={{ fontSize: 16, fontWeight: "600", color: colors.onBackground }}
+              >
+                {item.name}
+              </Text>
+              {item.loyaltyPointsMultiplier && item.loyaltyPointsMultiplier > 1.0 && (
+                <View style={styles.bonusPointsBadge}>
+                  <Text style={styles.bonusPointsText}>
+                    🌟 {item.loyaltyPointsMultiplier}x Points
+                  </Text>
+                </View>
+              )}
+            </View>
+          }
+          subtitle={`€${item.price.toFixed(2)}`}
+          right={() => (
+            <TouchableOpacity onPress={() => handleToggleFavorite(item.id)} style={{ marginRight: 8 }}>
+              <Text style={{ fontSize: 24 }}>{isFavorite(item.id) ? "❤️" : "🤍"}</Text>
+            </TouchableOpacity>
+          )}
+        />
+        <Card.Content>
+          <Text style={{ color: colors.onBackground }}>{item.description}</Text>
+          <DietaryBadges item={item} />
+          <View style={styles.cardButtonRow}>
+            <TouchableOpacity
+              style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
+              onPress={() => handleAddToCart(item)}
+            >
+              <Text style={[styles.addToCartButtonText, { color: colors.onPrimary }]}>
+                {t("menu.addToCart")}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.customizeButton, { borderColor: colors.primary }]}
+              onPress={() => handleNavigateToDetail(item)}
+            >
+              <Text style={[styles.customizeButtonText, { color: colors.primary }]}>
+                {t("menu.customize")}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </Card.Content>
+      </Card>
+    </TouchableOpacity>
   );
 
   if (loading) {
@@ -1036,6 +1061,21 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   addToCartButtonText: {
+    fontWeight: "bold",
+    letterSpacing: 0.5,
+  },
+  cardButtonRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 12,
+  },
+  customizeButton: {
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+  },
+  customizeButtonText: {
     fontWeight: "bold",
     letterSpacing: 0.5,
   },

@@ -11,16 +11,18 @@ import {
   Modal,
   Image,
   Switch,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Card, useTheme, Button, FAB } from "react-native-paper";
+import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../contexts/AuthContext";
 import { useIsFocused } from "@react-navigation/native";
 import ENV from "../config/env";
 import QRTokenManagement from "../components/QRTokenManagement";
 import { useTranslation } from "../hooks/useTranslation";
 import logger from '../utils/logger';
-import { AllowedPostalCode } from "../types";
+import { AllowedPostalCode, MenuItemModifier } from "../types";
 const STATUS_OPTIONS = [
   "pending",
   "confirmed",
@@ -35,7 +37,7 @@ const AdminScreen = () => {
   const { t, currentLanguage } = useTranslation();
   const { token, user, updateUser } = useAuth();
   const [activeTab, setActiveTab] = useState<
-    "orders" | "menu" | "qr" | "settings"
+    "orders" | "menu" | "modifiers" | "qr" | "settings"
   >("orders");
   const [orders, setOrders] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -88,6 +90,23 @@ const AdminScreen = () => {
     isActive: true,
   });
   const [savingPostalCode, setSavingPostalCode] = useState(false);
+
+  // Modifier management states
+  const [modifiers, setModifiers] = useState<MenuItemModifier[]>([]);
+  const [modifiersLoading, setModifiersLoading] = useState(false);
+  const [modifierModalVisible, setModifierModalVisible] = useState(false);
+  const [editingModifier, setEditingModifier] = useState<MenuItemModifier | null>(null);
+  const [modifierForm, setModifierForm] = useState({
+    menuItemId: "",
+    name: "",
+    nameEn: "",
+    nameDe: "",
+    price: "",
+    category: "",
+    maxQuantity: "5",
+    isAvailable: true,
+  });
+  const [savingModifier, setSavingModifier] = useState(false);
 
   // Settings states
   const [minOrderValue, setMinOrderValue] = useState("");
@@ -219,6 +238,142 @@ const AdminScreen = () => {
     }
   }, [token, t]);
 
+  // Modifier functions
+  const fetchModifiers = useCallback(async () => {
+    if (!token) return;
+    try {
+      setModifiersLoading(true);
+      const response = await fetch(`${ENV.API_URL}/api/modifiers`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error("Failed to load modifiers");
+      }
+      const data = await response.json();
+      setModifiers(data.modifiers || []);
+    } catch (err: any) {
+      logger.error("Failed to fetch modifiers:", err);
+      Alert.alert(t("common.error"), err.message || "Failed to load modifiers");
+    } finally {
+      setModifiersLoading(false);
+    }
+  }, [token, t]);
+
+  const openModifierModal = (modifier?: MenuItemModifier) => {
+    if (modifier) {
+      setEditingModifier(modifier);
+      setModifierForm({
+        menuItemId: modifier.menuItemId.toString(),
+        name: modifier.name,
+        nameEn: modifier.nameEn || "",
+        nameDe: modifier.nameDe || "",
+        price: modifier.price.toString(),
+        category: modifier.category || "",
+        maxQuantity: modifier.maxQuantity.toString(),
+        isAvailable: modifier.isAvailable,
+      });
+    } else {
+      setEditingModifier(null);
+      setModifierForm({
+        menuItemId: selectedCategoryId ? "" : "",
+        name: "",
+        nameEn: "",
+        nameDe: "",
+        price: "",
+        category: "",
+        maxQuantity: "5",
+        isAvailable: true,
+      });
+    }
+    setModifierModalVisible(true);
+  };
+
+  const saveModifier = async () => {
+    if (!token) return;
+    if (!modifierForm.menuItemId || !modifierForm.name || !modifierForm.price) {
+      Alert.alert(t("common.error"), "Menu item, name and price are required");
+      return;
+    }
+
+    setSavingModifier(true);
+    try {
+      const url = editingModifier
+        ? `${ENV.API_URL}/api/modifiers/${editingModifier.id}`
+        : `${ENV.API_URL}/api/modifiers`;
+      const method = editingModifier ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          menuItemId: parseInt(modifierForm.menuItemId),
+          name: modifierForm.name,
+          nameEn: modifierForm.nameEn || null,
+          nameDe: modifierForm.nameDe || null,
+          price: parseFloat(modifierForm.price),
+          category: modifierForm.category || null,
+          maxQuantity: parseInt(modifierForm.maxQuantity) || 5,
+          isAvailable: modifierForm.isAvailable,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to save modifier");
+      }
+
+      Alert.alert(t("common.success"), editingModifier ? "Modifier updated" : "Modifier created");
+      setModifierModalVisible(false);
+      fetchModifiers();
+    } catch (err: any) {
+      logger.error("Failed to save modifier:", err);
+      Alert.alert(t("common.error"), err.message || "Failed to save modifier");
+    } finally {
+      setSavingModifier(false);
+    }
+  };
+
+  const deleteModifier = async (modifierId: number) => {
+    if (!token) return;
+    
+    Alert.alert(
+      t("common.confirm"),
+      "Are you sure you want to delete this modifier?",
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("common.delete"),
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const response = await fetch(`${ENV.API_URL}/api/modifiers/${modifierId}`, {
+                method: "DELETE",
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              });
+
+              if (!response.ok) {
+                throw new Error("Failed to delete modifier");
+              }
+
+              Alert.alert(t("common.success"), "Modifier deleted");
+              fetchModifiers();
+            } catch (err: any) {
+              logger.error("Failed to delete modifier:", err);
+              Alert.alert(t("common.error"), err.message || "Failed to delete modifier");
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const fetchSettings = useCallback(async () => {
     try {
       const response = await fetch(`${ENV.API_URL}/settings/minOrderValue`);
@@ -316,6 +471,9 @@ const AdminScreen = () => {
       } else if (activeTab === "menu") {
         fetchCategories();
         fetchMenuItems();
+      } else if (activeTab === "modifiers") {
+        fetchModifiers();
+        fetchMenuItems(); // Need menu items for dropdown
       }
     }
   }, [
@@ -327,6 +485,7 @@ const AdminScreen = () => {
     fetchCategories,
     fetchMenuItems,
     fetchSettings,
+    fetchModifiers,
   ]);
 
   useEffect(() => {
@@ -718,6 +877,19 @@ const AdminScreen = () => {
               ]}
             >
               {t("admin.tabs.menu")}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === "modifiers" && styles.activeTab]}
+            onPress={() => setActiveTab("modifiers")}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "modifiers" && styles.activeTabText,
+              ]}
+            >
+              Extras
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -1483,6 +1655,182 @@ const AdminScreen = () => {
             </View>
           </View>
         </Modal>
+
+        {/* Modifiers Tab */}
+        {activeTab === "modifiers" && (
+          <View style={{ flex: 1 }}>
+            {modifiersLoading ? (
+              <ActivityIndicator size="large" color="#c8a97e" style={{ marginTop: 40 }} />
+            ) : (
+              <FlatList
+                data={modifiers}
+                keyExtractor={(item) => item.id.toString()}
+                contentContainerStyle={{ padding: 16, paddingBottom: 80 }}
+                ListEmptyComponent={
+                  <Text style={{ color: "#b8a68a", textAlign: "center", marginTop: 40 }}>
+                    {t("admin.modifiers.noModifiers")}
+                  </Text>
+                }
+                renderItem={({ item }) => {
+                  const menuItem = menuItems.find((m) => m.id === item.menuItemId);
+                  return (
+                    <Card style={styles.card}>
+                      <View style={{ flexDirection: "row", alignItems: "center", padding: 12 }}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.itemName}>
+                            {item.nameEn || item.name}
+                          </Text>
+                          <Text style={{ color: "#b8a68a", fontSize: 12 }}>
+                            {menuItem?.name || `Item #${item.menuItemId}`}
+                          </Text>
+                          <Text style={{ color: "#c8a97e", fontSize: 14, marginTop: 4 }}>
+                            +€{item.price.toFixed(2)}
+                          </Text>
+                          {item.category && (
+                            <Text style={{ color: "#888", fontSize: 12, marginTop: 2 }}>
+                              {item.category}
+                            </Text>
+                          )}
+                        </View>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                          <Text style={{ color: item.isAvailable ? "#4caf50" : "#f44336", fontSize: 12 }}>
+                            {item.isAvailable ? "Active" : "Inactive"}
+                          </Text>
+                          <TouchableOpacity
+                            onPress={() => openModifierModal(item)}
+                            style={{ padding: 8 }}
+                          >
+                            <Ionicons name="pencil" size={20} color="#c8a97e" />
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            onPress={() => deleteModifier(item.id)}
+                            style={{ padding: 8 }}
+                          >
+                            <Ionicons name="trash" size={20} color="#f44336" />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    </Card>
+                  );
+                }}
+              />
+            )}
+            <FAB
+              style={[styles.fab, { backgroundColor: "#c8a97e" }]}
+              icon="plus"
+              color="#181818"
+              onPress={() => openModifierModal()}
+            />
+
+            {/* Modifier Modal */}
+            <Modal
+              visible={modifierModalVisible}
+              transparent
+              animationType="slide"
+              onRequestClose={() => setModifierModalVisible(false)}
+            >
+              <View style={styles.modalOverlay}>
+                <View style={styles.modalContent}>
+                  <Text style={styles.modalTitle}>
+                    {editingModifier ? t("admin.modifiers.editModifier") : t("admin.modifiers.addModifier")}
+                  </Text>
+                  <ScrollView style={{ maxHeight: 400 }}>
+                    <Text style={{ color: "#b8a68a", marginBottom: 4 }}>
+                      {t("admin.modifiers.selectMenuItem")}
+                    </Text>
+                    <View style={{ 
+                      borderWidth: 1, 
+                      borderColor: "#333", 
+                      borderRadius: 8, 
+                      marginBottom: 12,
+                      backgroundColor: "#1c1c1c"
+                    }}>
+                      {menuItems.slice(0, 20).map((item) => (
+                        <TouchableOpacity
+                          key={item.id}
+                          onPress={() => setModifierForm((prev) => ({ ...prev, menuItemId: item.id.toString() }))}
+                          style={{
+                            padding: 12,
+                            borderBottomWidth: 1,
+                            borderBottomColor: "#333",
+                            backgroundColor: modifierForm.menuItemId === item.id.toString() ? "#2a2a2a" : "transparent"
+                          }}
+                        >
+                          <Text style={{ color: modifierForm.menuItemId === item.id.toString() ? "#c8a97e" : "#fff" }}>
+                            {item.name}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                    <TextInput
+                      style={styles.input}
+                      placeholder={t("admin.modifiers.name")}
+                      placeholderTextColor="#888"
+                      value={modifierForm.name}
+                      onChangeText={(text) => setModifierForm((prev) => ({ ...prev, name: text }))}
+                    />
+                    <TextInput
+                      style={styles.input}
+                      placeholder={t("admin.modifiers.nameEn")}
+                      placeholderTextColor="#888"
+                      value={modifierForm.nameEn}
+                      onChangeText={(text) => setModifierForm((prev) => ({ ...prev, nameEn: text }))}
+                    />
+                    <TextInput
+                      style={styles.input}
+                      placeholder={t("admin.modifiers.nameDe")}
+                      placeholderTextColor="#888"
+                      value={modifierForm.nameDe}
+                      onChangeText={(text) => setModifierForm((prev) => ({ ...prev, nameDe: text }))}
+                    />
+                    <TextInput
+                      style={styles.input}
+                      placeholder={t("admin.modifiers.price")}
+                      placeholderTextColor="#888"
+                      keyboardType="decimal-pad"
+                      value={modifierForm.price}
+                      onChangeText={(text) => setModifierForm((prev) => ({ ...prev, price: text }))}
+                    />
+                    <TextInput
+                      style={styles.input}
+                      placeholder={t("admin.modifiers.category")}
+                      placeholderTextColor="#888"
+                      value={modifierForm.category}
+                      onChangeText={(text) => setModifierForm((prev) => ({ ...prev, category: text }))}
+                    />
+                    <TextInput
+                      style={styles.input}
+                      placeholder={t("admin.modifiers.maxQuantity")}
+                      placeholderTextColor="#888"
+                      keyboardType="number-pad"
+                      value={modifierForm.maxQuantity}
+                      onChangeText={(text) => setModifierForm((prev) => ({ ...prev, maxQuantity: text }))}
+                    />
+                    <View style={styles.toggleContainer}>
+                      <Text style={styles.toggleLabel}>{t("admin.modifiers.available")}</Text>
+                      <Switch
+                        value={modifierForm.isAvailable}
+                        onValueChange={(value) => setModifierForm((prev) => ({ ...prev, isAvailable: value }))}
+                        trackColor={{ false: "#767577", true: "#4caf50" }}
+                        thumbColor={modifierForm.isAvailable ? "#fff" : "#f4f3f4"}
+                      />
+                    </View>
+                  </ScrollView>
+                  <View style={styles.modalActions}>
+                    <Button onPress={() => setModifierModalVisible(false)}>{t("common.cancel")}</Button>
+                    <Button
+                      mode="contained"
+                      onPress={saveModifier}
+                      disabled={savingModifier}
+                    >
+                      {savingModifier ? t("common.loading") : t("common.save")}
+                    </Button>
+                  </View>
+                </View>
+              </View>
+            </Modal>
+          </View>
+        )}
 
         {/* QR Codes Tab */}
         {activeTab === "qr" && <QRTokenManagement />}

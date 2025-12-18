@@ -56,6 +56,7 @@
     "categories": "Categories",
     "allCategories": "All",
     "addToCart": "Add to Cart",
+    "customize": "Customize",
     "favorites": "Favorites",
     "addToFavorites": "Add to Favorites",
     "removeFromFavorites": "Remove from Favorites",
@@ -74,6 +75,14 @@
     "description": "Description",
     "allergens": "Allergens"
   },
+  "modifiers": {
+    "addExtras": "Add Extras",
+    "extras": "Extras",
+    "toppings": "Toppings",
+    "proteins": "Proteins",
+    "sauces": "Sauces",
+    "sides": "Sides"
+  },
   "cart": {
     "title": "Cart",
     "emptyCart": "Your cart is empty",
@@ -85,7 +94,8 @@
     "free": "Free",
     "removeItem": "Remove Item",
     "clearCart": "Clear Cart",
-    "itemAdded": "Item added",
+    "itemAdded": "Item added to cart",
+    "goToCart": "Go to Cart",
     "itemRemoved": "Item removed",
     "loginRequired": "Please log in to manage your cart",
     "updateFailed": "We couldn't update your cart. Please try again.",
@@ -232,6 +242,7 @@
     "tabs": {
       "orders": "Orders",
       "menu": "Menu",
+      "modifiers": "Extras",
       "qr": "QR-Codes",
       "delivery": "Delivery",
       "settings": "Settings"
@@ -262,6 +273,27 @@
       "noItems": "No menu items yet. Select a category or use the + button to add items.",
       "bonusPoints": "{{multiplier}}x Points",
       "categoryLabel": "Category"
+    },
+    "modifiers": {
+      "title": "Extras Management",
+      "noModifiers": "No extras/modifiers yet. Use the + button to add one.",
+      "addModifier": "Add Extra",
+      "editModifier": "Edit Extra",
+      "selectMenuItem": "Select Menu Item",
+      "name": "Name",
+      "nameEn": "Name (EN)",
+      "nameDe": "Name (DE)",
+      "price": "Price (€)",
+      "category": "Category (e.g., Toppings, Sauces)",
+      "maxQuantity": "Max Quantity",
+      "available": "Available",
+      "saveSuccess": "Modifier saved successfully",
+      "saveError": "Failed to save modifier",
+      "deleteConfirmTitle": "Delete Modifier",
+      "deleteConfirmMessage": "Are you sure you want to delete this modifier?",
+      "deleteSuccess": "Modifier deleted",
+      "deleteError": "Failed to delete modifier",
+      "menuItemRequired": "Please select a menu item"
     },
     "modals": {
       "editCategory": "Edit Category",

@@ -28,6 +28,41 @@ export interface MenuItem {
   isSpicy?: boolean;
   allergens?: string;
   loyaltyPointsMultiplier?: number;
+  modifiers?: MenuItemModifier[];
+}
+
+// Modifier types
+export interface MenuItemModifier {
+  id: number;
+  menuItemId: number;
+  name: string;
+  nameEn?: string;
+  nameDe?: string;
+  price: number;
+  category?: string;
+  isAvailable: boolean;
+  sortOrder: number;
+  maxQuantity: number;
+}
+
+export interface SelectedModifier {
+  modifierId: number;
+  quantity: number;
+  name?: string;
+  price?: number;
+}
+
+export interface OrderItemModifier {
+  id: number;
+  modifierId: number;
+  quantity: number;
+  priceAtOrder: number;
+  modifier?: {
+    id: number;
+    name: string;
+    nameEn?: string;
+    nameDe?: string;
+  };
 }
 
 // Order types
@@ -49,6 +84,7 @@ export interface OrderItem {
     price: number;
   };
   quantity: number;
+  modifiers?: OrderItemModifier[];
 }
 
 export interface Order {

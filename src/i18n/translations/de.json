@@ -56,6 +56,7 @@
     "categories": "Kategorien",
     "allCategories": "Alle",
     "addToCart": "In den Warenkorb",
+    "customize": "Anpassen",
     "favorites": "Favoriten",
     "addToFavorites": "Zu Favoriten hinzufügen",
     "removeFromFavorites": "Aus Favoriten entfernen",
@@ -74,6 +75,14 @@
     "description": "Beschreibung",
     "allergens": "Allergene"
   },
+  "modifiers": {
+    "addExtras": "Extras hinzufügen",
+    "extras": "Extras",
+    "toppings": "Beläge",
+    "proteins": "Proteine",
+    "sauces": "Saucen",
+    "sides": "Beilagen"
+  },
   "cart": {
     "title": "Warenkorb",
     "emptyCart": "Ihr Warenkorb ist leer",
@@ -85,7 +94,8 @@
     "free": "Kostenlos",
     "removeItem": "Artikel entfernen",
     "clearCart": "Warenkorb leeren",
-    "itemAdded": "Artikel hinzugefügt",
+    "itemAdded": "Artikel zum Warenkorb hinzugefügt",
+    "goToCart": "Zum Warenkorb",
     "itemRemoved": "Artikel entfernt",
     "loginRequired": "Bitte melde dich an, um deinen Warenkorb zu verwalten",
     "updateFailed": "Der Warenkorb konnte nicht aktualisiert werden. Bitte versuche es erneut.",
@@ -232,6 +242,7 @@
     "tabs": {
       "orders": "Bestellungen",
       "menu": "Menü",
+      "modifiers": "Extras",
       "qr": "QR-Codes",
       "delivery": "Liefergebiete",
       "settings": "Einstellungen"
@@ -262,6 +273,27 @@
       "noItems": "Noch keine Menüeinträge. Wählen Sie eine Kategorie aus oder verwenden Sie die +-Schaltfläche, um Artikel hinzuzufügen.",
       "bonusPoints": "{{multiplier}}x Punkte",
       "categoryLabel": "Kategorie"
+    },
+    "modifiers": {
+      "title": "Extras-Verwaltung",
+      "noModifiers": "Noch keine Extras/Modifikatoren. Verwenden Sie die +-Schaltfläche, um einen hinzuzufügen.",
+      "addModifier": "Extra hinzufügen",
+      "editModifier": "Extra bearbeiten",
+      "selectMenuItem": "Menüeintrag auswählen",
+      "name": "Name",
+      "nameEn": "Name (EN)",
+      "nameDe": "Name (DE)",
+      "price": "Preis (€)",
+      "category": "Kategorie (z.B. Toppings, Saucen)",
+      "maxQuantity": "Maximale Menge",
+      "available": "Verfügbar",
+      "saveSuccess": "Modifikator erfolgreich gespeichert",
+      "saveError": "Modifikator konnte nicht gespeichert werden",
+      "deleteConfirmTitle": "Modifikator löschen",
+      "deleteConfirmMessage": "Sind Sie sicher, dass Sie diesen Modifikator löschen möchten?",
+      "deleteSuccess": "Modifikator gelöscht",
+      "deleteError": "Modifikator konnte nicht gelöscht werden",
+      "menuItemRequired": "Bitte wählen Sie einen Menüeintrag aus"
     },
     "modals": {
       "editCategory": "Kategorie bearbeiten",

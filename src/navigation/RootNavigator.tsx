@@ -7,6 +7,7 @@ import ResetPasswordScreen from "../screens/ResetPasswordScreen";
 import VerifyEmailScreen from "../screens/VerifyEmailScreen";
 import CookieSettingsScreen from "../screens/CookieSettingsScreen";
 import QRScannerScreen from "../screens/QRScannerScreen";
+import MenuItemDetailScreen from "../screens/MenuItemDetailScreen";
 import { useAuth } from "../contexts/AuthContext";
 import MenuScreen from "../screens/MenuScreen";
 import OrdersScreen from "../screens/OrdersScreen";
@@ -149,6 +150,13 @@ function MainStack() {
           title: t("navigation.checkout"),
           headerStyle: { backgroundColor: "#231a13" },
           headerTintColor: "#d4af37",
+        }}
+      />
+      <Stack.Screen
+        name="MenuItemDetail"
+        component={MenuItemDetailScreen}
+        options={{
+          headerShown: false,
         }}
       />
       <Stack.Screen

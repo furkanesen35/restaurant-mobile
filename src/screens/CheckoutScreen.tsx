@@ -75,7 +75,14 @@ const CheckoutScreen = () => {
   const [saveAddressToProfile, setSaveAddressToProfile] = useState(true);
   const [savePaymentToProfile, setSavePaymentToProfile] = useState(true);
 
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  // Calculate total including modifiers
+  const total = cart.reduce((sum, item) => {
+    const basePrice = item.price * item.quantity;
+    const modifiersPrice = (item.modifiers || []).reduce((modSum, mod) => {
+      return modSum + (mod.price || 0) * mod.quantity;
+    }, 0);
+    return sum + basePrice + modifiersPrice * item.quantity;
+  }, 0);
 
   // Fetch allowed postal codes for delivery
   React.useEffect(() => {
@@ -347,6 +354,10 @@ const CheckoutScreen = () => {
       const items = cart.map((i) => ({
         menuItemId: parseInt(i.menuItemId),
         quantity: i.quantity,
+        modifiers: (i.modifiers || []).map((mod) => ({
+          modifierId: mod.modifierId,
+          quantity: mod.quantity,
+        })),
       }));
 
       const orderPayload = {

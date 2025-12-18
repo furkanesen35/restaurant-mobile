@@ -10,15 +10,28 @@ import { useAuth } from "./AuthContext";
 import apiClient from "../utils/apiClient";
 import logger from "../utils/logger";
 
+import { SelectedModifier } from "../types";
+
+export type CartItemModifier = {
+  modifierId: number;
+  quantity: number;
+  name?: string;
+  price?: number;
+};
+
 export type CartItem = {
   menuItemId: string;
   name: string;
   price: number;
   quantity: number;
   imageUrl?: string | null;
+  modifiers?: CartItemModifier[];
 };
 
-type AddToCartInput = Omit<CartItem, "quantity"> & { quantity?: number };
+type AddToCartInput = Omit<CartItem, "quantity"> & { 
+  quantity?: number;
+  modifiers?: SelectedModifier[];
+};
 
 type CartContextType = {
   cart: CartItem[];
@@ -31,12 +44,20 @@ type CartContextType = {
   clearCart: () => Promise<void>;
 };
 
+type ApiCartItemModifier = {
+  modifierId: number;
+  quantity: number;
+  name?: string;
+  price?: number;
+};
+
 type ApiCartItem = {
   menuItemId: string | number;
   quantity: number;
   name: string;
   price: number;
   imageUrl?: string | null;
+  modifiers?: ApiCartItemModifier[];
 };
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -48,6 +69,12 @@ const normalizeCartItems = (items: ApiCartItem[] = []): CartItem[] =>
     price: item.price,
     quantity: item.quantity,
     imageUrl: item.imageUrl ?? null,
+    modifiers: item.modifiers?.map((mod) => ({
+      modifierId: mod.modifierId,
+      quantity: mod.quantity,
+      name: mod.name,
+      price: mod.price,
+    })) ?? [],
   }));
 
 const loginRequiredError = () => {
@@ -101,7 +128,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, [user, resetCart]);
 
   const addToCart = useCallback(
-    async ({ menuItemId, quantity = 1 }: AddToCartInput) => {
+    async ({ menuItemId, quantity = 1, modifiers = [] }: AddToCartInput) => {
       if (!user) {
         throw loginRequiredError();
       }
@@ -112,6 +139,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           {
             menuItemId,
             quantity,
+            modifiers: modifiers.map((mod) => ({
+              modifierId: mod.modifierId,
+              quantity: mod.quantity,
+            })),
           }
         );
         const payload = response.data?.items || [];
