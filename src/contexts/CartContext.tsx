@@ -175,12 +175,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           ...(cookingNotes && { cookingNotes }),
         };
         console.log("[CartContext] addToCart request:", JSON.stringify(requestBody, null, 2));
-            modifierId: mod.modifierId,
-            quantity: mod.quantity,
-          })),
-          ...(specialInstructions && { specialInstructions }),
-        };
-        console.log("[CartContext] addToCart request:", JSON.stringify(requestBody, null, 2));
         
         const response = await apiClient.post<{ items: ApiCartItem[] }>(
           "/api/cart",
