@@ -115,6 +115,25 @@ const AdminScreen = () => {
   const [savingSettings, setSavingSettings] = useState(false);
   const [resettingPoints, setResettingPoints] = useState(false);
 
+  // Message modal states
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageTarget, setMessageTarget] = useState<{ userId: number; orderId: number } | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [customTitle, setCustomTitle] = useState('');
+  const [customMessage, setCustomMessage] = useState('');
+  const [templateVariables, setTemplateVariables] = useState<Record<string, string>>({});
+  const [sendingMessage, setSendingMessage] = useState(false);
+
+  const MESSAGE_TEMPLATES = [
+    { id: 'delay_traffic', label: '🚗 Delay - Traffic', category: 'delay' },
+    { id: 'delay_busy', label: '⏰ Delay - High Demand', category: 'delay' },
+    { id: 'driver_issue', label: '🚨 Driver Issue', category: 'issue' },
+    { id: 'refund_processing', label: '💳 Refund Processing', category: 'refund' },
+    { id: 'refund_complete', label: '✅ Refund Complete', category: 'refund' },
+    { id: 'out_of_stock', label: '❌ Item Unavailable', category: 'issue' },
+    { id: 'custom', label: '✏️ Custom Message', category: 'custom' },
+  ];
+
   const resolveItemCategoryId = (item: any): number | null => {
     if (typeof item?.categoryId === "number") return item.categoryId;
     if (typeof item?.category === "number") return item.category;
@@ -262,6 +281,65 @@ const AdminScreen = () => {
       setModifiersLoading(false);
     }
   }, [token, t]);
+
+  // Message modal functions
+  const openMessageModal = (userId: number, orderId: number) => {
+    setMessageTarget({ userId, orderId });
+    setSelectedTemplate(null);
+    setCustomTitle('');
+    setCustomMessage('');
+    setTemplateVariables({});
+    setShowMessageModal(true);
+  };
+
+  const sendMessage = async () => {
+    if (!messageTarget || !token) return;
+    
+    setSendingMessage(true);
+    try {
+      const payload: any = {
+        userId: messageTarget.userId,
+        orderId: messageTarget.orderId,
+      };
+      
+      if (selectedTemplate === 'custom') {
+        if (!customTitle || !customMessage) {
+          Alert.alert(t("common.error"), "Title and message are required for custom messages");
+          return;
+        }
+        payload.title = customTitle;
+        payload.message = customMessage;
+      } else {
+        if (!selectedTemplate) {
+          Alert.alert(t("common.error"), "Please select a template");
+          return;
+        }
+        payload.templateId = selectedTemplate;
+        payload.variables = templateVariables;
+      }
+      
+      const response = await fetch(`${ENV.API_URL}/notifications/send-admin-message`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send message');
+      }
+      
+      Alert.alert(t("common.success"), 'Message sent to customer');
+      setShowMessageModal(false);
+    } catch (err: any) {
+      Alert.alert(t("common.error"), err.message || 'Failed to send message');
+    } finally {
+      setSendingMessage(false);
+    }
+  };
 
   const openModifierModal = (modifier?: MenuItemModifier) => {
     if (modifier) {
@@ -1101,6 +1179,15 @@ const AdminScreen = () => {
                           )
                         )}
                       </ScrollView>
+                      
+                      {/* Message Button */}
+                      <TouchableOpacity
+                        style={styles.messageButton}
+                        onPress={() => openMessageModal(item.userId, item.id)}
+                      >
+                        <Ionicons name="chatbubble-outline" size={20} color="#e0b97f" />
+                        <Text style={styles.messageButtonText}>Message Customer</Text>
+                      </TouchableOpacity>
                     </Card.Content>
                   </Card>
                 )}
@@ -2150,6 +2237,108 @@ const AdminScreen = () => {
           </ScrollView>
         )}
       </View>
+
+      {/* Message Modal */}
+      <Modal visible={showMessageModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.messageModalContent}>
+            <Text style={styles.messageModalTitle}>Send Message to Customer</Text>
+            
+            <Text style={styles.messageLabel}>Select Template:</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.templateScroll}>
+              {MESSAGE_TEMPLATES.map(template => (
+                <TouchableOpacity
+                  key={template.id}
+                  style={[
+                    styles.templateChip,
+                    selectedTemplate === template.id && styles.templateChipSelected
+                  ]}
+                  onPress={() => setSelectedTemplate(template.id)}
+                >
+                  <Text style={[
+                    styles.templateChipText,
+                    selectedTemplate === template.id && styles.templateChipTextSelected
+                  ]}>{template.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            
+            {selectedTemplate === 'custom' && (
+              <>
+                <TextInput
+                  style={styles.messageInput}
+                  placeholder="Notification Title"
+                  placeholderTextColor="#666"
+                  value={customTitle}
+                  onChangeText={setCustomTitle}
+                />
+                <TextInput
+                  style={[styles.messageInput, styles.messageTextArea]}
+                  placeholder="Message content..."
+                  placeholderTextColor="#666"
+                  value={customMessage}
+                  onChangeText={setCustomMessage}
+                  multiline
+                  numberOfLines={4}
+                />
+              </>
+            )}
+            
+            {/* Variable inputs for templates with placeholders */}
+            {(selectedTemplate === 'delay_traffic' || selectedTemplate === 'delay_busy') && (
+              <TextInput
+                style={styles.messageInput}
+                placeholder="New ETA (e.g., 20 minutes)"
+                placeholderTextColor="#666"
+                value={templateVariables.eta || ''}
+                onChangeText={(text) => setTemplateVariables({ ...templateVariables, eta: text })}
+              />
+            )}
+            
+            {(selectedTemplate === 'refund_processing' || selectedTemplate === 'refund_complete') && (
+              <TextInput
+                style={styles.messageInput}
+                placeholder="Refund Amount (e.g., 25.00)"
+                placeholderTextColor="#666"
+                value={templateVariables.amount || ''}
+                onChangeText={(text) => setTemplateVariables({ ...templateVariables, amount: text })}
+                keyboardType="decimal-pad"
+              />
+            )}
+            
+            {selectedTemplate === 'out_of_stock' && (
+              <TextInput
+                style={styles.messageInput}
+                placeholder="Item name"
+                placeholderTextColor="#666"
+                value={templateVariables.item || ''}
+                onChangeText={(text) => setTemplateVariables({ ...templateVariables, item: text })}
+              />
+            )}
+            
+            <View style={styles.messageModalButtons}>
+              <TouchableOpacity 
+                style={styles.messageCancelButton}
+                onPress={() => setShowMessageModal(false)}
+              >
+                <Text style={styles.messageCancelButtonText}>{t("common.cancel")}</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.messageSendButton, (sendingMessage || !selectedTemplate) && styles.messageButtonDisabled]}
+                onPress={sendMessage}
+                disabled={sendingMessage || !selectedTemplate}
+              >
+                {sendingMessage ? (
+                  <ActivityIndicator color="#231a13" />
+                ) : (
+                  <Text style={styles.messageSendButtonText}>Send Message</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -2598,6 +2787,118 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 11,
     fontWeight: "bold",
+  },
+  messageButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#2d2117",
+    borderWidth: 1,
+    borderColor: "#e0b97f",
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 12,
+    gap: 8,
+  },
+  messageButtonText: {
+    color: "#e0b97f",
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  messageModalContent: {
+    backgroundColor: "#2d2117",
+    borderRadius: 16,
+    padding: 24,
+    width: "90%",
+    maxHeight: "80%",
+    borderWidth: 1,
+    borderColor: "#4b3a2a",
+  },
+  messageModalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#e0b97f",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  messageLabel: {
+    color: "#fffbe8",
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  templateScroll: {
+    marginBottom: 16,
+  },
+  templateChip: {
+    backgroundColor: "#3a2b1f",
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: "#4b3a2a",
+  },
+  templateChipSelected: {
+    backgroundColor: "#e0b97f",
+    borderColor: "#e0b97f",
+  },
+  templateChipText: {
+    color: "#fffbe8",
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  templateChipTextSelected: {
+    color: "#231a13",
+    fontWeight: "600",
+  },
+  messageInput: {
+    backgroundColor: "#231a13",
+    color: "#fffbe8",
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#4b3a2a",
+    marginBottom: 12,
+    fontSize: 14,
+  },
+  messageTextArea: {
+    height: 100,
+    textAlignVertical: "top",
+  },
+  messageModalButtons: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 8,
+  },
+  messageCancelButton: {
+    flex: 1,
+    backgroundColor: "#3a2b1f",
+    borderRadius: 8,
+    padding: 14,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#4b3a2a",
+  },
+  messageCancelButtonText: {
+    color: "#fffbe8",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  messageSendButton: {
+    flex: 1,
+    backgroundColor: "#e0b97f",
+    borderRadius: 8,
+    padding: 14,
+    alignItems: "center",
+  },
+  messageSendButtonText: {
+    color: "#231a13",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  messageButtonDisabled: {
+    opacity: 0.5,
   },
 });
 
