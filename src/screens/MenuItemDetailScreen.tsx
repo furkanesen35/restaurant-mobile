@@ -8,6 +8,7 @@ import {
   ImageBackground,
   ActivityIndicator,
   Alert,
+  TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "react-native-paper";
@@ -36,33 +37,88 @@ const MenuItemDetailScreen = () => {
   const { currentLanguage } = useLanguage();
 
   const [modifiers, setModifiers] = useState<MenuItemModifier[]>([]);
+  const [groupedModifiers, setGroupedModifiers] = useState<{
+    additions: MenuItemModifier[];
+    removals: MenuItemModifier[];
+    preparations: MenuItemModifier[];
+  }>({ additions: [], removals: [], preparations: [] });
   const [selectedModifiers, setSelectedModifiers] = useState<SelectedModifier[]>([]);
+  const [selectedPreparation, setSelectedPreparation] = useState<number | null>(null);
+  const [specialInstructions, setSpecialInstructions] = useState("");
+  
+  // Ingredient state
+  const [ingredients, setIngredients] = useState<any[]>([]);
+  const [ingredientCustomizations, setIngredientCustomizations] = useState<Record<number, number>>({});
+  
+  // Cooking preferences state
+  const [hasCookingOptions, setHasCookingOptions] = useState(false);
+  const [allowedCookingPreferences, setAllowedCookingPreferences] = useState<string[]>([]);
+  const [selectedCookingPreference, setSelectedCookingPreference] = useState<string | null>(null);
+  const [cookingNotes, setCookingNotes] = useState("");
+  
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
 
-  // Fetch modifiers for this item
+  // Fetch modifiers and ingredients for this item
   useEffect(() => {
-    const fetchModifiers = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(
+        
+        // Fetch modifiers
+        const modifiersResponse = await fetch(
           `${ENV.API_URL}/api/modifiers/menu-item/${item.id}`
         );
-        if (!response.ok) {
-          throw new Error("Failed to fetch modifiers");
+        if (modifiersResponse.ok) {
+          const modifiersData = await modifiersResponse.json();
+          setModifiers(modifiersData.modifiers || []);
+          
+          // Handle grouped response
+          if (modifiersData.grouped) {
+            setGroupedModifiers({
+              additions: modifiersData.grouped.additions || [],
+              removals: modifiersData.grouped.removals || [],
+              preparations: modifiersData.grouped.preparations || []
+            });
+          } else {
+            // Fallback for old API response
+            setGroupedModifiers({
+              additions: modifiersData.modifiers || [],
+              removals: [],
+              preparations: []
+            });
+          }
         }
-        const data = await response.json();
-        setModifiers(data.modifiers || []);
+        
+        // Fetch ingredients
+        const ingredientsResponse = await fetch(
+          `${ENV.API_URL}/api/menu-item-ingredients/menu-item/${item.id}`
+        );
+        if (ingredientsResponse.ok) {
+          const ingredientsData = await ingredientsResponse.json();
+          setIngredients(ingredientsData.ingredients || []);
+          
+          // Initialize ingredient customizations with default quantities
+          const defaultCustomizations: Record<number, number> = {};
+          (ingredientsData.ingredients || []).forEach((ing: any) => {
+            defaultCustomizations[ing.ingredientId] = ing.defaultQuantity;
+          });
+          setIngredientCustomizations(defaultCustomizations);
+        }
+        
+        // Set cooking options from menu item
+        setHasCookingOptions((item as any).hasCookingOptions || false);
+        setAllowedCookingPreferences((item as any).allowedCookingPreferences || []);
+        
       } catch (err) {
-        logger.error("Error fetching modifiers:", err);
-        // Don't show error - modifiers are optional
+        logger.error("Error fetching data:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchModifiers();
+    fetchData();
   }, [item.id]);
 
   // Get localized name for modifier
@@ -76,15 +132,57 @@ const MenuItemDetailScreen = () => {
     return modifier.name;
   };
 
-  // Group modifiers by category
-  const groupedModifiers = modifiers.reduce((acc, mod) => {
-    const category = mod.category || t("modifiers.extras");
-    if (!acc[category]) {
-      acc[category] = [];
+  const handleToggleRemoval = (modifierId: number) => {
+    const existingIndex = selectedModifiers.findIndex(
+      (m) => m.modifierId === modifierId
+    );
+    
+    if (existingIndex >= 0) {
+      setSelectedModifiers(selectedModifiers.filter((_, i) => i !== existingIndex));
+    } else {
+      const modifier = groupedModifiers.removals.find((m) => m.id === modifierId);
+      if (modifier) {
+        setSelectedModifiers([
+          ...selectedModifiers,
+          {
+            modifierId,
+            quantity: 1,
+            name: getModifierName(modifier),
+            price: 0,
+          },
+        ]);
+      }
     }
-    acc[category].push(mod);
-    return acc;
-  }, {} as Record<string, MenuItemModifier[]>);
+  };
+
+  const handleSelectPreparation = (modifierId: number) => {
+    // Remove any existing preparation
+    const withoutPreparations = selectedModifiers.filter(
+      (m) => !groupedModifiers.preparations.some((p) => p.id === m.modifierId)
+    );
+    
+    // Add the new preparation if different from current
+    if (selectedPreparation !== modifierId) {
+      const modifier = groupedModifiers.preparations.find((m) => m.id === modifierId);
+      if (modifier) {
+        setSelectedModifiers([
+          ...withoutPreparations,
+          {
+            modifierId,
+            quantity: 1,
+            name: getModifierName(modifier),
+            price: 0,
+          },
+        ]);
+        setSelectedPreparation(modifierId);
+      }
+    } else {
+      // Deselect if clicking the same one
+      setSelectedModifiers(withoutPreparations);
+      setSelectedPreparation(null);
+    }
+  };
+
 
   // Handle modifier quantity change
   const updateModifierQuantity = (modifierId: number, delta: number) => {
@@ -115,14 +213,44 @@ const MenuItemDetailScreen = () => {
     return selectedModifiers.find((m) => m.modifierId === modifierId)?.quantity || 0;
   };
 
-  // Calculate total price
+  // Ingredient handlers
+  const handleIngredientQuantityChange = (ingredientId: number, delta: number) => {
+    setIngredientCustomizations((prev) => {
+      const currentQty = prev[ingredientId] || 0;
+      const newQty = Math.max(0, currentQty + delta);
+      return { ...prev, [ingredientId]: newQty };
+    });
+  };
+
+  const getIngredientName = (ingredient: any) => {
+    if (currentLanguage === "en" && ingredient.nameEn) {
+      return ingredient.nameEn;
+    }
+    if (currentLanguage === "de" && ingredient.nameDe) {
+      return ingredient.nameDe;
+    }
+    return ingredient.name;
+  };
+
+  // Calculate total price including ingredients
   const calculateTotal = () => {
     const basePrice = item.price * quantity;
+    
+    // Modifiers price
     const modifiersPrice = selectedModifiers.reduce((sum, sel) => {
       const modifier = modifiers.find((m) => m.id === sel.modifierId);
       return sum + (modifier?.price || 0) * sel.quantity;
     }, 0);
-    return basePrice + modifiersPrice * quantity;
+    
+    // Ingredients price (only charge for EXTRA quantities beyond default)
+    const ingredientsPrice = ingredients.reduce((sum, ing) => {
+      const defaultQty = ing.defaultQuantity;
+      const currentQty = ingredientCustomizations[ing.ingredientId] || 0;
+      const extraQty = Math.max(0, currentQty - defaultQty);
+      return sum + (extraQty * ing.pricePerUnit);
+    }, 0);
+    
+    return basePrice + (modifiersPrice + ingredientsPrice) * quantity;
   };
 
   // Handle add to cart
@@ -147,7 +275,22 @@ const MenuItemDetailScreen = () => {
         quantity,
         selectedModifiers,
         modifiersWithDetails,
+        ingredientCustomizations,
+        cookingPreference: selectedCookingPreference,
+        cookingNotes,
       });
+
+      // Prepare ingredient customizations array
+      const ingredientCustomizationsArray = Object.entries(ingredientCustomizations)
+        .map(([ingredientId, qty]) => ({
+          ingredientId: parseInt(ingredientId),
+          quantity: qty,
+        }))
+        .filter((custom) => {
+          // Only send if quantity differs from default
+          const ing = ingredients.find((i) => i.ingredientId === custom.ingredientId);
+          return ing && custom.quantity !== ing.defaultQuantity;
+        });
 
       await addToCart({
         menuItemId: item.id,
@@ -156,6 +299,10 @@ const MenuItemDetailScreen = () => {
         imageUrl: item.imageUrl ?? null,
         quantity,
         modifiers: modifiersWithDetails,
+        specialInstructions: specialInstructions.trim() || undefined,
+        ingredientCustomizations: ingredientCustomizationsArray.length > 0 ? ingredientCustomizationsArray : undefined,
+        cookingPreference: selectedCookingPreference || undefined,
+        cookingNotes: cookingNotes.trim() || undefined,
       });
 
       Alert.alert(
@@ -310,20 +457,77 @@ const MenuItemDetailScreen = () => {
             </View>
           </View>
 
-          {/* Modifiers Section */}
+          {/* Ingredients & Modifiers Section */}
           {loading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
               <Text style={styles.loadingText}>{t("common.loading")}</Text>
             </View>
-          ) : modifiers.length > 0 ? (
-            <View style={styles.modifiersSection}>
-              <Text style={styles.sectionTitle}>{t("modifiers.addExtras")}</Text>
+          ) : (
+            <>
+              {/* Ingredients Section */}
+              {ingredients.length > 0 && (
+                <View style={styles.modifiersSection}>
+                  <Text style={styles.sectionTitle}>
+                    {t("ingredients.title") || "Ingredients"}
+                  </Text>
+                  <Text style={styles.sectionSubtitle}>
+                    {t("ingredients.subtitle") || "Customize quantities (extra charges apply)"}
+                  </Text>
+                  {ingredients.map((ing) => {
+                    const currentQty = ingredientCustomizations[ing.ingredientId] || 0;
+                    const defaultQty = ing.defaultQuantity;
+                    const extraQty = Math.max(0, currentQty - defaultQty);
+                    const extraCost = extraQty * ing.pricePerUnit;
+                    
+                    return (
+                      <View key={ing.ingredientId} style={styles.ingredientRow}>
+                        <View style={styles.ingredientInfo}>
+                          <Text style={styles.ingredientName}>
+                            {getIngredientName(ing)}
+                          </Text>
+                          {extraCost > 0 && (
+                            <Text style={styles.ingredientPrice}>
+                              +€{extraCost.toFixed(2)}
+                            </Text>
+                          )}
+                        </View>
+                        <View style={styles.ingredientControls}>
+                          <TouchableOpacity
+                            style={[
+                              styles.ingredientBtn,
+                              currentQty === 0 && styles.ingredientBtnDisabled,
+                            ]}
+                            onPress={() => handleIngredientQuantityChange(ing.ingredientId, -1)}
+                            disabled={currentQty === 0}
+                          >
+                            <Ionicons
+                              name="remove"
+                              size={16}
+                              color={currentQty === 0 ? "#666" : "#231a13"}
+                            />
+                          </TouchableOpacity>
+                          <Text style={styles.ingredientQty}>{currentQty}</Text>
+                          <TouchableOpacity
+                            style={styles.ingredientBtn}
+                            onPress={() => handleIngredientQuantityChange(ing.ingredientId, 1)}
+                          >
+                            <Ionicons name="add" size={16} color="#231a13" />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
 
-              {Object.entries(groupedModifiers).map(([category, mods]) => (
-                <View key={category} style={styles.modifierCategory}>
-                  <Text style={styles.modifierCategoryTitle}>{category}</Text>
-                  {mods.map((mod) => (
+              {/* Additions (paid extras) */}
+              {groupedModifiers.additions.length > 0 && (
+                <View style={styles.modifiersSection}>
+                  <Text style={styles.sectionTitle}>
+                    {t("modifiers.additions") || "Add Extras"}
+                  </Text>
+                  {groupedModifiers.additions.map((mod) => (
                     <View key={mod.id} style={styles.modifierRow}>
                       <View style={styles.modifierInfo}>
                         <Text style={styles.modifierName}>
@@ -379,9 +583,151 @@ const MenuItemDetailScreen = () => {
                     </View>
                   ))}
                 </View>
-              ))}
-            </View>
-          ) : null}
+              )}
+
+              {/* Removals (checkboxes) */}
+              {groupedModifiers.removals.length > 0 && (
+                <View style={styles.modifiersSection}>
+                  <Text style={styles.sectionTitle}>
+                    {t("modifiers.removals") || "Remove Ingredients"}
+                  </Text>
+                  {groupedModifiers.removals.map((mod) => {
+                    const isSelected = selectedModifiers.some(
+                      (m) => m.modifierId === mod.id
+                    );
+                    return (
+                      <TouchableOpacity
+                        key={mod.id}
+                        style={styles.checkboxRow}
+                        onPress={() => handleToggleRemoval(mod.id)}
+                      >
+                        <Ionicons
+                          name={isSelected ? "checkbox" : "square-outline"}
+                          size={24}
+                          color={isSelected ? colors.primary : "#666"}
+                        />
+                        <Text style={styles.checkboxLabel}>
+                          {getModifierName(mod)}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              )}
+
+              {/* Preparations (radio buttons) */}
+              {groupedModifiers.preparations.length > 0 && (
+                <View style={styles.modifiersSection}>
+                  <Text style={styles.sectionTitle}>
+                    {t("modifiers.preparations") || "Cooking Preference"}
+                  </Text>
+                  {groupedModifiers.preparations.map((mod) => {
+                    const isSelected = selectedPreparation === mod.id;
+                    return (
+                      <TouchableOpacity
+                        key={mod.id}
+                        style={styles.radioRow}
+                        onPress={() => handleSelectPreparation(mod.id)}
+                      >
+                        <Ionicons
+                          name={isSelected ? "radio-button-on" : "radio-button-off"}
+                          size={24}
+                          color={isSelected ? colors.primary : "#666"}
+                        />
+                        <Text style={styles.radioLabel}>
+                          {getModifierName(mod)}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              )}
+
+              {/* Cooking Preferences (if item has cooking options) */}
+              {hasCookingOptions && allowedCookingPreferences.length > 0 && (
+                <View style={styles.modifiersSection}>
+                  <Text style={styles.sectionTitle}>
+                    {t("cooking.preference") || "Cooking Preference"}
+                  </Text>
+                  {allowedCookingPreferences.map((pref) => {
+                    const isSelected = selectedCookingPreference === pref;
+                    return (
+                      <TouchableOpacity
+                        key={pref}
+                        style={styles.radioRow}
+                        onPress={() => setSelectedCookingPreference(isSelected ? null : pref)}
+                      >
+                        <Ionicons
+                          name={isSelected ? "radio-button-on" : "radio-button-off"}
+                          size={24}
+                          color={isSelected ? colors.primary : "#666"}
+                        />
+                        <Text style={styles.radioLabel}>
+                          {t(`cooking.${pref}`) || pref.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              )}
+
+              {/* Cooking Notes */}
+              {hasCookingOptions && (
+                <View style={styles.modifiersSection}>
+                  <Text style={styles.sectionTitle}>
+                    {t("cooking.notes") || "Cooking Notes"}
+                  </Text>
+                  <TextInput
+                    style={styles.specialInstructionsInput}
+                    placeholder={
+                      t("cooking.notesPlaceholder") ||
+                      "Any special cooking instructions..."
+                    }
+                    placeholderTextColor="#999"
+                    value={cookingNotes}
+                    onChangeText={(text) => {
+                      if (text.length <= 200) {
+                        setCookingNotes(text);
+                      }
+                    }}
+                    multiline
+                    numberOfLines={2}
+                    maxLength={200}
+                  />
+                  <Text style={styles.charCounter}>
+                    {cookingNotes.length}/200
+                  </Text>
+                </View>
+              )}
+
+              {/* Special Instructions */}
+              <View style={styles.modifiersSection}>
+                <Text style={styles.sectionTitle}>
+                  {t("modifiers.specialInstructions") || "Special Instructions"}
+                </Text>
+                <TextInput
+                  style={styles.specialInstructionsInput}
+                  placeholder={
+                    t("modifiers.specialInstructionsPlaceholder") ||
+                    "Add any special requests here..."
+                  }
+                  placeholderTextColor="#999"
+                  value={specialInstructions}
+                  onChangeText={(text) => {
+                    if (text.length <= 200) {
+                      setSpecialInstructions(text);
+                    }
+                  }}
+                  multiline
+                  numberOfLines={3}
+                  maxLength={200}
+                />
+                <Text style={styles.charCounter}>
+                  {specialInstructions.length}/200
+                </Text>
+              </View>
+            </>
+          )}
         </View>
       </ScrollView>
 
@@ -625,6 +971,100 @@ const styles = StyleSheet.create({
     backgroundColor: "#3a2b1f",
   },
   modifierQty: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#fffbe8",
+    minWidth: 24,
+    textAlign: "center",
+  },
+  checkboxRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    gap: 12,
+  },
+  checkboxLabel: {
+    fontSize: 16,
+    color: "#fffbe8",
+    flex: 1,
+  },
+  radioRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    gap: 12,
+  },
+  radioLabel: {
+    fontSize: 16,
+    color: "#fffbe8",
+    flex: 1,
+  },
+  specialInstructionsInput: {
+    backgroundColor: "#3a2b1f",
+    color: "#fffbe8",
+    padding: 12,
+    borderRadius: 8,
+    fontSize: 16,
+    minHeight: 80,
+    textAlignVertical: "top",
+    borderWidth: 1,
+    borderColor: "#4a3b2f",
+  },
+  charCounter: {
+    fontSize: 12,
+    color: "#b8a68a",
+    textAlign: "right",
+    marginTop: 4,
+  },
+  sectionSubtitle: {
+    fontSize: 13,
+    color: "#b8a68a",
+    marginBottom: 12,
+    fontStyle: "italic",
+  },
+  ingredientRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#3a2b1f",
+  },
+  ingredientInfo: {
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginRight: 16,
+  },
+  ingredientName: {
+    fontSize: 16,
+    color: "#fffbe8",
+    flex: 1,
+  },
+  ingredientPrice: {
+    fontSize: 14,
+    color: "#e0b97f",
+    fontWeight: "600",
+    marginLeft: 8,
+  },
+  ingredientControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  ingredientBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#e0b97f",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  ingredientBtnDisabled: {
+    backgroundColor: "#3a2b1f",
+  },
+  ingredientQty: {
     fontSize: 16,
     fontWeight: "600",
     color: "#fffbe8",

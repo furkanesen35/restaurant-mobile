@@ -173,6 +173,16 @@ const CartScreen = () => {
                       ))}
                     </View>
                   )}
+
+                  {/* Display special instructions if any */}
+                  {item.specialInstructions && (
+                    <View style={styles.specialInstructionsContainer}>
+                      <Ionicons name="document-text-outline" size={14} color="#b8a68a" />
+                      <Text style={styles.specialInstructionsText}>
+                        {item.specialInstructions}
+                      </Text>
+                    </View>
+                  )}
                   
                   {/* Subtotal for this item */}
                   <View style={styles.itemSubtotalRow}>
@@ -338,6 +348,22 @@ const styles = StyleSheet.create({
     color: "#e0b97f",
     fontSize: 14,
     fontWeight: "500",
+  },
+  specialInstructionsContainer: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    backgroundColor: "#1a120b",
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 8,
+    gap: 8,
+  },
+  specialInstructionsText: {
+    flex: 1,
+    color: "#b8a68a",
+    fontSize: 13,
+    fontStyle: "italic",
+    lineHeight: 18,
   },
   itemSubtotalRow: {
     flexDirection: "row",

@@ -27,6 +27,7 @@ export type CartItem = {
   quantity: number;
   imageUrl?: string | null;
   modifiers?: CartItemModifier[];
+  specialInstructions?: string;
 };
 
 type AddToCartInput = {
@@ -36,6 +37,10 @@ type AddToCartInput = {
   imageUrl?: string | null;
   quantity?: number;
   modifiers?: SelectedModifier[];
+  specialInstructions?: string;
+  ingredientCustomizations?: Array<{ ingredientId: number; quantity: number }>;
+  cookingPreference?: string;
+  cookingNotes?: string;
 };
 
 type CartContextType = {
@@ -64,6 +69,7 @@ type ApiCartItem = {
   price: number;
   imageUrl?: string | null;
   modifiers?: ApiCartItemModifier[];
+  specialInstructions?: string;
 };
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -84,6 +90,7 @@ const normalizeCartItems = (items: ApiCartItem[] = []): CartItem[] => {
         name: mod.name,
         price: mod.price,
       })) ?? [],
+      specialInstructions: item.specialInstructions,
     };
     console.log("[CartContext] Normalized item modifiers:", item.name, normalized.modifiers);
     return normalized;
@@ -141,7 +148,15 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, [user, resetCart]);
 
   const addToCart = useCallback(
-    async ({ menuItemId, quantity = 1, modifiers = [] }: AddToCartInput) => {
+    async ({ 
+      menuItemId, 
+      quantity = 1, 
+      modifiers = [], 
+      specialInstructions,
+      ingredientCustomizations,
+      cookingPreference,
+      cookingNotes
+    }: AddToCartInput) => {
       if (!user) {
         throw loginRequiredError();
       }
@@ -154,6 +169,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             modifierId: mod.modifierId,
             quantity: mod.quantity,
           })),
+          ...(specialInstructions && { specialInstructions }),
+          ...(ingredientCustomizations && ingredientCustomizations.length > 0 && { ingredientCustomizations }),
+          ...(cookingPreference && { cookingPreference }),
+          ...(cookingNotes && { cookingNotes }),
+        };
+        console.log("[CartContext] addToCart request:", JSON.stringify(requestBody, null, 2));
+            modifierId: mod.modifierId,
+            quantity: mod.quantity,
+          })),
+          ...(specialInstructions && { specialInstructions }),
         };
         console.log("[CartContext] addToCart request:", JSON.stringify(requestBody, null, 2));
         

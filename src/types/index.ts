@@ -29,6 +29,8 @@ export interface MenuItem {
   allergens?: string;
   loyaltyPointsMultiplier?: number;
   modifiers?: MenuItemModifier[];
+  hasCookingOptions?: boolean;
+  allowedCookingPreferences?: string[];
 }
 
 // Modifier types
