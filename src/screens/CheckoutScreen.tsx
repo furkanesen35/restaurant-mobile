@@ -369,14 +369,8 @@ const CheckoutScreen = () => {
           {
             text: "View Orders",
             onPress: () => {
-              navigation.goBack();
-              setTimeout(() => {
-                const parent = navigation.getParent();
-                if (parent) {
-                  // @ts-ignore
-                  parent.navigate("MainTabs", { screen: "Orders" });
-                }
-              }, 100);
+              // Navigate to MainTabs with Orders screen
+              navigation.navigate("MainTabs", { screen: "Orders" });
             },
           },
           {
@@ -636,38 +630,14 @@ const CheckoutScreen = () => {
           {
             text: "View Orders",
             onPress: () => {
-              logger.info("[Checkout] View Orders button pressed");
-              logger.info("[Checkout] Current navigation state:", navigation.getState());
-              logger.info("[Checkout] Parent navigation exists:", !!navigation.getParent());
-              
-              try {
-                // Navigate back to MainTabs and switch to Orders tab
-                logger.info("[Checkout] Calling goBack()...");
-                navigation.goBack();
-                
-                // Use setTimeout to ensure navigation completes before switching tabs
-                setTimeout(() => {
-                  logger.info("[Checkout] Attempting to navigate to Orders tab...");
-                  const parent = navigation.getParent();
-                  if (parent) {
-                    logger.info("[Checkout] Parent navigator found, navigating to MainTabs > Orders");
-                    // @ts-ignore - Parent navigation typing
-                    parent.navigate("MainTabs", { screen: "Orders" });
-                    logger.info("[Checkout] Navigation command sent");
-                  } else {
-                    logger.error("[Checkout] No parent navigator found!");
-                  }
-                }, 100);
-              } catch (error) {
-                logger.error("[Checkout] Navigation error:", error);
-              }
+              // Navigate to MainTabs with Orders screen
+              navigation.navigate("MainTabs", { screen: "Orders" });
             },
           },
           {
             text: "Stay Here",
             style: "cancel",
             onPress: () => {
-              logger.info("[Checkout] Stay Here button pressed");
               navigation.goBack();
             },
           },
