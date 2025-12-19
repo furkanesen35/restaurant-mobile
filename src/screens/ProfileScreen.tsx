@@ -182,6 +182,31 @@ const ProfileScreen = () => {
         </Card>
       </TouchableOpacity>
 
+      {/* Privacy Settings Section */}
+      <TouchableOpacity onPress={() => navigation.navigate("PrivacySettings" as never)}>
+        <Card style={styles.sectionCard}>
+          <Card.Title
+            title={t("profile.privacySettings")}
+            titleStyle={styles.sectionTitle}
+            left={(props) => (
+              <Avatar.Icon
+                {...props}
+                icon="shield-account"
+                style={styles.sectionIcon}
+              />
+            )}
+            right={(props) => (
+              <IconButton {...props} icon="chevron-right" iconColor="#ffffff" />
+            )}
+          />
+          <Card.Content>
+            <Text style={styles.sectionDescription}>
+              {t("profile.privacySettingsDesc") || "Manage data collection and notifications"}
+            </Text>
+          </Card.Content>
+        </Card>
+      </TouchableOpacity>
+
       {/* Language Settings Section */}
       <View style={styles.languageSwitcherContainer}>
         <LanguageSwitcher iconColor="#e0b97f" iconSize={24} />

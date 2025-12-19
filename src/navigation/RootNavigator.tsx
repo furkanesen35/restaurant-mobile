@@ -6,6 +6,7 @@ import ForgotPasswordScreen from "../screens/ForgotPasswordScreen";
 import ResetPasswordScreen from "../screens/ResetPasswordScreen";
 import VerifyEmailScreen from "../screens/VerifyEmailScreen";
 import CookieSettingsScreen from "../screens/CookieSettingsScreen";
+import PrivacySettingsScreen from "../screens/PrivacySettingsScreen";
 import QRScannerScreen from "../screens/QRScannerScreen";
 import MenuItemDetailScreen from "../screens/MenuItemDetailScreen";
 import { useAuth } from "../contexts/AuthContext";
@@ -186,6 +187,15 @@ function MainStack() {
         component={CookieSettingsScreen}
         options={{
           title: t("navigation.cookieSettings"),
+          headerStyle: { backgroundColor: "#231a13" },
+          headerTintColor: "#e0b97f",
+        }}
+      />
+      <Stack.Screen
+        name="PrivacySettings"
+        component={PrivacySettingsScreen}
+        options={{
+          title: t("navigation.privacySettings") || "Privacy Settings",
           headerStyle: { backgroundColor: "#231a13" },
           headerTintColor: "#e0b97f",
         }}

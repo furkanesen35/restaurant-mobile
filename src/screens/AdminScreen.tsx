@@ -1354,7 +1354,7 @@ const AdminScreen = () => {
                           )}
                       </View>
                       <Text style={styles.itemDesc}>{localizedDescription}</Text>
-                      <Text style={styles.itemPrice}>${item.price}</Text>
+                      <Text style={styles.itemPrice}>€{item.price}</Text>
                       <Text style={styles.itemCategory}>
                         {t("admin.menu.categoryLabel")}:{" "}
                         {
