@@ -360,7 +360,8 @@ const MenuScreen = () => {
 
   const handleNavigateToDetail = useCallback(
     (item: MenuItem) => {
-      navigation.navigate("MenuItemDetail" as never, { item } as never);
+      // @ts-ignore - Navigation typing
+      navigation.navigate("MenuItemDetail", { item });
     },
     [navigation]
   );

@@ -75,6 +75,10 @@ const CheckoutScreen = () => {
   const [loading, setLoading] = useState(false);
   const [loadingMethods, setLoadingMethods] = useState(true);
   const [cardComplete, setCardComplete] = useState(false);
+  
+  // Payment type state
+  const [paymentType, setPaymentType] = useState<'card' | 'paypal'>('card');
+  const [paypalLoading, setPaypalLoading] = useState(false);
 
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(
@@ -206,6 +210,192 @@ const CheckoutScreen = () => {
     fetchAddresses();
   }, [token]);
 
+  // PayPal payment handler
+  const handlePayPalPayment = async () => {
+    if (!user || !token) {
+      Alert.alert("Error", "Please log in to place an order.");
+      return;
+    }
+
+    // Check if address is selected or new address is being added
+    if (selectedAddressId === null) {
+      Alert.alert("Error", "Please select a delivery address.");
+      return;
+    }
+
+    if (selectedAddressId === -1) {
+      // Validate new address form
+      if (
+        !newAddressForm.label ||
+        !newAddressForm.street ||
+        !newAddressForm.city ||
+        !newAddressForm.postalCode ||
+        !newAddressForm.phone
+      ) {
+        Alert.alert("Error", "Please fill in all address fields.");
+        return;
+      }
+    }
+
+    setPaypalLoading(true);
+    logger.info("Starting PayPal payment...");
+
+    try {
+      // Step 0: Create new address if needed
+      let finalAddressId = selectedAddressId;
+      if (selectedAddressId === -1) {
+        const addressRes = await fetch(`${ENV.API_URL}/api/address`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            ...newAddressForm,
+            saveToProfile: saveAddressToProfile,
+          }),
+        });
+        if (!addressRes.ok) throw new Error("Failed to create address");
+        const newAddress = await addressRes.json();
+        finalAddressId = newAddress.id;
+      }
+
+      // Step 1: Create PaymentIntent for PayPal
+      const intentRes = await fetch(`${ENV.API_URL}/api/payment/stripe-intent`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          amount: total,
+          currency: "eur",
+          paymentMethodType: "paypal",
+        }),
+      });
+
+      if (!intentRes.ok) throw new Error("Failed to create payment");
+
+      const { clientSecret, paymentIntentId } = await intentRes.json();
+
+      // Step 2: Confirm PayPal payment
+      const { error } = await confirmPayment(clientSecret, {
+        paymentMethodType: "PayPal",
+        paymentMethodData: {
+          billingDetails: {
+            email: user.email,
+          },
+        },
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      logger.info("PayPal payment confirmed, creating order...");
+
+      // Step 3: Create order
+      const items = cart.map((i) => ({
+        menuItemId: parseInt(i.menuItemId),
+        quantity: i.quantity,
+        modifiers: (i.modifiers || []).map((mod) => ({
+          modifierId: mod.modifierId,
+          quantity: mod.quantity,
+        })),
+      }));
+
+      const orderPayload = {
+        userId: user.id,
+        items: items,
+        paymentMethodId: null, // PayPal doesn't use saved payment methods
+        addressId: finalAddressId,
+      };
+
+      const orderRes = await fetch(`${ENV.API_URL}/order`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(orderPayload),
+      });
+
+      if (!orderRes.ok) {
+        throw new Error("Failed to create order");
+      }
+
+      const orderData = await orderRes.json();
+      const orderId = orderData?.data?.id;
+      const pointsEarned = orderData?.loyaltyPointsEarned ?? 0;
+      const updatedBalance = orderData?.loyaltyPointsBalance;
+
+      // Step 4: Link paymentIntentId to the order
+      if (orderId && paymentIntentId) {
+        try {
+          await fetch(`${ENV.API_URL}/api/payment/link-order`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              orderId: orderId,
+              paymentIntentId: paymentIntentId,
+            }),
+          });
+          logger.info("Payment linked to order successfully");
+        } catch (linkErr) {
+          logger.warn("Failed to link payment to order:", linkErr);
+        }
+      }
+
+      if (typeof updatedBalance === "number") {
+        await updateUser({ loyaltyPoints: updatedBalance });
+      }
+
+      // Success!
+      try {
+        await clearCart();
+      } catch (cartError) {
+        logger.warn("Failed to clear cart after order", cartError);
+      }
+
+      Alert.alert(
+        "Order placed!",
+        pointsEarned > 0
+          ? `Your PayPal payment was successful and order has been received. You earned ${pointsEarned} loyalty points!`
+          : "Your PayPal payment was successful and order has been received.",
+        [
+          {
+            text: "View Orders",
+            onPress: () => {
+              navigation.goBack();
+              setTimeout(() => {
+                const parent = navigation.getParent();
+                if (parent) {
+                  // @ts-ignore
+                  parent.navigate("MainTabs", { screen: "Orders" });
+                }
+              }, 100);
+            },
+          },
+          {
+            text: "Stay Here",
+            style: "cancel",
+            onPress: () => {
+              navigation.goBack();
+            },
+          },
+        ]
+      );
+    } catch (err: any) {
+      logger.error("PayPal payment error:", err);
+      Alert.alert("Payment Failed", err.message);
+    } finally {
+      setPaypalLoading(false);
+    }
+  };
+
   const handlePlaceOrder = async () => {
     if (!user) {
       Alert.alert("Error", "Please log in to place an order.");
@@ -287,6 +477,7 @@ const CheckoutScreen = () => {
           body: JSON.stringify({
             amount: total,
             currency: "eur", // Euro
+            paymentMethodType: "card",
           }),
         }
       );
@@ -722,6 +913,44 @@ const CheckoutScreen = () => {
               Payment Method
             </Text>
 
+            {/* Payment Type Selector */}
+            <View style={styles.paymentTypeSelector}>
+              <TouchableOpacity
+                style={[
+                  styles.paymentTypeButton,
+                  paymentType === 'card' && styles.paymentTypeButtonSelected,
+                  { borderColor: colors.primary }
+                ]}
+                onPress={() => setPaymentType('card')}
+              >
+                <Text style={[
+                  styles.paymentTypeButtonText,
+                  paymentType === 'card' ? { color: colors.primary } : { color: '#999' }
+                ]}>
+                  💳 Card
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.paymentTypeButton,
+                  paymentType === 'paypal' && styles.paymentTypeButtonSelected,
+                  { borderColor: colors.primary }
+                ]}
+                onPress={() => setPaymentType('paypal')}
+              >
+                <Text style={[
+                  styles.paymentTypeButtonText,
+                  paymentType === 'paypal' ? { color: colors.primary } : { color: '#999' }
+                ]}>
+                  🅿️ PayPal
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Card Payment UI */}
+            {paymentType === 'card' && (
+              <>
             {/* Saved Payment Methods */}
             {savedMethods.map((method) => (
               <TouchableOpacity
@@ -875,6 +1104,23 @@ const CheckoutScreen = () => {
                 </Text>
               </View>
             )}
+              </>
+            )}
+
+            {/* PayPal Payment UI */}
+            {paymentType === 'paypal' && (
+              <View style={styles.paypalSection}>
+                <Text style={[styles.paypalInfo, { color: colors.onBackground }]}>
+                  You will be redirected to PayPal to complete your payment securely.
+                </Text>
+                <View style={styles.paypalLogoContainer}>
+                  <Text style={styles.paypalLogoText}>PayPal</Text>
+                </View>
+                <Text style={[styles.paypalNote, { color: '#999' }]}>
+                  After completing payment with PayPal, you'll be returned to the app to confirm your order.
+                </Text>
+              </View>
+            )}
           </View>
 
           {/* Place Order Button */}
@@ -883,12 +1129,12 @@ const CheckoutScreen = () => {
             style={[
               styles.placeOrderButton,
               { backgroundColor: colors.primary },
-              loading && styles.buttonDisabled,
+              (loading || paypalLoading) && styles.buttonDisabled,
             ]}
-            onPress={handlePlaceOrder}
-            disabled={loading}
+            onPress={paymentType === 'paypal' ? handlePayPalPayment : handlePlaceOrder}
+            disabled={loading || paypalLoading}
           >
-            {loading ? (
+            {(loading || paypalLoading) ? (
               <ActivityIndicator color={colors.onPrimary} />
             ) : (
               <Text
@@ -898,7 +1144,9 @@ const CheckoutScreen = () => {
                   fontWeight: "bold",
                 }}
               >
-                Pay €{total.toFixed(2)} & Place Order
+                {paymentType === 'paypal' 
+                  ? `Pay €${total.toFixed(2)} with PayPal`
+                  : `Pay €${total.toFixed(2)} & Place Order`}
               </Text>
             )}
           </TouchableOpacity>
@@ -1046,6 +1294,57 @@ const styles = StyleSheet.create({
   },
   toggleSubtext: {
     fontSize: 12,
+  },
+  paymentTypeSelector: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  paymentTypeButton: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    backgroundColor: '#2d2117',
+    alignItems: 'center',
+  },
+  paymentTypeButtonSelected: {
+    borderStyle: 'solid',
+    backgroundColor: '#3a2b1f',
+  },
+  paymentTypeButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  paypalSection: {
+    backgroundColor: '#2d2117',
+    padding: 20,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  paypalInfo: {
+    fontSize: 15,
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+  paypalLogoContainer: {
+    alignItems: 'center',
+    padding: 24,
+    backgroundColor: '#003087',
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  paypalLogoText: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    fontStyle: 'italic',
+  },
+  paypalNote: {
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
   },
 });
 
