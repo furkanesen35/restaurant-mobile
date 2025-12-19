@@ -34,8 +34,10 @@ const PrivacySettingsScreen = () => {
   const fetchConsent = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/api/consent');
-      setConsent(response.data);
+      const response = await apiClient.get<ConsentSettings>('/api/consent');
+      if (response.data) {
+        setConsent(response.data);
+      }
     } catch (err) {
       console.error('Failed to load consent settings:', err);
       Alert.alert(
