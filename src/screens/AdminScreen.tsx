@@ -110,6 +110,30 @@ const AdminScreen = () => {
   const [expandedCategories, setExpandedCategories] = useState<Record<number, boolean>>({});
   const [savingModifier, setSavingModifier] = useState(false);
 
+  // Ingredient management states
+  const [ingredientModalVisible, setIngredientModalVisible] = useState(false);
+  const [ingredients, setIngredients] = useState<any[]>([]);
+  const [ingredientsLoading, setIngredientsLoading] = useState(false);
+  const [showIngredientForm, setShowIngredientForm] = useState(false);
+  const [editingIngredient, setEditingIngredient] = useState<any>(null);
+  const [ingredientForm, setIngredientForm] = useState({
+    name: "",
+    nameEn: "",
+    nameDe: "",
+    category: "protein",
+    pricePerUnit: "",
+    isAvailable: true,
+  });
+  const [selectedMenuItem, setSelectedMenuItem] = useState<any>(null);
+  const [menuItemIngredients, setMenuItemIngredients] = useState<any[]>([]);
+  const [assignIngredientModalVisible, setAssignIngredientModalVisible] = useState(false);
+  const [ingredientAssignForm, setIngredientAssignForm] = useState({
+    ingredientId: "",
+    defaultQuantity: "1",
+  });
+  const [savingIngredient, setSavingIngredient] = useState(false);
+  const [ingredientSearchQuery, setIngredientSearchQuery] = useState("");
+
   // Settings states
   const [minOrderValue, setMinOrderValue] = useState("");
   const [savingSettings, setSavingSettings] = useState(false);
@@ -456,6 +480,182 @@ const AdminScreen = () => {
         },
       ]
     );
+  };
+
+  // Ingredient Management Functions
+  const fetchIngredients = async () => {
+    if (!token) return;
+    setIngredientsLoading(true);
+    try {
+      const response = await fetch(`${ENV.API_URL}/api/ingredients`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setIngredients(data.ingredients || []);
+      }
+    } catch (err: any) {
+      logger.error("Failed to fetch ingredients:", err);
+    } finally {
+      setIngredientsLoading(false);
+    }
+  };
+
+  const saveIngredient = async () => {
+    if (!token) return;
+    setSavingIngredient(true);
+    try {
+      const url = editingIngredient
+        ? `${ENV.API_URL}/api/ingredients/${editingIngredient.id}`
+        : `${ENV.API_URL}/api/ingredients`;
+      
+      const response = await fetch(url, {
+        method: editingIngredient ? "PUT" : "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: ingredientForm.name,
+          nameEn: ingredientForm.nameEn,
+          nameDe: ingredientForm.nameDe,
+          category: ingredientForm.category,
+          pricePerUnit: parseFloat(ingredientForm.pricePerUnit),
+          isAvailable: ingredientForm.isAvailable,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to save ingredient");
+
+      Alert.alert("Success", `Ingredient ${editingIngredient ? "updated" : "created"}`);
+      setShowIngredientForm(false);
+      setEditingIngredient(null);
+      fetchIngredients();
+    } catch (err: any) {
+      logger.error("Failed to save ingredient:", err);
+      Alert.alert("Error", err.message || "Failed to save ingredient");
+    } finally {
+      setSavingIngredient(false);
+    }
+  };
+
+  const deleteIngredient = async (ingredientId: number) => {
+    if (!token) return;
+    
+    Alert.alert(
+      "Confirm",
+      "Are you sure you want to delete this ingredient?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const response = await fetch(`${ENV.API_URL}/api/ingredients/${ingredientId}`, {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${token}` },
+              });
+
+              if (!response.ok) throw new Error("Failed to delete ingredient");
+
+              Alert.alert("Success", "Ingredient deleted");
+              fetchIngredients();
+            } catch (err: any) {
+              logger.error("Failed to delete ingredient:", err);
+              Alert.alert("Error", err.message || "Failed to delete ingredient");
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const fetchMenuItemIngredients = async (menuItemId: number) => {
+    if (!token) return;
+    try {
+      const response = await fetch(`${ENV.API_URL}/api/menu-item-ingredients/menu-item/${menuItemId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setMenuItemIngredients(data.ingredients || []);
+      }
+    } catch (err: any) {
+      logger.error("Failed to fetch menu item ingredients:", err);
+    }
+  };
+
+  const assignIngredientToMenuItem = async () => {
+    if (!token || !selectedMenuItem) return;
+    setSavingIngredient(true);
+    try {
+      const response = await fetch(
+        `${ENV.API_URL}/api/menu-item-ingredients/menu-item/${selectedMenuItem.id}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ingredientId: parseInt(ingredientAssignForm.ingredientId),
+            defaultQuantity: parseInt(ingredientAssignForm.defaultQuantity),
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to assign ingredient");
+
+      Alert.alert("Success", "Ingredient assigned to menu item");
+      setAssignIngredientModalVisible(false);
+      fetchMenuItemIngredients(selectedMenuItem.id);
+    } catch (err: any) {
+      logger.error("Failed to assign ingredient:", err);
+      Alert.alert("Error", err.message || "Failed to assign ingredient");
+    } finally {
+      setSavingIngredient(false);
+    }
+  };
+
+  const removeIngredientFromMenuItem = async (menuItemIngredientId: number) => {
+    if (!token || !selectedMenuItem) return;
+    
+    Alert.alert(
+      "Confirm",
+      "Remove this ingredient from the menu item?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Remove",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const response = await fetch(
+                `${ENV.API_URL}/api/menu-item-ingredients/${menuItemIngredientId}`,
+                {
+                  method: "DELETE",
+                  headers: { Authorization: `Bearer ${token}` },
+                }
+              );
+
+              if (!response.ok) throw new Error("Failed to remove ingredient");
+
+              Alert.alert("Success", "Ingredient removed");
+              fetchMenuItemIngredients(selectedMenuItem.id);
+            } catch (err: any) {
+              logger.error("Failed to remove ingredient:", err);
+              Alert.alert("Error", err.message || "Failed to remove ingredient");
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const openIngredientManagerForItem = (item: any) => {
+    setSelectedMenuItem(item);
+    fetchMenuItemIngredients(item.id);
+    setIngredientModalVisible(true);
+    setShowIngredientForm(false);
   };
 
   const fetchSettings = useCallback(async () => {
@@ -1364,6 +1564,12 @@ const AdminScreen = () => {
                       </Text>
                       <View style={styles.itemActions}>
                         <TouchableOpacity
+                          style={[styles.editBtn, { backgroundColor: "#4CAF50" }]}
+                          onPress={() => openIngredientManagerForItem(item)}
+                        >
+                          <Text style={styles.btnText}>Ingredients</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
                           style={styles.editBtn}
                           onPress={() => {
                             setEditingItem(item);
@@ -2085,6 +2291,193 @@ const AdminScreen = () => {
           </View>
         </Modal>
 
+        {/* Ingredient Management Modal */}
+        <Modal
+          visible={ingredientModalVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => {
+            setIngredientModalVisible(false);
+            setSelectedMenuItem(null);
+          }}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { height: "85%", width: "90%", padding: 0 }]}>
+              {/* Header */}
+              <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: "#333", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                <Text style={styles.modalTitle} numberOfLines={1}>
+                  {selectedMenuItem?.name} - Ingredients
+                </Text>
+                <TouchableOpacity onPress={() => {
+                  setIngredientModalVisible(false);
+                  setSelectedMenuItem(null);
+                }}>
+                  <Ionicons name="close" size={28} color="#e0b97f" />
+                </TouchableOpacity>
+              </View>
+
+              {/* Assigned Ingredients */}
+              <ScrollView style={{ flex: 1, padding: 16 }} contentContainerStyle={{ paddingBottom: 16 }}>
+                <Text style={[styles.sectionTitle, { marginBottom: 12 }]}>
+                  Assigned Ingredients
+                </Text>
+                {menuItemIngredients.length === 0 ? (
+                  <Text style={{ color: "#999", textAlign: "center", marginVertical: 20 }}>
+                    No ingredients assigned yet
+                  </Text>
+                ) : (
+                  menuItemIngredients.map((ing) => (
+                    <Card key={ing.id} style={[styles.card, { marginBottom: 8 }]}>
+                      <Card.Content>
+                        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ color: "#e0b97f", fontWeight: "bold" }}>
+                              {ing.ingredient?.name}
+                            </Text>
+                            <Text style={{ color: "#999", fontSize: 12 }}>
+                              Default Qty: {ing.defaultQuantity} • +€{ing.ingredient?.pricePerUnit}/extra
+                            </Text>
+                            <Text style={{ color: "#666", fontSize: 11, textTransform: "capitalize" }}>
+                              {ing.ingredient?.category}
+                            </Text>
+                          </View>
+                          <TouchableOpacity
+                            onPress={() => removeIngredientFromMenuItem(ing.id)}
+                            style={{ padding: 8 }}
+                          >
+                            <Ionicons name="trash" size={20} color="#f44336" />
+                          </TouchableOpacity>
+                        </View>
+                      </Card.Content>
+                    </Card>
+                  ))
+                )}
+              </ScrollView>
+
+              {/* Add Ingredient Button */}
+              <View style={{ padding: 16, borderTopWidth: 1, borderTopColor: "#333", backgroundColor: "#1a120b" }}>
+                <Button
+                  mode="contained"
+                  onPress={() => {
+                    fetchIngredients();
+                    setAssignIngredientModalVisible(true);
+                  }}
+                  icon="plus"
+                >
+                  Assign Ingredient
+                </Button>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Assign Ingredient to Menu Item Modal */}
+        <Modal
+          visible={assignIngredientModalVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => {
+            setAssignIngredientModalVisible(false);
+            setIngredientSearchQuery("");
+          }}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { height: "85%", width: "90%" }]}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                <Text style={styles.modalTitle}>Assign Ingredient</Text>
+                <TouchableOpacity onPress={() => {
+                  setAssignIngredientModalVisible(false);
+                  setIngredientSearchQuery("");
+                }}>
+                  <Ionicons name="close" size={28} color="#e0b97f" />
+                </TouchableOpacity>
+              </View>
+              
+              <Text style={[styles.label, { color: "#e0b97f", marginBottom: 8 }]}>Select Ingredient</Text>
+              
+              {/* Search Bar */}
+              {ingredients.length > 0 && (
+                <View style={{ marginBottom: 12 }}>
+                  <TextInput
+                    style={[styles.input, { paddingLeft: 40 }]}
+                    placeholder="Search ingredients..."
+                    placeholderTextColor="#999"
+                    value={ingredientSearchQuery}
+                    onChangeText={setIngredientSearchQuery}
+                  />
+                  <Ionicons
+                    name="search"
+                    size={20}
+                    color="#999"
+                    style={{ position: "absolute", left: 12, top: 12 }}
+                  />
+                </View>
+              )}
+              
+              {ingredientsLoading ? (
+                <ActivityIndicator size="large" color="#e0b97f" style={{ marginVertical: 20 }} />
+              ) : ingredients.length === 0 ? (
+                <View style={{ padding: 20, backgroundColor: "#1a1a1a", borderRadius: 8, marginBottom: 16 }}>
+                  <Text style={{ color: "#999", textAlign: "center" }}>
+                    No ingredients available. Please seed ingredients first.
+                  </Text>
+                </View>
+              ) : (
+                <ScrollView style={{ flex: 1, marginBottom: 16 }}>
+                  {ingredients
+                    .filter((ing) =>
+                      ing.name.toLowerCase().includes(ingredientSearchQuery.toLowerCase()) ||
+                      ing.category.toLowerCase().includes(ingredientSearchQuery.toLowerCase())
+                    )
+                    .map((ing) => (
+                    <TouchableOpacity
+                      key={ing.id}
+                      style={{
+                        padding: 12,
+                        backgroundColor: ingredientAssignForm.ingredientId === ing.id.toString() ? "#e0b97f20" : "#1a1a1a",
+                        marginBottom: 6,
+                        borderRadius: 8,
+                        borderWidth: 1,
+                        borderColor: ingredientAssignForm.ingredientId === ing.id.toString() ? "#e0b97f" : "#333",
+                      }}
+                      onPress={() => setIngredientAssignForm({ ...ingredientAssignForm, ingredientId: ing.id.toString() })}
+                    >
+                      <Text style={{ color: "#e0b97f", fontWeight: "bold" }}>{ing.name}</Text>
+                      <Text style={{ color: "#999", fontSize: 12 }}>
+                        €{ing.pricePerUnit}/extra • {ing.category}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
+
+              <Text style={[styles.label, { color: "#e0b97f", marginBottom: 8 }]}>Default Quantity</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g., 2"
+                placeholderTextColor="#999"
+                value={ingredientAssignForm.defaultQuantity}
+                onChangeText={(text) => setIngredientAssignForm({ ...ingredientAssignForm, defaultQuantity: text })}
+                keyboardType="numeric"
+              />
+
+              <View style={styles.modalActions}>
+                <Button onPress={() => setAssignIngredientModalVisible(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  mode="contained"
+                  onPress={assignIngredientToMenuItem}
+                  loading={savingIngredient}
+                  disabled={!ingredientAssignForm.ingredientId || !ingredientAssignForm.defaultQuantity || ingredients.length === 0}
+                >
+                  Assign
+                </Button>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
         {/* QR Codes Tab */}
         {activeTab === "qr" && <QRTokenManagement />}
 
@@ -2596,19 +2989,23 @@ const styles = StyleSheet.create({
   itemActions: {
     flexDirection: "row",
     justifyContent: "flex-end",
+    flexWrap: "wrap",
     marginTop: 12,
+    gap: 8,
   },
   editBtn: {
     backgroundColor: "#4a90e2",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
+    marginLeft: 8,
   },
   deleteBtn: {
     backgroundColor: "#d32f2f",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
+    marginLeft: 8,
   },
   btnText: {
     color: "#fff",

@@ -486,11 +486,12 @@ const MenuItemDetailScreen = () => {
                           <Text style={styles.ingredientName}>
                             {getIngredientName(ing)}
                           </Text>
-                          {extraCost > 0 && (
-                            <Text style={styles.ingredientPrice}>
-                              +€{extraCost.toFixed(2)}
-                            </Text>
-                          )}
+                          <Text style={[styles.ingredientPrice, { color: extraCost > 0 ? "#e0b97f" : "#999" }]}>
+                            {extraCost > 0 
+                              ? `+€${extraCost.toFixed(2)}` 
+                              : `€${ing.pricePerUnit.toFixed(2)}/extra`
+                            }
+                          </Text>
                         </View>
                         <View style={styles.ingredientControls}>
                           <TouchableOpacity
