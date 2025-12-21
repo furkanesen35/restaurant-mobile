@@ -32,10 +32,15 @@ export default {
       supportsTablet: true,
       bundleIdentifier: "com.burgermeister.restaurantmobile",
       buildNumber: "1.0.0",
+      config: {
+        googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || "YOUR_GOOGLE_MAPS_API_KEY"
+      },
       infoPlist: {
         NSAppTransportSecurity: {
           NSAllowsArbitraryLoads: true,
         },
+        NSLocationWhenInUseUsageDescription: "This app needs access to your location to show delivery tracking.",
+        NSLocationAlwaysUsageDescription: "This app needs access to your location to show delivery tracking."
       },
     },
     android: {
@@ -48,8 +53,15 @@ export default {
         "CAMERA",
         "INTERNET",
         "ACCESS_NETWORK_STATE",
-        "VIBRATE"
+        "VIBRATE",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
       ],
+      config: {
+        googleMaps: {
+          apiKey: process.env.GOOGLE_MAPS_API_KEY || "YOUR_GOOGLE_MAPS_API_KEY"
+        }
+      },
       usesCleartextTraffic: true,
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,

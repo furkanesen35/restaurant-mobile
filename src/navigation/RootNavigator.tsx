@@ -12,6 +12,7 @@ import MenuItemDetailScreen from "../screens/MenuItemDetailScreen";
 import { useAuth } from "../contexts/AuthContext";
 import MenuScreen from "../screens/MenuScreen";
 import OrdersScreen from "../screens/OrdersScreen";
+import OrderTrackingScreen from "../screens/OrderTrackingScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import FavoritesScreen from "../screens/FavoritesScreen";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -207,6 +208,13 @@ function MainStack() {
           title: t("navigation.scanQRCode"),
           headerStyle: { backgroundColor: "#231a13" },
           headerTintColor: "#e0b97f",
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="OrderTracking"
+        component={OrderTrackingScreen}
+        options={{
           headerShown: false,
         }}
       />

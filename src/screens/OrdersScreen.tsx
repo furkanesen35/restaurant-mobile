@@ -23,7 +23,8 @@ import apiClient from "../utils/apiClient";
 import ErrorMessage from "../components/common/ErrorMessage";
 import { useTranslation } from "../hooks/useTranslation";
 import logger from '../utils/logger';
-const OrdersScreen = () => {
+
+const OrdersScreen = ({ navigation }: any) => {
   const { colors } = useTheme();
   const { user, token, updateUser } = useAuth();
   const { t } = useTranslation();
@@ -177,6 +178,7 @@ const OrdersScreen = () => {
         confirmed: 0.4,
         preparing: 0.6,
         ready: 0.8,
+        out_for_delivery: 0.9,
         delivered: 1.0,
         cancelled: 0,
       };
@@ -273,17 +275,30 @@ const OrdersScreen = () => {
             <Text style={styles.orderTotal}>
               {t("cart.total")}: {formatCurrency(total)}
             </Text>
-            {order.status === "pending" && (
-              <Button
-                mode="outlined"
-                onPress={() => handleCancelOrder(order)}
-                style={styles.cancelButton}
-                labelStyle={styles.cancelButtonLabel}
-                compact
-              >
-                {t("common.cancel")}
-              </Button>
-            )}
+            <View style={styles.orderActions}>
+              {order.status === "pending" && (
+                <Button
+                  mode="outlined"
+                  onPress={() => handleCancelOrder(order)}
+                  style={styles.cancelButton}
+                  labelStyle={styles.cancelButtonLabel}
+                  compact
+                >
+                  {t("common.cancel")}
+                </Button>
+              )}
+              {(order.status === "out_for_delivery" || (order.status === "ready" && order.driverName)) && (
+                <Button
+                  mode="contained"
+                  onPress={() => navigation.navigate("OrderTracking", { orderId: order.id })}
+                  style={styles.trackButton}
+                  compact
+                  icon="map-marker-outline"
+                >
+                  {t("orders.trackOrder")}
+                </Button>
+              )}
+            </View>
           </View>
         </Card.Content>
       </Card>
@@ -580,7 +595,16 @@ const styles = StyleSheet.create({
     fontSize: 16, // Medium-large for emphasis
     fontWeight: "bold", // Bold for importance
     color: "#e0b97f", // Gold accent color
-    flex: 1, // Takes remaining space (pushes cancel button right)
+    flex: 1, // Takes remaining space (pushes buttons right)
+  },
+
+  // ============================================================================
+  // ORDER ACTIONS - Container for action buttons
+  // Used by: View wrapping cancel/track buttons
+  // ============================================================================
+  orderActions: {
+    flexDirection: "row",
+    gap: 8,
   },
 
   // ============================================================================
@@ -589,7 +613,14 @@ const styles = StyleSheet.create({
   // ============================================================================
   cancelButton: {
     borderColor: "#d32f2f", // Red border for warning/destructive action
-    marginLeft: 8, // 8px space from total text
+  },
+
+  // ============================================================================
+  // TRACK BUTTON - Primary button to track delivery
+  // Used by: Button component for tracking out_for_delivery orders
+  // ============================================================================
+  trackButton: {
+    backgroundColor: "#4CAF50", // Green for active tracking
   },
 
   // ============================================================================

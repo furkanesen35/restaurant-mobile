@@ -147,7 +147,24 @@
     "orderAgain": "Order Again",
     "items": "Items",
     "deliveredOn": "Delivered on",
-    "orderedOn": "Ordered on"
+    "orderedOn": "Ordered on",
+    "loadingTracking": "Loading tracking information...",
+    "trackingNotAvailable": "Tracking not available",
+    "driver": "Driver",
+    "callDriver": "Call Driver",
+    "eta": "ETA",
+    "distance": "Distance",
+    "lastUpdated": "Last Updated",
+    "restaurant": "Restaurant",
+    "status": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "preparing": "Preparing",
+      "ready": "Ready",
+      "out_for_delivery": "Out for Delivery",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled"
+    }
   },
   "profile": {
     "title": "Profile",

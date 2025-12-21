@@ -148,6 +148,16 @@ const AdminScreen = () => {
   const [templateVariables, setTemplateVariables] = useState<Record<string, string>>({});
   const [sendingMessage, setSendingMessage] = useState(false);
 
+  // Driver assignment states
+  const [showDriverModal, setShowDriverModal] = useState(false);
+  const [selectedOrderForDriver, setSelectedOrderForDriver] = useState<any>(null);
+  const [driverForm, setDriverForm] = useState({
+    driverName: '',
+    driverPhone: '',
+    estimatedMinutes: '30'
+  });
+  const [assigningDriver, setAssigningDriver] = useState(false);
+
   const MESSAGE_TEMPLATES = [
     { id: 'delay_traffic', label: '🚗 Delay - Traffic', category: 'delay' },
     { id: 'delay_busy', label: '⏰ Delay - High Demand', category: 'delay' },
@@ -840,6 +850,83 @@ const AdminScreen = () => {
     }
   };
 
+  // Driver assignment
+  const openDriverModal = (order: any) => {
+    setSelectedOrderForDriver(order);
+    setDriverForm({
+      driverName: order.driverName || '',
+      driverPhone: order.driverPhone || '',
+      estimatedMinutes: '30'
+    });
+    setShowDriverModal(true);
+  };
+
+  const assignDriver = async () => {
+    if (!selectedOrderForDriver || !driverForm.driverName.trim()) {
+      Alert.alert("Error", "Driver name is required");
+      return;
+    }
+
+    setAssigningDriver(true);
+    try {
+      const url = `${ENV.API_URL}/api/delivery/assign-driver/${selectedOrderForDriver.id}`;
+      const payload = {
+        driverName: driverForm.driverName,
+        driverPhone: driverForm.driverPhone || null,
+        estimatedMinutes: parseInt(driverForm.estimatedMinutes) || 30
+      };
+      
+      logger.info("Assigning driver:", { 
+        url, 
+        orderId: selectedOrderForDriver.id, 
+        orderStatus: selectedOrderForDriver.status,
+        payload 
+      });
+      
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      let responseData;
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        responseData = await response.json();
+      } else {
+        const text = await response.text();
+        responseData = { error: text || 'Unknown error' };
+      }
+      
+      logger.info("Server response:", { 
+        status: response.status, 
+        statusText: response.statusText,
+        data: responseData 
+      });
+      
+      if (!response.ok) {
+        throw new Error(responseData.error || responseData.message || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      Alert.alert("Success", `Driver ${driverForm.driverName} assigned to order #${selectedOrderForDriver.id}`);
+      setShowDriverModal(false);
+      setDriverForm({ driverName: '', driverPhone: '', estimatedMinutes: '30' });
+      setSelectedOrderForDriver(null);
+      fetchOrders();
+    } catch (err: any) {
+      logger.error("Failed to assign driver:", err);
+      Alert.alert(
+        "Error", 
+        `${err.message}\n\nOrder: #${selectedOrderForDriver.id}\nStatus: ${selectedOrderForDriver.status}\n\nCheck Metro logs for details.`
+      );
+    } finally {
+      setAssigningDriver(false);
+    }
+  };
+
   // Category management
   const saveCategory = async () => {
     if (!categoryForm.name.trim()) {
@@ -1379,6 +1466,19 @@ const AdminScreen = () => {
                           )
                         )}
                       </ScrollView>
+                      
+                      {/* Assign Driver Button - Show for 'ready' orders */}
+                      {item.status === 'ready' && (
+                        <TouchableOpacity
+                          style={[styles.messageButton, { backgroundColor: '#2a5c2a', marginTop: 8 }]}
+                          onPress={() => openDriverModal(item)}
+                        >
+                          <Ionicons name="car-outline" size={20} color="#fff" />
+                          <Text style={[styles.messageButtonText, { color: '#fff' }]}>
+                            {item.driverName ? `Driver: ${item.driverName}` : 'Assign Driver'}
+                          </Text>
+                        </TouchableOpacity>
+                      )}
                       
                       {/* Message Button */}
                       <TouchableOpacity
@@ -2726,6 +2826,75 @@ const AdminScreen = () => {
                   <ActivityIndicator color="#231a13" />
                 ) : (
                   <Text style={styles.messageSendButtonText}>Send Message</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Driver Assignment Modal */}
+      <Modal visible={showDriverModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.messageModalContent}>
+            <Text style={styles.messageModalTitle}>Assign Driver to Order #{selectedOrderForDriver?.id}</Text>
+            <Text style={{ color: '#999', fontSize: 12, marginBottom: 12, fontStyle: 'italic' }}>
+              Enter the driver's name (any name you want)
+            </Text>
+            
+            <Text style={styles.messageLabel}>Driver Name *</Text>
+            <TextInput
+              style={styles.messageInput}
+              placeholder="Type driver name: Max Müller, John Doe, etc."
+              placeholderTextColor="#666"
+              value={driverForm.driverName}
+              onChangeText={(text) => setDriverForm({ ...driverForm, driverName: text })}
+              autoCapitalize="words"
+            />
+            
+            <Text style={styles.messageLabel}>Driver Phone (optional)</Text>
+            <TextInput
+              style={styles.messageInput}
+              placeholder="+49 151 12345678"
+              placeholderTextColor="#666"
+              value={driverForm.driverPhone}
+              onChangeText={(text) => setDriverForm({ ...driverForm, driverPhone: text })}
+              keyboardType="phone-pad"
+            />
+            
+            <Text style={styles.messageLabel}>Estimated Delivery Time (minutes)</Text>
+            <TextInput
+              style={styles.messageInput}
+              placeholder="30"
+              placeholderTextColor="#666"
+              value={driverForm.estimatedMinutes}
+              onChangeText={(text) => setDriverForm({ ...driverForm, estimatedMinutes: text })}
+              keyboardType="number-pad"
+            />
+            
+            <View style={styles.messageModalButtons}>
+              <TouchableOpacity 
+                style={styles.messageCancelButton}
+                onPress={() => {
+                  setShowDriverModal(false);
+                  setDriverForm({ driverName: '', driverPhone: '', estimatedMinutes: '30' });
+                  setSelectedOrderForDriver(null);
+                }}
+              >
+                <Text style={styles.messageCancelButtonText}>{t("common.cancel")}</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.messageSendButton, (assigningDriver || !driverForm.driverName) && styles.messageButtonDisabled]}
+                onPress={assignDriver}
+                disabled={assigningDriver || !driverForm.driverName}
+              >
+                {assigningDriver ? (
+                  <ActivityIndicator color="#231a13" />
+                ) : (
+                  <Text style={styles.messageSendButtonText}>
+                    {selectedOrderForDriver?.driverName ? 'Update Driver' : 'Assign Driver'}
+                  </Text>
                 )}
               </TouchableOpacity>
             </View>

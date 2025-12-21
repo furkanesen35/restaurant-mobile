@@ -73,6 +73,7 @@ export type OrderStatus =
   | "confirmed"
   | "preparing"
   | "ready"
+  | "out_for_delivery"
   | "delivered"
   | "cancelled";
 
@@ -104,6 +105,9 @@ export interface Order {
   refundStatus?: RefundStatus;
   refundAmount?: number;
   refundedAt?: string;
+  // Driver tracking fields
+  driverName?: string;
+  driverPhone?: string;
 }
 
 // Auth types

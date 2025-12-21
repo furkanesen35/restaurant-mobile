@@ -147,7 +147,24 @@
     "orderAgain": "Erneut bestellen",
     "items": "Artikel",
     "deliveredOn": "Geliefert am",
-    "orderedOn": "Bestellt am"
+    "orderedOn": "Bestellt am",
+    "loadingTracking": "Tracking-Informationen werden geladen...",
+    "trackingNotAvailable": "Tracking nicht verfügbar",
+    "driver": "Fahrer",
+    "callDriver": "Fahrer anrufen",
+    "eta": "Voraussichtliche Ankunft",
+    "distance": "Entfernung",
+    "lastUpdated": "Zuletzt aktualisiert",
+    "restaurant": "Restaurant",
+    "status": {
+      "pending": "Ausstehend",
+      "confirmed": "Bestätigt",
+      "preparing": "In Vorbereitung",
+      "ready": "Bereit",
+      "out_for_delivery": "Unterwegs",
+      "delivered": "Geliefert",
+      "cancelled": "Storniert"
+    }
   },
   "profile": {
     "title": "Profil",
