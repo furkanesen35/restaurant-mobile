@@ -1,4 +1,7 @@
 {
+  "cli": {
+    "version": ">= 3.0.0"
+  },
   "build": {
     "development": {
       "developmentClient": true,
@@ -29,9 +32,23 @@
         "GOOGLE_CLIENT_ID": "509747335993-r082n4d37nfnb45tv292nme5c0l9u0e2.apps.googleusercontent.com"
       },
       "android": {
-        "buildType": "apk"
+        "buildType": "app-bundle"
       },
-      "ios": {}
+      "ios": {
+        "resourceClass": "m-medium"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "production"
+      },
+      "ios": {
+        "appleId": "YOUR_APPLE_ID_EMAIL",
+        "ascAppId": "YOUR_APP_STORE_CONNECT_APP_ID"
+      }
     }
   }
 }
