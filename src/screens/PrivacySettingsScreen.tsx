@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, Switch, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../contexts/AuthContext';
 import apiClient from '../utils/apiClient';
+import logger from '../utils/logger';
 import { Button } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
-import { useNavigation } from '@react-navigation/native';
 
 interface ConsentSettings {
   marketingConsent: boolean;
@@ -17,7 +16,6 @@ interface ConsentSettings {
 
 const PrivacySettingsScreen = () => {
   const { t } = useTranslation();
-  const navigation = useNavigation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
@@ -27,11 +25,7 @@ const PrivacySettingsScreen = () => {
     reminderNotificationsConsent: false,
   });
   
-  useEffect(() => {
-    fetchConsent();
-  }, []);
-  
-  const fetchConsent = async () => {
+  const fetchConsent = useCallback(async () => {
     try {
       setLoading(true);
       const response = await apiClient.get<ConsentSettings>('/api/consent');
@@ -39,7 +33,7 @@ const PrivacySettingsScreen = () => {
         setConsent(response.data);
       }
     } catch (err) {
-      console.error('Failed to load consent settings:', err);
+      logger.error('Failed to load consent settings:', err);
       Alert.alert(
         t('error') || 'Error',
         'Failed to load privacy settings'
@@ -47,7 +41,11 @@ const PrivacySettingsScreen = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
+  
+  useEffect(() => {
+    fetchConsent();
+  }, [fetchConsent]);
   
   const updateConsent = async (field: string, value: boolean) => {
     try {
@@ -68,7 +66,7 @@ const PrivacySettingsScreen = () => {
       }
       
     } catch (err) {
-      console.error('Failed to update consent:', err);
+      logger.error('Failed to update consent:', err);
       Alert.alert(
         t('error') || 'Error',
         'Failed to update privacy settings'

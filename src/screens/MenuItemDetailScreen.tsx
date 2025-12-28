@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -124,7 +124,7 @@ const MenuItemDetailScreen = () => {
     };
 
     fetchData();
-  }, [item.id]);
+  }, [item]);
 
   // Get localized name for modifier
   const getModifierName = (modifier: MenuItemModifier) => {
@@ -274,7 +274,7 @@ const MenuItemDetailScreen = () => {
         };
       });
 
-      console.log("[MenuItemDetailScreen] Adding to cart:", {
+      logger.log("[MenuItemDetailScreen] Adding to cart:", {
         menuItemId: item.id,
         name: item.name,
         quantity,
@@ -320,7 +320,7 @@ const MenuItemDetailScreen = () => {
             onPress: () => {
               logger.info("[MenuItemDetail] Go to Cart button pressed");
               // Navigate to MainTabs Cart screen directly (will dismiss this screen)
-              // @ts-ignore - Navigation typing
+              // @ts-expect-error - Navigation typing
               navigation.navigate("MainTabs", { screen: "Cart" });
             },
           },

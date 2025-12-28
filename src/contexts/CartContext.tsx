@@ -75,7 +75,7 @@ type ApiCartItem = {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 const normalizeCartItems = (items: ApiCartItem[] = []): CartItem[] => {
-  console.log("[CartContext] Normalizing cart items:", JSON.stringify(items, null, 2));
+  logger.log("[CartContext] Normalizing cart items:", JSON.stringify(items, null, 2));
   return items.map((item) => {
     const normalized = {
       cartItemId: item.cartItemId,
@@ -92,7 +92,7 @@ const normalizeCartItems = (items: ApiCartItem[] = []): CartItem[] => {
       })) ?? [],
       specialInstructions: item.specialInstructions,
     };
-    console.log("[CartContext] Normalized item modifiers:", item.name, normalized.modifiers);
+    logger.log("[CartContext] Normalized item modifiers:", item.name, normalized.modifiers);
     return normalized;
   });
 };
@@ -174,13 +174,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           ...(cookingPreference && { cookingPreference }),
           ...(cookingNotes && { cookingNotes }),
         };
-        console.log("[CartContext] addToCart request:", JSON.stringify(requestBody, null, 2));
+        logger.log("[CartContext] addToCart request:", JSON.stringify(requestBody, null, 2));
         
         const response = await apiClient.post<{ items: ApiCartItem[] }>(
           "/api/cart",
           requestBody
         );
-        console.log("[CartContext] addToCart response:", JSON.stringify(response, null, 2));
+        logger.log("[CartContext] addToCart response:", JSON.stringify(response, null, 2));
         
         const payload = response.data?.items || [];
         setCart(normalizeCartItems(payload));

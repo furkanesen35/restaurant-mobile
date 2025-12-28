@@ -27,8 +27,9 @@
     },
     "production": {
       "env": {
-        "EXPO_PUBLIC_API_URL": "http://40.67.194.111:3000",
-        "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_test_51SIEcoJDAuuxJ7tmTrHI050YwBjrCyVaEPpF4HxQ4v2OnkyCDNyDgrNyZhRKceEcVbnIYn3lCg2hY6jGiPvuYUkA00FYOLxNCy",
+        "APP_VARIANT": "production",
+        "EXPO_PUBLIC_API_URL": "https://burgermeister-api.westeurope.cloudapp.azure.com",
+        "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_live_YOUR_LIVE_STRIPE_KEY_HERE",
         "GOOGLE_CLIENT_ID": "509747335993-r082n4d37nfnb45tv292nme5c0l9u0e2.apps.googleusercontent.com"
       },
       "android": {

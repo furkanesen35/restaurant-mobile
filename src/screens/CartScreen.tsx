@@ -118,7 +118,7 @@ const CartScreen = () => {
   };
 
   // Debug: Log cart items
-  console.log("[CartScreen] Rendering cart with items:", JSON.stringify(cart, null, 2));
+  logger.log("[CartScreen] Rendering cart with items:", JSON.stringify(cart, null, 2));
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -134,7 +134,7 @@ const CartScreen = () => {
           renderItem={({ item }) => {
             const itemTotal = calculateItemTotal(item);
             const hasModifiers = item.modifiers && item.modifiers.length > 0;
-            console.log("[CartScreen] Item:", item.name, "hasModifiers:", hasModifiers, "modifiers:", item.modifiers);
+            logger.log("[CartScreen] Item:", item.name, "hasModifiers:", hasModifiers, "modifiers:", item.modifiers);
             
             return (
               <Card style={styles.card}>

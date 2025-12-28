@@ -18,7 +18,6 @@ class ApiClient {
   constructor(baseURL: string, timeout: number = 10000) {
     this.baseURL = baseURL;
     this.timeout = timeout;
-    console.log("[API Client] baseURL:", baseURL, "timeout:", timeout);
   }
 
   private async getHeaders(): Promise<HeadersInit> {
@@ -72,16 +71,6 @@ class ApiClient {
     const url = `${this.baseURL}${endpoint}`;
     const headers = await this.getHeaders();
 
-    // Debug logging for production
-    console.log(`[API Request] ${options.method || 'GET'} ${url}`);
-    if (options.body) {
-      try {
-        console.log('[API Body]', JSON.parse(options.body as string));
-      } catch {
-        console.log('[API Body]', options.body);
-      }
-    }
-
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
@@ -110,7 +99,7 @@ class ApiClient {
       }
 
       // Log the raw error for debugging
-      console.error("[ApiClient] Raw network error:", error);
+      logger.error("[ApiClient] Raw network error:", error);
 
       throw {
         error: "Network error",

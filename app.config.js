@@ -1,20 +1,23 @@
 import "dotenv/config";
 
-export default {
-  expo: {
-    plugins: [
-        "expo-web-browser",
-        "expo-font",
-        "expo-localization",
-        [
-          "expo-build-properties",
-          {
-            android: {
-              usesCleartextTraffic: true,
+export default ({ config: _config }) => {
+  const isProduction = process.env.APP_VARIANT === 'production';
+  
+  return {
+    expo: {
+      plugins: [
+          "expo-web-browser",
+          "expo-font",
+          "expo-localization",
+          [
+            "expo-build-properties",
+            {
+              android: {
+                usesCleartextTraffic: !isProduction,
+              },
             },
-          },
-        ],
-    ],
+          ],
+      ],
     name: "restaurant-mobile",
     slug: "restaurant-mobile",
     scheme: "restaurantapp",
@@ -36,7 +39,7 @@ export default {
         googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || "YOUR_GOOGLE_MAPS_API_KEY"
       },
       infoPlist: {
-        NSAppTransportSecurity: {
+        NSAppTransportSecurity: isProduction ? undefined : {
           NSAllowsArbitraryLoads: true,
         },
         NSLocationWhenInUseUsageDescription: "This app needs access to your location to show delivery tracking.",
@@ -62,7 +65,7 @@ export default {
           apiKey: process.env.GOOGLE_MAPS_API_KEY || "YOUR_GOOGLE_MAPS_API_KEY"
         }
       },
-      usesCleartextTraffic: true,
+      usesCleartextTraffic: !isProduction,
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
     },
@@ -77,3 +80,4 @@ export default {
     },
   },
 };
+}
