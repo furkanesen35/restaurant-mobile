@@ -81,7 +81,13 @@
     "toppings": "Toppings",
     "proteins": "Proteins",
     "sauces": "Sauces",
-    "sides": "Sides"
+    "sides": "Sides",
+    "specialInstructions": "Special Instructions",
+    "specialInstructionsPlaceholder": "Add any special requests or notes..."
+  },
+  "ingredients": {
+    "title": "Ingredients",
+    "subtitle": "Customize quantities (extra charges apply)"
   },
   "cart": {
     "title": "Cart",
@@ -180,6 +186,8 @@
     "about": "About",
     "termsAndConditions": "Terms & Conditions",
     "privacyPolicy": "Privacy Policy",
+    "privacySettings": "Privacy Settings",
+    "privacySettingsDesc": "Manage your data and privacy preferences",
     "cookieSettings": "Cookie Settings",
     "version": "Version",
     "deleteAccount": "Delete Account",

@@ -25,6 +25,7 @@ import { MenuItem } from "../types";
 import { useTranslation } from "../hooks/useTranslation";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useNavigation } from "@react-navigation/native";
+import { fuzzyMatch, fuzzyScore } from "../utils/fuzzySearch";
 
 const MenuScreen = () => {
   const { colors } = useTheme();
@@ -218,13 +219,26 @@ const MenuScreen = () => {
   const getFilteredItems = () => {
     let filtered = menuItems;
 
-    // Apply search filter (client-side)
+    // Apply search filter with fuzzy matching
     if (committedSearchQuery.trim()) {
-      const searchLower = committedSearchQuery.toLowerCase();
+      const searchQuery = committedSearchQuery.trim();
       filtered = filtered.filter((item) => 
-        item.name.toLowerCase().includes(searchLower) ||
-        (item.description && item.description.toLowerCase().includes(searchLower))
+        fuzzyMatch(searchQuery, item.name) ||
+        (item.description && fuzzyMatch(searchQuery, item.description))
       );
+      
+      // Sort by relevance score (best matches first)
+      filtered = filtered.sort((a, b) => {
+        const scoreA = Math.max(
+          fuzzyScore(searchQuery, a.name),
+          a.description ? fuzzyScore(searchQuery, a.description) * 0.8 : 0
+        );
+        const scoreB = Math.max(
+          fuzzyScore(searchQuery, b.name),
+          b.description ? fuzzyScore(searchQuery, b.description) * 0.8 : 0
+        );
+        return scoreB - scoreA;
+      });
     }
 
     // Apply category filter
@@ -360,7 +374,7 @@ const MenuScreen = () => {
 
   const handleNavigateToDetail = useCallback(
     (item: MenuItem) => {
-      // @ts-ignore - Navigation typing
+      // @ts-expect-error - Navigation typing
       navigation.navigate("MenuItemDetail", { item });
     },
     [navigation]
@@ -1059,10 +1073,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 14,
+    justifyContent: "center",
+    alignItems: "center",
   },
   addToCartButtonText: {
     fontWeight: "bold",
     letterSpacing: 0.5,
+    textAlign: "center",
   },
   cardButtonRow: {
     flexDirection: "row",

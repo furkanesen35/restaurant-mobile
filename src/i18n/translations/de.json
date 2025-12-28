@@ -81,7 +81,13 @@
     "toppings": "Beläge",
     "proteins": "Proteine",
     "sauces": "Saucen",
-    "sides": "Beilagen"
+    "sides": "Beilagen",
+    "specialInstructions": "Besondere Wünsche",
+    "specialInstructionsPlaceholder": "Fügen Sie besondere Wünsche oder Hinweise hinzu..."
+  },
+  "ingredients": {
+    "title": "Zutaten",
+    "subtitle": "Mengen anpassen (Aufpreis möglich)"
   },
   "cart": {
     "title": "Warenkorb",
@@ -180,6 +186,8 @@
     "about": "Über uns",
     "termsAndConditions": "AGB",
     "privacyPolicy": "Datenschutzerklärung",
+    "privacySettings": "Datenschutzeinstellungen",
+    "privacySettingsDesc": "Verwalten Sie Ihre Daten und Datenschutzeinstellungen",
     "cookieSettings": "Cookie-Einstellungen",
     "version": "Version",
     "deleteAccount": "Konto löschen",

@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   TextInput,
+  Dimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "react-native-paper";
@@ -25,6 +26,10 @@ import logger from "../utils/logger";
 type RouteParams = {
   item: MenuItem;
 };
+
+// Get screen dimensions for responsive sizing
+const { height: SCREEN_HEIGHT } = Dimensions.get("window");
+const IMAGE_HEIGHT = Math.min(280, SCREEN_HEIGHT * 0.3); // Max 280px or 30% of screen
 
 const MenuItemDetailScreen = () => {
   const { colors } = useTheme();
@@ -404,14 +409,14 @@ const MenuItemDetailScreen = () => {
         {item.imageUrl ? (
           <ImageBackground
             source={{ uri: item.imageUrl }}
-            style={styles.imageHero}
+            style={[styles.imageHero, { height: IMAGE_HEIGHT }]}
             imageStyle={styles.imageRadius}
             resizeMode="cover"
           >
             <View style={styles.imageOverlay} />
           </ImageBackground>
         ) : (
-          <View style={[styles.imageHero, styles.imagePlaceholder]}>
+          <View style={[styles.imageHero, styles.imagePlaceholder, { height: IMAGE_HEIGHT }]}>
             <Text style={styles.placeholderIcon}>🍽️</Text>
           </View>
         )}
@@ -790,7 +795,7 @@ const styles = StyleSheet.create({
   },
   imageHero: {
     width: "100%",
-    height: 280,
+    // height is set dynamically via IMAGE_HEIGHT constant
     backgroundColor: "#3a2b1f",
   },
   imageRadius: {
@@ -813,31 +818,31 @@ const styles = StyleSheet.create({
     fontSize: 80,
   },
   detailsContainer: {
-    padding: 20,
+    padding: SCREEN_HEIGHT < 700 ? 14 : 20,
   },
   titleRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 12,
+    marginBottom: SCREEN_HEIGHT < 700 ? 8 : 12,
   },
   itemName: {
-    fontSize: 26,
+    fontSize: SCREEN_HEIGHT < 700 ? 22 : 26,
     fontWeight: "bold",
     color: "#fffbe8",
     flex: 1,
     marginRight: 16,
   },
   itemPrice: {
-    fontSize: 24,
+    fontSize: SCREEN_HEIGHT < 700 ? 20 : 24,
     fontWeight: "700",
     color: "#e0b97f",
   },
   itemDescription: {
-    fontSize: 16,
+    fontSize: SCREEN_HEIGHT < 700 ? 14 : 16,
     color: "#b8a68a",
-    lineHeight: 24,
-    marginBottom: 16,
+    lineHeight: SCREEN_HEIGHT < 700 ? 20 : 24,
+    marginBottom: SCREEN_HEIGHT < 700 ? 10 : 16,
   },
   dietaryBadgesContainer: {
     flexDirection: "row",
@@ -872,16 +877,16 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: SCREEN_HEIGHT < 700 ? 16 : 18,
     fontWeight: "700",
     color: "#fffbe8",
-    marginBottom: 12,
+    marginBottom: SCREEN_HEIGHT < 700 ? 8 : 12,
   },
   quantitySection: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 16,
+    paddingVertical: SCREEN_HEIGHT < 700 ? 12 : 16,
     borderTopWidth: 1,
     borderTopColor: "#3a2b1f",
   },
@@ -917,7 +922,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   modifiersSection: {
-    paddingTop: 16,
+    paddingTop: SCREEN_HEIGHT < 700 ? 12 : 16,
     borderTopWidth: 1,
     borderTopColor: "#3a2b1f",
   },
@@ -1003,10 +1008,10 @@ const styles = StyleSheet.create({
   specialInstructionsInput: {
     backgroundColor: "#3a2b1f",
     color: "#fffbe8",
-    padding: 12,
+    padding: SCREEN_HEIGHT < 700 ? 10 : 12,
     borderRadius: 8,
-    fontSize: 16,
-    minHeight: 80,
+    fontSize: SCREEN_HEIGHT < 700 ? 14 : 16,
+    minHeight: SCREEN_HEIGHT < 700 ? 60 : 80,
     textAlignVertical: "top",
     borderWidth: 1,
     borderColor: "#4a3b2f",
@@ -1075,12 +1080,12 @@ const styles = StyleSheet.create({
   bottomBar: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 16,
-    paddingBottom: 24,
+    padding: SCREEN_HEIGHT < 700 ? 12 : 16,
+    paddingBottom: SCREEN_HEIGHT < 700 ? 16 : 24,
     backgroundColor: "#2d2117",
     borderTopWidth: 1,
     borderTopColor: "#3a2b1f",
-    gap: 16,
+    gap: SCREEN_HEIGHT < 700 ? 12 : 16,
   },
   totalSection: {
     flex: 1,
