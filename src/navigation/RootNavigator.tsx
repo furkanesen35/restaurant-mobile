@@ -13,6 +13,8 @@ import { useAuth } from "../contexts/AuthContext";
 import MenuScreen from "../screens/MenuScreen";
 import OrdersScreen from "../screens/OrdersScreen";
 import OrderTrackingScreen from "../screens/OrderTrackingScreen";
+import OrderDetailsScreen from "../screens/OrderDetailsScreen";
+import NotificationsScreen from "../screens/NotificationsScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import FavoritesScreen from "../screens/FavoritesScreen";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -214,6 +216,20 @@ function MainStack() {
       <Stack.Screen
         name="OrderTracking"
         component={OrderTrackingScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="OrderDetails"
+        component={OrderDetailsScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="Notifications"
+        component={NotificationsScreen}
         options={{
           headerShown: false,
         }}

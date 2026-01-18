@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, TextInput, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Card, Button, Avatar, Divider, IconButton } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
@@ -8,13 +8,48 @@ import PaymentMethodsScreen from "./PaymentMethodsScreen";
 import { useNavigation } from "@react-navigation/native";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import { useTranslation } from "../hooks/useTranslation";
+import apiClient from "../utils/apiClient";
+import logger from "../utils/logger";
 
 const ProfileScreen = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const { t } = useTranslation();
   const navigation = useNavigation();
   const [showAddresses, setShowAddresses] = useState(false);
   const [showPayments, setShowPayments] = useState(false);
+  const [showEditName, setShowEditName] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [savingName, setSavingName] = useState(false);
+
+  const handleEditName = () => {
+    setNewName(user?.name || "");
+    setShowEditName(true);
+  };
+
+  const handleSaveName = async () => {
+    if (!newName.trim() || newName.trim().length < 2) {
+      Alert.alert(t("common.error"), t("auth.nameRequired"));
+      return;
+    }
+
+    setSavingName(true);
+    try {
+      const response = await apiClient.put<{ user: { name: string } }>("/auth/profile", {
+        name: newName.trim(),
+      });
+      
+      if (response.data?.user) {
+        await updateUser({ name: response.data.user.name });
+        Alert.alert(t("common.success"), t("success.profileUpdated"));
+        setShowEditName(false);
+      }
+    } catch (err: any) {
+      logger.error("Error updating name:", err);
+      Alert.alert(t("common.error"), err?.message || t("errors.somethingWentWrong"));
+    } finally {
+      setSavingName(false);
+    }
+  };
 
   if (!user) {
     return (
@@ -49,7 +84,16 @@ const ProfileScreen = () => {
             labelStyle={styles.avatarLabel}
           />
           <View style={styles.userInfo}>
-            <Text style={styles.userName}>{user.name}</Text>
+            <View style={styles.nameRow}>
+              <Text style={styles.userName}>{user.name}</Text>
+              <IconButton
+                icon="pencil"
+                iconColor="#e0b97f"
+                size={20}
+                onPress={handleEditName}
+                style={styles.editNameButton}
+              />
+            </View>
             <Text style={styles.userEmail}>{user.email}</Text>
             {user.role === "admin" && (
               <Card style={styles.adminBadge}>
@@ -127,6 +171,31 @@ const ProfileScreen = () => {
           <Card.Content>
             <Text style={styles.sectionPlaceholder}>
               {t("profile.paymentMethods")}
+            </Text>
+          </Card.Content>
+        </Card>
+      </TouchableOpacity>
+
+      {/* Notifications Section */}
+      <TouchableOpacity onPress={() => navigation.navigate("Notifications" as never)}>
+        <Card style={styles.sectionCard}>
+          <Card.Title
+            title={t("notifications.title")}
+            titleStyle={styles.sectionTitle}
+            left={(props) => (
+              <Avatar.Icon
+                {...props}
+                icon="bell"
+                style={styles.sectionIcon}
+              />
+            )}
+            right={(props) => (
+              <IconButton {...props} icon="chevron-right" iconColor="#ffffff" />
+            )}
+          />
+          <Card.Content>
+            <Text style={styles.sectionDescription}>
+              {t("notifications.viewHistory") || "View your notification history"}
             </Text>
           </Card.Content>
         </Card>
@@ -260,6 +329,51 @@ const ProfileScreen = () => {
             />
           </View>
           <PaymentMethodsScreen />
+        </View>
+      </Modal>
+
+      {/* Edit Name Modal */}
+      <Modal
+        visible={showEditName}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowEditName(false)}
+      >
+        <View style={styles.editNameOverlay}>
+          <View style={styles.editNameModal}>
+            <Text style={styles.editNameTitle}>{t("profile.editProfile")}</Text>
+            <Text style={styles.editNameLabel}>{t("auth.name")}</Text>
+            <TextInput
+              style={styles.editNameInput}
+              value={newName}
+              onChangeText={setNewName}
+              placeholder={t("auth.namePlaceholder")}
+              placeholderTextColor="#8a7a6a"
+              autoCapitalize="words"
+              maxLength={100}
+            />
+            <View style={styles.editNameButtons}>
+              <Button
+                mode="outlined"
+                onPress={() => setShowEditName(false)}
+                style={styles.editNameCancelButton}
+                labelStyle={styles.editNameCancelLabel}
+                disabled={savingName}
+              >
+                {t("common.cancel")}
+              </Button>
+              <Button
+                mode="contained"
+                onPress={handleSaveName}
+                style={styles.editNameSaveButton}
+                labelStyle={styles.editNameSaveLabel}
+                loading={savingName}
+                disabled={savingName || !newName.trim()}
+              >
+                {t("common.save")}
+              </Button>
+            </View>
+          </View>
         </View>
       </Modal>
     </SafeAreaView>
@@ -408,6 +522,24 @@ const styles = StyleSheet.create({
   },
 
   // ============================================================================
+  // NAME ROW - Row containing name and edit button
+  // Used by: View wrapping user name and edit icon
+  // ============================================================================
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  // ============================================================================
+  // EDIT NAME BUTTON - Pencil icon to edit name
+  // Used by: IconButton for editing name
+  // ============================================================================
+  editNameButton: {
+    margin: 0,
+    marginLeft: 4,
+  },
+
+  // ============================================================================
   // USER NAME - User's display name
   // Used by: Text component showing user's full name
   // ============================================================================
@@ -415,7 +547,6 @@ const styles = StyleSheet.create({
     color: "#ffffff", // White text for high visibility
     fontSize: 22, // Large text for name prominence
     fontWeight: "bold", // Bold for emphasis
-    marginBottom: 4, // 4px space below name
   },
 
   // ============================================================================
@@ -640,6 +771,67 @@ const styles = StyleSheet.create({
     color: "#ffffff", // White text for high visibility
     fontSize: 20, // Large text for modal heading
     fontWeight: "bold", // Bold for emphasis
+  },
+
+  // ============================================================================
+  // EDIT NAME MODAL STYLES
+  // ============================================================================
+  editNameOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  editNameModal: {
+    width: "100%",
+    maxWidth: 400,
+    backgroundColor: "#2d2117",
+    borderRadius: 16,
+    padding: 24,
+  },
+  editNameTitle: {
+    color: "#ffffff",
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  editNameLabel: {
+    color: "#e0b97f",
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  editNameInput: {
+    backgroundColor: "#1a120b",
+    color: "#ffffff",
+    fontSize: 16,
+    padding: 14,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#3d3127",
+    marginBottom: 20,
+  },
+  editNameButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  editNameCancelButton: {
+    flex: 1,
+    borderColor: "#e0b97f",
+  },
+  editNameCancelLabel: {
+    color: "#e0b97f",
+  },
+  editNameSaveButton: {
+    flex: 1,
+    backgroundColor: "#e0b97f",
+  },
+  editNameSaveLabel: {
+    color: "#231a13",
+    fontWeight: "bold",
   },
 });
 

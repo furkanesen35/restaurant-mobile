@@ -203,105 +203,111 @@ const OrdersScreen = ({ navigation }: any) => {
     const progress = getProgress(order.status);
     const timeRemaining = getTimeRemaining();
 
+    const handleOrderPress = () => {
+      navigation.navigate("OrderDetails", { orderId: order.id });
+    };
+
     return (
-      <Card style={styles.orderCard}>
-        <Card.Content>
-          <View style={styles.orderHeader}>
-            <Text style={styles.orderId}>#{order.id}</Text>
-            {order.createdAt && (
-              <Text style={styles.orderTime}>
-                {formatRelativeTime(order.createdAt)}
-              </Text>
-            )}
-          </View>
-          <Chip mode="outlined" style={styles.statusChip}>
-            {order.status}
-          </Chip>
-
-          {/* Refund Status for cancelled orders */}
-          {order.status === "cancelled" && order.refundStatus && (
-            <View style={styles.refundSection}>
-              <Chip 
-                mode="flat" 
-                style={[
-                  styles.refundChip,
-                  order.refundStatus === "succeeded" && styles.refundSuccessChip,
-                  order.refundStatus === "pending" && styles.refundPendingChip,
-                  order.refundStatus === "failed" && styles.refundFailedChip,
-                ]}
-                textStyle={styles.refundChipText}
-              >
-                {order.refundStatus === "succeeded" 
-                  ? `✓ Refunded €${order.refundAmount?.toFixed(2) || '0.00'}`
-                  : order.refundStatus === "pending"
-                  ? "⏳ Refund pending"
-                  : "⚠ Refund failed"}
-              </Chip>
+      <TouchableOpacity onPress={handleOrderPress} activeOpacity={0.7}>
+        <Card style={styles.orderCard}>
+          <Card.Content>
+            <View style={styles.orderHeader}>
+              <Text style={styles.orderId}>#{order.id}</Text>
+              {order.createdAt && (
+                <Text style={styles.orderTime}>
+                  {formatRelativeTime(order.createdAt)}
+                </Text>
+              )}
             </View>
-          )}
+            <Chip mode="outlined" style={styles.statusChip}>
+              {order.status}
+            </Chip>
 
-          {/* Progress Bar for active orders */}
-          {order.status !== "delivered" && order.status !== "cancelled" && (
-            <View style={styles.progressSection}>
-              <View style={styles.progressBar}>
-                <View
+            {/* Refund Status for cancelled orders */}
+            {order.status === "cancelled" && order.refundStatus && (
+              <View style={styles.refundSection}>
+                <Chip 
+                  mode="flat" 
                   style={[
-                    styles.progressFill,
-                    { width: `${progress * 100}%` },
+                    styles.refundChip,
+                    order.refundStatus === "succeeded" && styles.refundSuccessChip,
+                    order.refundStatus === "pending" && styles.refundPendingChip,
+                    order.refundStatus === "failed" && styles.refundFailedChip,
                   ]}
-                />
+                  textStyle={styles.refundChipText}
+                >
+                  {order.refundStatus === "succeeded" 
+                    ? `✓ Refunded €${order.refundAmount?.toFixed(2) || '0.00'}`
+                    : order.refundStatus === "pending"
+                    ? "⏳ Refund pending"
+                    : "⚠ Refund failed"}
+                </Chip>
               </View>
-              {timeRemaining && (
-                <Text style={styles.estimatedTime}>
-                  Estimated: {timeRemaining}
-                </Text>
-              )}
-            </View>
-          )}
-
-          {/* Items */}
-          <View style={styles.itemsList}>
-            {order.items && order.items.length > 0 ? (
-              order.items.map((oi: OrderItem, idx: number) => (
-                <Text key={idx} style={styles.orderItem}>
-                  • {oi.menuItem?.name || "Item"} x{oi.quantity}
-                </Text>
-              ))
-            ) : (
-              <Text style={styles.orderItem}>No items available</Text>
             )}
-          </View>
-          <View style={styles.orderFooter}>
-            <Text style={styles.orderTotal}>
-              {t("cart.total")}: {formatCurrency(total)}
-            </Text>
-            <View style={styles.orderActions}>
-              {order.status === "pending" && (
-                <Button
-                  mode="outlined"
-                  onPress={() => handleCancelOrder(order)}
-                  style={styles.cancelButton}
-                  labelStyle={styles.cancelButtonLabel}
-                  compact
-                >
-                  {t("common.cancel")}
-                </Button>
-              )}
-              {(order.status === "out_for_delivery" || (order.status === "ready" && order.driverName)) && (
-                <Button
-                  mode="contained"
-                  onPress={() => navigation.navigate("OrderTracking", { orderId: order.id })}
-                  style={styles.trackButton}
-                  compact
-                  icon="map-marker-outline"
-                >
-                  {t("orders.trackOrder")}
-                </Button>
+
+            {/* Progress Bar for active orders */}
+            {order.status !== "delivered" && order.status !== "cancelled" && (
+              <View style={styles.progressSection}>
+                <View style={styles.progressBar}>
+                  <View
+                    style={[
+                      styles.progressFill,
+                      { width: `${progress * 100}%` },
+                    ]}
+                  />
+                </View>
+                {timeRemaining && (
+                  <Text style={styles.estimatedTime}>
+                    Estimated: {timeRemaining}
+                  </Text>
+                )}
+              </View>
+            )}
+
+            {/* Items */}
+            <View style={styles.itemsList}>
+              {order.items && order.items.length > 0 ? (
+                order.items.map((oi: OrderItem, idx: number) => (
+                  <Text key={idx} style={styles.orderItem}>
+                    • {oi.menuItem?.name || "Item"} x{oi.quantity}
+                  </Text>
+                ))
+              ) : (
+                <Text style={styles.orderItem}>No items available</Text>
               )}
             </View>
-          </View>
-        </Card.Content>
-      </Card>
+            <View style={styles.orderFooter}>
+              <Text style={styles.orderTotal}>
+                {t("cart.total")}: {formatCurrency(total)}
+              </Text>
+              <View style={styles.orderActions}>
+                {order.status === "pending" && (
+                  <Button
+                    mode="outlined"
+                    onPress={() => handleCancelOrder(order)}
+                    style={styles.cancelButton}
+                    labelStyle={styles.cancelButtonLabel}
+                    compact
+                  >
+                    {t("common.cancel")}
+                  </Button>
+                )}
+                {(order.status === "out_for_delivery" || (order.status === "ready" && order.driverName)) && (
+                  <Button
+                    mode="contained"
+                    onPress={() => navigation.navigate("OrderTracking", { orderId: order.id })}
+                    style={styles.trackButton}
+                    compact
+                    icon="map-marker-outline"
+                  >
+                    {t("orders.trackOrder")}
+                  </Button>
+                )}
+              </View>
+            </View>
+          </Card.Content>
+        </Card>
+      </TouchableOpacity>
     );
   });
 
