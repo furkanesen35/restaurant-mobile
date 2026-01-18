@@ -1467,8 +1467,8 @@ const AdminScreen = () => {
                         )}
                       </ScrollView>
                       
-                      {/* Assign Driver Button - Show for 'ready' orders */}
-                      {item.status === 'ready' && (
+                      {/* Assign Driver Button - Show for confirmed, preparing, ready, and out_for_delivery orders */}
+                      {['confirmed', 'preparing', 'ready', 'out_for_delivery'].includes(item.status) && (
                         <TouchableOpacity
                           style={[styles.messageButton, { backgroundColor: '#2a5c2a', marginTop: 8 }]}
                           onPress={() => openDriverModal(item)}
