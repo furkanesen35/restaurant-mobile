@@ -114,9 +114,9 @@ const AdminScreen = () => {
   const [ingredientModalVisible, setIngredientModalVisible] = useState(false);
   const [ingredients, setIngredients] = useState<any[]>([]);
   const [ingredientsLoading, setIngredientsLoading] = useState(false);
-  const [showIngredientForm, setShowIngredientForm] = useState(false);
+  const [_showIngredientForm, setShowIngredientForm] = useState(false);
   const [editingIngredient, setEditingIngredient] = useState<any>(null);
-  const [ingredientForm, setIngredientForm] = useState({
+  const [ingredientForm, _setIngredientForm] = useState({
     name: "",
     nameEn: "",
     nameDe: "",
@@ -511,7 +511,7 @@ const AdminScreen = () => {
     }
   };
 
-  const saveIngredient = async () => {
+  const _saveIngredient = async () => {
     if (!token) return;
     setSavingIngredient(true);
     try {
@@ -549,7 +549,7 @@ const AdminScreen = () => {
     }
   };
 
-  const deleteIngredient = async (ingredientId: number) => {
+  const _deleteIngredient = async (ingredientId: number) => {
     if (!token) return;
     
     Alert.alert(
