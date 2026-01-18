@@ -9,9 +9,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { TextInput, Button, Card, Title } from "react-native-paper";
 import { useAuth } from "../contexts/AuthContext";
 import { NavigationProps } from "../types";
+import { useTranslation } from "react-i18next";
 
 const RegisterScreen = ({ navigation }: NavigationProps) => {
   const { register, isLoading } = useAuth();
+  const { t } = useTranslation();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -22,30 +25,36 @@ const RegisterScreen = ({ navigation }: NavigationProps) => {
     setError("");
     setSuccess("");
 
+    const trimmedName = name.trim();
     const trimmedEmail = email.trim().toLowerCase();
     const trimmedPassword = password.trim();
     const trimmedConfirm = confirmPassword.trim();
 
-    if (!trimmedEmail || !trimmedPassword || !trimmedConfirm) {
-      setError("All fields are required");
+    if (!trimmedName || !trimmedEmail || !trimmedPassword || !trimmedConfirm) {
+      setError(t("auth.allFieldsRequired", "All fields are required"));
+      return;
+    }
+
+    if (trimmedName.length < 2) {
+      setError(t("auth.nameTooShort", "Name must be at least 2 characters"));
       return;
     }
 
     if (trimmedPassword !== trimmedConfirm) {
-      setError("Passwords do not match");
+      setError(t("auth.passwordsNoMatch", "Passwords do not match"));
       return;
     }
 
     if (trimmedPassword.length < 6) {
-      setError("Password must be at least 6 characters");
+      setError(t("auth.passwordTooShort", "Password must be at least 6 characters"));
       return;
     }
 
     try {
-      await register({ email: trimmedEmail, password: trimmedPassword });
-      setSuccess("Registration successful!");
+      await register({ name: trimmedName, email: trimmedEmail, password: trimmedPassword });
+      setSuccess(t("auth.registrationSuccess", "Registration successful!"));
     } catch (e: any) {
-      setError(e.message || "Registration failed");
+      setError(e.message || t("auth.registrationFailed", "Registration failed"));
     }
   };
 
@@ -54,9 +63,16 @@ const RegisterScreen = ({ navigation }: NavigationProps) => {
       <KeyboardAvoidingView style={styles.container} behavior="padding">
         <Card style={styles.card}>
           <Card.Content>
-            <Title style={styles.title}>Register</Title>
+            <Title style={styles.title}>{t("auth.register", "Register")}</Title>
             <TextInput
-              label="Email"
+              label={t("auth.name", "Name")}
+              value={name}
+              onChangeText={setName}
+              style={styles.input}
+              autoCapitalize="words"
+            />
+            <TextInput
+              label={t("auth.email", "Email")}
               value={email}
             onChangeText={setEmail}
             style={styles.input}
@@ -64,14 +80,14 @@ const RegisterScreen = ({ navigation }: NavigationProps) => {
             keyboardType="email-address"
           />
           <TextInput
-            label="Password"
+            label={t("auth.password", "Password")}
             value={password}
             onChangeText={setPassword}
             style={styles.input}
             secureTextEntry
           />
           <TextInput
-            label="Confirm Password"
+            label={t("auth.confirmPassword", "Confirm Password")}
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             style={styles.input}
@@ -87,10 +103,10 @@ const RegisterScreen = ({ navigation }: NavigationProps) => {
             contentStyle={{ backgroundColor: "#e0b97f" }}
             labelStyle={{ color: "#231a13" }}
           >
-            Register
+            {t("auth.register", "Register")}
           </Button>
           <TouchableOpacity onPress={() => navigation.navigate("Login")}>
-            <Text style={styles.link}>Already have an account? Login</Text>
+            <Text style={styles.link}>{t("auth.alreadyHaveAccount", "Already have an account? Login")}</Text>
           </TouchableOpacity>
         </Card.Content>
       </Card>
