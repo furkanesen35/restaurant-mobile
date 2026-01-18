@@ -69,6 +69,7 @@ const RegisterScreen = ({ navigation }: NavigationProps) => {
               value={name}
               onChangeText={setName}
               style={styles.input}
+              textColor="#231a13"
               autoCapitalize="words"
             />
             <TextInput
@@ -76,6 +77,7 @@ const RegisterScreen = ({ navigation }: NavigationProps) => {
               value={email}
             onChangeText={setEmail}
             style={styles.input}
+            textColor="#231a13"
             autoCapitalize="none"
             keyboardType="email-address"
           />
@@ -84,6 +86,7 @@ const RegisterScreen = ({ navigation }: NavigationProps) => {
             value={password}
             onChangeText={setPassword}
             style={styles.input}
+            textColor="#231a13"
             secureTextEntry
           />
           <TextInput
@@ -91,6 +94,7 @@ const RegisterScreen = ({ navigation }: NavigationProps) => {
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             style={styles.input}
+            textColor="#231a13"
             secureTextEntry
           />
           {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -157,6 +161,14 @@ const styles = StyleSheet.create({
   input: {
     marginBottom: 12, // 12px space between input fields
     backgroundColor: "#fffbe8", // Light cream background for good contrast with dark text
+  },
+
+  // ============================================================================
+  // INPUT TEXT COLOR - Text color inside input fields
+  // Used by: TextInput components via textColor prop
+  // ============================================================================
+  inputText: {
+    color: "#231a13", // Dark text for high contrast on light background
   },
 
   // ============================================================================

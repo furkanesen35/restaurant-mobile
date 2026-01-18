@@ -137,6 +137,7 @@ const LoginScreen: React.FC<NavigationProps> = ({ navigation }) => {
                     }
                   }}
                   style={styles.input}
+                  textColor="#231a13"
                   autoCapitalize="none"
                   keyboardType="email-address"
                   autoComplete="email"
@@ -166,6 +167,7 @@ const LoginScreen: React.FC<NavigationProps> = ({ navigation }) => {
                     }
                   }}
                   style={styles.input}
+                  textColor="#231a13"
                   secureTextEntry={!showPassword}
                   autoComplete="password"
                   textContentType="password"
@@ -319,6 +321,14 @@ const styles = StyleSheet.create({
   // ============================================================================
   input: {
     backgroundColor: "#fffbe8", // Light cream background for good contrast with dark text
+  },
+
+  // ============================================================================
+  // INPUT TEXT COLOR - Text color inside input fields
+  // Used by: TextInput components via textColor prop
+  // ============================================================================
+  inputText: {
+    color: "#231a13", // Dark text for high contrast on light background
   },
 
   // ============================================================================
