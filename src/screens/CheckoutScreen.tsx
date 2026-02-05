@@ -1033,14 +1033,11 @@ const CheckoutScreen = () => {
                     }}
                     style={styles.cardField}
                     onCardChange={(cardDetails) => {
-                      logger.info("Card details changed:", { 
-                        complete: cardDetails.complete,
-                        brand: cardDetails.brand,
-                        last4: cardDetails.last4,
-                        expiryMonth: cardDetails.expiryMonth,
-                        expiryYear: cardDetails.expiryYear,
-                      });
                       setCardComplete(cardDetails.complete);
+                      // Log only when card becomes complete
+                      if (cardDetails.complete) {
+                        logger.info("Card validated:", { brand: cardDetails.brand, last4: cardDetails.last4 });
+                      }
                     }}
                   />
                 </View>
@@ -1113,11 +1110,11 @@ const CheckoutScreen = () => {
                       }}
                       style={styles.cardField}
                       onCardChange={(cardDetails) => {
-                        logger.info("Card details changed (saved method):", { 
-                          complete: cardDetails.complete,
-                          brand: cardDetails.brand,
-                        });
                         setCardComplete(cardDetails.complete);
+                        // Log only when card becomes complete
+                        if (cardDetails.complete) {
+                          logger.info("Card validated (legacy saved method):", { brand: cardDetails.brand });
+                        }
                       }}
                     />
                   </View>
