@@ -18,8 +18,10 @@ const ProfileScreen = () => {
   const [showAddresses, setShowAddresses] = useState(false);
   const [showPayments, setShowPayments] = useState(false);
   const [showEditName, setShowEditName] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [newName, setNewName] = useState("");
   const [savingName, setSavingName] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   const handleEditName = () => {
     setNewName(user?.name || "");
@@ -48,6 +50,34 @@ const ProfileScreen = () => {
       Alert.alert(t("common.error"), err?.message || t("errors.somethingWentWrong"));
     } finally {
       setSavingName(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeletingAccount(true);
+    try {
+      await apiClient.delete("/auth/account");
+      
+      Alert.alert(
+        t("common.success"),
+        t("profile.deleteAccountSuccess"),
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              setShowDeleteConfirm(false);
+              logout();
+            },
+          },
+        ]
+      );
+    } catch (err: any) {
+      logger.error("Error deleting account:", err);
+      Alert.alert(
+        t("common.error"),
+        err?.message || t("errors.somethingWentWrong")
+      );
+      setDeletingAccount(false);
     }
   };
 
@@ -281,6 +311,31 @@ const ProfileScreen = () => {
         <LanguageSwitcher iconColor="#e0b97f" iconSize={24} />
       </View>
 
+      {/* Delete Account Section */}
+      <TouchableOpacity onPress={() => setShowDeleteConfirm(true)}>
+        <Card style={styles.deleteAccountCard}>
+          <Card.Title
+            title={t("profile.deleteAccount")}
+            titleStyle={styles.deleteAccountTitle}
+            left={(props) => (
+              <Avatar.Icon
+                {...props}
+                icon="account-remove"
+                style={styles.deleteAccountIcon}
+              />
+            )}
+            right={(props) => (
+              <IconButton {...props} icon="chevron-right" iconColor="#ffffff" />
+            )}
+          />
+          <Card.Content>
+            <Text style={styles.deleteAccountDescription}>
+              {t("profile.deleteAccountWarning")}
+            </Text>
+          </Card.Content>
+        </Card>
+      </TouchableOpacity>
+
       {/* Logout Button */}
       <Button
         mode="contained"
@@ -371,6 +426,57 @@ const ProfileScreen = () => {
                 disabled={savingName || !newName.trim()}
               >
                 {t("common.save")}
+              </Button>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Delete Account Confirmation Modal */}
+      <Modal
+        visible={showDeleteConfirm}
+        animationType="fade"
+        transparent
+        onRequestClose={() => !deletingAccount && setShowDeleteConfirm(false)}
+      >
+        <View style={styles.deleteConfirmOverlay}>
+          <View style={styles.deleteConfirmModal}>
+            <Avatar.Icon
+              size={60}
+              icon="alert-circle"
+              style={styles.deleteConfirmIcon}
+            />
+            <Text style={styles.deleteConfirmTitle}>
+              {t("profile.deleteAccountConfirm")}
+            </Text>
+            <Text style={styles.deleteConfirmWarning}>
+              {t("profile.deleteAccountWarning")}
+            </Text>
+            <Text style={styles.deleteConfirmItems}>
+              {t("profile.deleteAccountItems")}
+            </Text>
+            <Text style={styles.deleteConfirmProceed}>
+              {t("profile.deleteAccountProceed")}
+            </Text>
+            <View style={styles.deleteConfirmButtons}>
+              <Button
+                mode="outlined"
+                onPress={() => setShowDeleteConfirm(false)}
+                style={styles.deleteConfirmCancelButton}
+                labelStyle={styles.deleteConfirmCancelLabel}
+                disabled={deletingAccount}
+              >
+                {t("common.cancel")}
+              </Button>
+              <Button
+                mode="contained"
+                onPress={handleDeleteAccount}
+                style={styles.deleteConfirmDeleteButton}
+                labelStyle={styles.deleteConfirmDeleteLabel}
+                loading={deletingAccount}
+                disabled={deletingAccount}
+              >
+                {t("common.delete")}
               </Button>
             </View>
           </View>
@@ -831,6 +937,110 @@ const styles = StyleSheet.create({
   },
   editNameSaveLabel: {
     color: "#231a13",
+    fontWeight: "bold",
+  },
+
+  // ============================================================================
+  // DELETE ACCOUNT CARD
+  // ============================================================================
+  deleteAccountCard: {
+    backgroundColor: "#3d1a1a", // Dark red background
+    marginBottom: 16,
+    borderRadius: 12,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    borderWidth: 1,
+    borderColor: "#d32f2f",
+  },
+  deleteAccountTitle: {
+    color: "#ff6b6b",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  deleteAccountIcon: {
+    backgroundColor: "#d32f2f",
+  },
+  deleteAccountDescription: {
+    color: "#ffb3b3",
+    fontSize: 13,
+    lineHeight: 18,
+  },
+
+  // ============================================================================
+  // DELETE CONFIRMATION MODAL
+  // ============================================================================
+  deleteConfirmOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  deleteConfirmModal: {
+    width: "100%",
+    maxWidth: 400,
+    backgroundColor: "#2d2117",
+    borderRadius: 16,
+    padding: 24,
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#d32f2f",
+  },
+  deleteConfirmIcon: {
+    backgroundColor: "#d32f2f",
+    marginBottom: 16,
+  },
+  deleteConfirmTitle: {
+    color: "#ffffff",
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  deleteConfirmWarning: {
+    color: "#ff6b6b",
+    fontSize: 15,
+    marginBottom: 12,
+    textAlign: "center",
+    lineHeight: 22,
+  },
+  deleteConfirmItems: {
+    color: "#e0b97f",
+    fontSize: 14,
+    marginBottom: 16,
+    lineHeight: 24,
+    textAlign: "left",
+    alignSelf: "stretch",
+  },
+  deleteConfirmProceed: {
+    color: "#ffffff",
+    fontSize: 14,
+    marginBottom: 24,
+    textAlign: "center",
+    fontWeight: "600",
+  },
+  deleteConfirmButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+    width: "100%",
+  },
+  deleteConfirmCancelButton: {
+    flex: 1,
+    borderColor: "#e0b97f",
+  },
+  deleteConfirmCancelLabel: {
+    color: "#e0b97f",
+  },
+  deleteConfirmDeleteButton: {
+    flex: 1,
+    backgroundColor: "#d32f2f",
+  },
+  deleteConfirmDeleteLabel: {
+    color: "#ffffff",
     fontWeight: "bold",
   },
 });
