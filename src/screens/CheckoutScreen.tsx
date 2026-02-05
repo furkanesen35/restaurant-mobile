@@ -33,6 +33,7 @@ type PaymentMethod = {
   brand?: string;
   paypalEmail?: string;
   isDefault: boolean;
+  stripePaymentMethodId?: string; // Stripe payment method ID for reusable payments
 };
 
 type Address = {
@@ -422,15 +423,20 @@ const CheckoutScreen = () => {
       return;
     }
 
+    // Check if using a saved card with Stripe payment method ID
+    const selectedMethod = savedMethods.find((m) => m.id === selectedMethodId);
+    const usingSavedCard = selectedMethodId !== -1 && selectedMethod?.stripePaymentMethodId;
+
     logger.info("Payment method check:", { 
       selectedMethodId, 
       cardComplete,
-      isNewCard: selectedMethodId === -1 
+      isNewCard: selectedMethodId === -1,
+      usingSavedCard,
+      hasStripeId: !!selectedMethod?.stripePaymentMethodId,
     });
 
-    // Always require card details for Stripe payment
-    // Saved payment methods are for display/convenience only, not for actual payment processing
-    if (!cardComplete) {
+    // Only require card details if not using a saved card with Stripe ID
+    if (!usingSavedCard && !cardComplete) {
       Alert.alert("Error", "Please enter card details to complete payment.");
       return;
     }
@@ -460,6 +466,18 @@ const CheckoutScreen = () => {
       }
 
       // Step 1: Create Stripe PaymentIntent
+      const paymentIntentBody: any = {
+        amount: total,
+        currency: "eur", // Euro
+        paymentMethodType: "card",
+      };
+
+      // If using a saved card, pass the savedPaymentMethodId
+      if (usingSavedCard && selectedMethod?.stripePaymentMethodId) {
+        paymentIntentBody.savedPaymentMethodId = selectedMethodId;
+        logger.info("Using saved payment method:", selectedMethodId);
+      }
+
       const paymentIntentRes = await fetch(
         `${ENV.API_URL}/api/payment/stripe-intent`,
         {
@@ -468,11 +486,7 @@ const CheckoutScreen = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            amount: total,
-            currency: "eur", // Euro
-            paymentMethodType: "card",
-          }),
+          body: JSON.stringify(paymentIntentBody),
         }
       );
 
@@ -480,34 +494,47 @@ const CheckoutScreen = () => {
         throw new Error("Failed to create payment intent");
       }
 
-      const { clientSecret, paymentIntentId } = await paymentIntentRes.json();
+      const paymentIntentData = await paymentIntentRes.json();
+      const { clientSecret, paymentIntentId, status } = paymentIntentData;
 
       // Step 2: Confirm payment with Stripe
       let paymentResult;
       let paymentMethodDetails = null;
 
-      // Always use CardField for payment confirmation
-      // Saved payment methods are for display only, actual payment always uses fresh card input
-      paymentResult = await confirmPayment(clientSecret, {
-        paymentMethodType: "Card",
-      });
+      // For saved cards, payment is already confirmed by backend
+      // For new cards, use CardField for payment confirmation
+      if (usingSavedCard) {
+        // Payment already confirmed, check status
+        if (status === 'succeeded') {
+          logger.info("Payment succeeded with saved card");
+          paymentResult = { paymentIntent: { status: 'succeeded' } };
+        } else {
+          throw new Error(`Payment failed with status: ${status}`);
+        }
+      } else {
+        // Use CardField for new card payment
+        paymentResult = await confirmPayment(clientSecret, {
+          paymentMethodType: "Card",
+        });
 
-      logger.info("Payment confirmation result:", { 
-        hasError: !!paymentResult.error, 
-        status: paymentResult.paymentIntent?.status 
-      });
+        logger.info("Payment confirmation result:", { 
+          hasError: !!paymentResult.error, 
+          status: paymentResult.paymentIntent?.status 
+        });
 
-      // If payment successful and user wants to save card (only for new card option)
-      if (!paymentResult.error && selectedMethodId === -1 && savePaymentToProfile && paymentResult.paymentIntent) {
-        // Extract card details from payment intent
-        const paymentIntent = paymentResult.paymentIntent;
-        if (paymentIntent.paymentMethod) {
-          paymentMethodDetails = {
-            last4: paymentIntent.paymentMethod.Card?.last4 || "****",
-            brand: paymentIntent.paymentMethod.Card?.brand || "Card",
-            expMonth: paymentIntent.paymentMethod.Card?.expMonth || 0,
-            expYear: paymentIntent.paymentMethod.Card?.expYear || 0,
-          };
+        // If payment successful and user wants to save card (only for new card option)
+        if (!paymentResult.error && selectedMethodId === -1 && savePaymentToProfile && paymentResult.paymentIntent) {
+          // Extract card details from payment intent
+          const paymentIntent = paymentResult.paymentIntent;
+          if (paymentIntent.paymentMethod) {
+            paymentMethodDetails = {
+              last4: paymentIntent.paymentMethod.Card?.last4 || "****",
+              brand: paymentIntent.paymentMethod.Card?.brand || "Card",
+              expMonth: paymentIntent.paymentMethod.Card?.expMonth || 0,
+              expYear: paymentIntent.paymentMethod.Card?.expYear || 0,
+              stripePaymentMethodId: paymentIntent.paymentMethod.id, // Save Stripe PM ID
+            };
+          }
         }
       }
 
@@ -541,13 +568,14 @@ const CheckoutScreen = () => {
               cardHolder: "Card Holder", // You might want to add a field for this
               expiry: expiry,
               brand: paymentMethodDetails.brand,
+              stripePaymentMethodId: paymentMethodDetails.stripePaymentMethodId, // Save Stripe PM ID
               isDefault: false,
               saveToProfile: true,
             }),
           });
 
           if (saveCardRes.ok) {
-            logger.info("Payment method saved to profile");
+            logger.info("Payment method saved to profile with Stripe ID");
           }
         } catch (err) {
           logger.error("Failed to save payment method:", err);
@@ -1042,38 +1070,63 @@ const CheckoutScreen = () => {
               </View>
             )}
 
-            {/* Card entry for saved methods (they're just references, need actual card input) */}
-            {selectedMethodId !== -1 && (
-              <View style={styles.formSection}>
-                <Text style={{ color: colors.onBackground, marginBottom: 8 }}>
-                  Enter card details to complete payment:
-                </Text>
-                <View style={styles.cardFieldWrapper}>
-                  <CardField
-                    postalCodeEnabled={false}
-                    placeholders={{
-                      number: "4242 4242 4242 4242",
-                    }}
-                    cardStyle={{
-                      backgroundColor: "#FFFFFF",
-                      textColor: "#000000",
-                      placeholderColor: "#999999",
-                    }}
-                    style={styles.cardField}
-                    onCardChange={(cardDetails) => {
-                      logger.info("Card details changed (saved method):", { 
-                        complete: cardDetails.complete,
-                        brand: cardDetails.brand,
-                      });
-                      setCardComplete(cardDetails.complete);
-                    }}
-                  />
+            {/* Card entry for saved methods without Stripe payment method ID */}
+            {selectedMethodId !== -1 && (() => {
+              const selectedMethod = savedMethods.find((m) => m.id === selectedMethodId);
+              const hasStripeId = selectedMethod?.stripePaymentMethodId;
+
+              if (hasStripeId) {
+                // Saved card with Stripe ID - no need to re-enter card details
+                return (
+                  <View style={styles.formSection}>
+                    <View style={[styles.infoBox, { backgroundColor: '#E8F5E9', borderLeftColor: '#4CAF50' }]}>
+                      <Text style={{ color: '#2E7D32', fontSize: 14, fontWeight: '600' }}>
+                        ✓ Using saved card
+                      </Text>
+                      <Text style={{ color: '#555', fontSize: 12, marginTop: 4 }}>
+                        {selectedMethod?.brand} ending in {selectedMethod?.cardNumber}
+                      </Text>
+                      <Text style={{ color: '#777', fontSize: 11, marginTop: 4 }}>
+                        No need to re-enter card details
+                      </Text>
+                    </View>
+                  </View>
+                );
+              }
+
+              // Legacy saved card without Stripe ID - requires card re-entry
+              return (
+                <View style={styles.formSection}>
+                  <Text style={{ color: colors.onBackground, marginBottom: 8 }}>
+                    Enter card details to complete payment:
+                  </Text>
+                  <View style={styles.cardFieldWrapper}>
+                    <CardField
+                      postalCodeEnabled={false}
+                      placeholders={{
+                        number: "4242 4242 4242 4242",
+                      }}
+                      cardStyle={{
+                        backgroundColor: "#FFFFFF",
+                        textColor: "#000000",
+                        placeholderColor: "#999999",
+                      }}
+                      style={styles.cardField}
+                      onCardChange={(cardDetails) => {
+                        logger.info("Card details changed (saved method):", { 
+                          complete: cardDetails.complete,
+                          brand: cardDetails.brand,
+                        });
+                        setCardComplete(cardDetails.complete);
+                      }}
+                    />
+                  </View>
+                  <Text style={{ color: cardComplete ? "#4CAF50" : "#FF9800", fontSize: 12, marginTop: 8 }}>
+                    {cardComplete ? "✓ Card details complete" : "⚠ Saved cards are for reference only. Please enter card details for secure payment."}
+                  </Text>
                 </View>
-                <Text style={{ color: cardComplete ? "#4CAF50" : "#FF9800", fontSize: 12, marginTop: 8 }}>
-                  {cardComplete ? "✓ Card details complete" : "⚠ Saved cards are for reference only. Please enter card details for secure payment."}
-                </Text>
-              </View>
-            )}
+              );
+            })()}
               </>
             )}
 
@@ -1240,6 +1293,11 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     marginTop: 8,
+  },
+  infoBox: {
+    padding: 16,
+    borderRadius: 8,
+    borderLeftWidth: 4,
   },
   input: {
     backgroundColor: "#fffbe8",
